@@ -2,176 +2,194 @@
 
 {% block title %}{{ brand }} Dashboard - Wholesale Management{% endblock %}
 
+{% block page_title %}{{ brand }} Dashboard{% endblock %}
+
 {% block content %}
-<div class="container mt-4">
-    <!-- Brand Header -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center">
-                <h2><i class="fas fa-chart-bar"></i> {{ brand }} Dashboard</h2>
-                <div class="btn-group" role="group">
-                    <a href="{{ url_for('dashboard', brand='URBRAND') }}" 
-                       class="btn {% if brand == 'URBRAND' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                        URBRAND
-                    </a>
-                    <a href="{{ url_for('dashboard', brand='SURVACCI') }}" 
-                       class="btn {% if brand == 'SURVACCI' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
-                        SURVACCI
-                    </a>
+<!-- Brand Toggle -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="brand-toggle">
+        <a href="{{ url_for('dashboard', brand='URBRAND') }}" 
+           class="btn {% if brand == 'URBRAND' %}active{% else %}btn-secondary{% endif %}">
+            URBRAND
+        </a>
+        <a href="{{ url_for('dashboard', brand='SURVACCI') }}" 
+           class="btn {% if brand == 'SURVACCI' %}active{% else %}btn-secondary{% endif %}">
+            SURVACCI
+        </a>
+    </div>
+    
+    <!-- Time Filters -->
+    <div class="time-filters">
+        <button class="time-filter-btn active" onclick="setTimeFilter('7d')">7 Days</button>
+        <button class="time-filter-btn" onclick="setTimeFilter('30d')">30 Days</button>
+        <button class="time-filter-btn" onclick="setTimeFilter('90d')">90 Days</button>
+        <button class="time-filter-btn" onclick="setTimeFilter('1y')">1 Year</button>
+    </div>
+</div>
+
+<!-- Analytics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card revenue fade-in-up">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ "{:,.0f}".format(total_revenue) }}</h3>
+                    <p>Total Revenue (EGP)</p>
+                </div>
+                <div class="stats-icon">
+                    <i class="fas fa-money-bill-wave"></i>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Analytics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-3 mb-3">
-            <div class="card bg-primary text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h5 class="card-title">Total Revenue</h5>
-                            <h3>{{ "{:,.2f}".format(total_revenue) }} EGP</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-money-bill-wave fa-2x"></i>
-                        </div>
-                    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card cost fade-in-up" style="animation-delay: 0.1s;">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ "{:,.0f}".format(total_cost) }}</h3>
+                    <p>Total Cost (EGP)</p>
                 </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="card bg-warning text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h5 class="card-title">Total Cost</h5>
-                            <h3>{{ "{:,.2f}".format(total_cost) }} EGP</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-coins fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="card bg-success text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h5 class="card-title">Total Profit</h5>
-                            <h3>{{ "{:,.2f}".format(total_profit) }} EGP</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-chart-line fa-2x"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-3">
-            <div class="card bg-info text-white">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between">
-                        <div>
-                            <h5 class="card-title">Total Orders</h5>
-                            <h3>{{ orders_count }}</h3>
-                        </div>
-                        <div class="align-self-center">
-                            <i class="fas fa-shopping-cart fa-2x"></i>
-                        </div>
-                    </div>
+                <div class="stats-icon">
+                    <i class="fas fa-coins"></i>
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- Charts Row -->
-    <div class="row">
-        <!-- Sales Over Time Chart -->
-        <div class="col-lg-8 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-chart-line"></i> Sales Over Time</h5>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card profit fade-in-up" style="animation-delay: 0.2s;">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ "{:,.0f}".format(total_profit) }}</h3>
+                    <p>Total Profit (EGP)</p>
                 </div>
-                <div class="card-body">
-                    <canvas id="salesChart" width="400" height="200"></canvas>
+                <div class="stats-icon">
+                    <i class="fas fa-chart-line"></i>
                 </div>
             </div>
         </div>
-        
-        <!-- Top Products -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-star"></i> Top Selling Products</h5>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card orders fade-in-up" style="animation-delay: 0.3s;">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ orders_count }}</h3>
+                    <p>Total Orders</p>
                 </div>
-                <div class="card-body">
-                    {% if top_products %}
-                        <div class="list-group list-group-flush">
-                            {% for product, quantity in top_products %}
-                                <div class="list-group-item d-flex justify-content-between align-items-center">
-                                    {{ product }}
-                                    <span class="badge bg-primary rounded-pill">{{ quantity }} pieces</span>
+                <div class="stats-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Sales Over Time Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line me-2"></i>Sales Over Time</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products Pie Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>Top Products</h5>
+            </div>
+            <div class="card-body">
+                {% if top_products %}
+                    <div class="chart-container">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                    
+                    <!-- Product Legend -->
+                    <div class="product-legend mt-3">
+                        {% for product, quantity in top_products %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="legend-color me-2" style="background-color: {{ loop.index0 | product_color }};"></div>
+                                    <span class="text-sm">{{ product }}</span>
                                 </div>
-                            {% endfor %}
-                        </div>
-                    {% else %}
-                        <div class="text-center text-muted py-4">
-                            <i class="fas fa-box-open fa-3x mb-3"></i>
-                            <p>No products sold yet</p>
-                        </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
-                </div>
-                <div class="card-body">
-                    <div class="row">
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('new_order') }}" class="btn btn-primary w-100">
-                                <i class="fas fa-plus"></i> New Order
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-list"></i> View All Orders
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('products') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-tags"></i> Manage Products
-                            </a>
-                        </div>
-                        <div class="col-md-3 mb-2">
-                            <a href="{{ url_for('export') }}" class="btn btn-outline-secondary w-100">
-                                <i class="fas fa-download"></i> Export Data
-                            </a>
-                        </div>
+                                <span class="badge bg-secondary">{{ quantity }}</span>
+                            </div>
+                        {% endfor %}
                     </div>
-                </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-box-open fa-3x mb-3 opacity-50"></i>
+                        <p class="mb-0">No products sold yet</p>
+                        <small>Start creating orders to see analytics</small>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <a href="{{ url_for('new_order') }}" class="quick-action-card">
+        <i class="fas fa-plus"></i>
+        <h5>New Order</h5>
+        <p>Create a new customer order</p>
+    </a>
+    
+    <a href="{{ url_for('orders') }}" class="quick-action-card">
+        <i class="fas fa-list"></i>
+        <h5>View Orders</h5>
+        <p>Manage all customer orders</p>
+    </a>
+    
+    <a href="{{ url_for('products') }}" class="quick-action-card">
+        <i class="fas fa-tags"></i>
+        <h5>Products</h5>
+        <p>Manage product types & pricing</p>
+    </a>
+    
+    <a href="{{ url_for('export') }}" class="quick-action-card">
+        <i class="fas fa-download"></i>
+        <h5>Export Data</h5>
+        <p>Download reports & analytics</p>
+    </a>
+</div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
 <script>
-    // Initialize the sales chart
+    // Initialize charts
     initSalesChart('{{ brand }}');
+    
+    {% if top_products %}
+    initTopProductsChart({{ top_products | tojson }});
+    {% endif %}
+    
+    // Time filter functionality
+    function setTimeFilter(period) {
+        // Remove active class from all buttons
+        document.querySelectorAll('.time-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Add active class to clicked button
+        event.target.classList.add('active');
+        
+        // Here you would typically reload the chart data
+        // For now, we'll just refresh with current data
+        refreshChart();
+    }
 </script>
 {% endblock %}

@@ -1,15 +1,20 @@
 <!DOCTYPE html>
-<html lang="en" data-bs-theme="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Wholesale Management{% endblock %}</title>
     
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -19,83 +24,118 @@
 </head>
 <body>
     {% if current_user.is_authenticated %}
-    <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i class="fas fa-store"></i> Wholesale Manager
-            </a>
-            
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-chart-bar"></i> Dashboard
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{{ url_for('dashboard', brand='URBRAND') }}">URBRAND</a></li>
-                            <li><a class="dropdown-item" href="{{ url_for('dashboard', brand='SURVACCI') }}">SURVACCI</a></li>
-                        </ul>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('orders') }}">
-                            <i class="fas fa-shopping-cart"></i> Orders
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('products') }}">
-                            <i class="fas fa-tags"></i> Products
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('export') }}">
-                            <i class="fas fa-download"></i> Export
-                        </a>
-                    </li>
-                </ul>
-                
-                <ul class="navbar-nav">
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
-                            <i class="fas fa-user"></i> {{ current_user.username }}
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt"></i> Logout
-                            </a></li>
-                        </ul>
-                    </li>
-                </ul>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <i class="fas fa-store"></i>
+                <span class="logo-text">Wholesale Manager</span>
             </div>
+            <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="sidebar-menu">
+            <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="sidebar-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('orders') }}" class="sidebar-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="{{ url_for('products') }}" class="sidebar-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
+                <i class="fas fa-tags"></i>
+                <span>Products</span>
+            </a>
+            <a href="{{ url_for('export') }}" class="sidebar-item {% if request.endpoint == 'export' %}active{% endif %}">
+                <i class="fas fa-download"></i>
+                <span>Export</span>
+            </a>
+        </div>
+        
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <span class="user-name">{{ current_user.username }}</span>
+                    <span class="user-role">Administrator</span>
+                </div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-btn">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
         </div>
     </nav>
+
+    <!-- Mobile Menu Overlay -->
+    <div class="sidebar-overlay d-lg-none" onclick="toggleSidebar()"></div>
+
+    <!-- Top Header -->
+    <header class="top-header">
+        <div class="header-left">
+            <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+        </div>
+        <div class="header-right">
+            <div class="header-actions">
+                <button class="header-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                </button>
+                <button class="header-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Settings">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </div>
+        </div>
+    </header>
     {% endif %}
 
-    <!-- Flash Messages -->
-    {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-            <div class="container mt-3">
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                    </div>
-                {% endfor %}
-            </div>
-        {% endif %}
-    {% endwith %}
-
     <!-- Main Content -->
-    <main>
-        {% block content %}{% endblock %}
+    <main class="main-content {% if current_user.is_authenticated %}with-sidebar{% endif %}">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
     </main>
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Sidebar toggle functionality
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.querySelector('.sidebar-overlay');
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        }
+    </script>
     
     {% block scripts %}{% endblock %}
 </body>
