@@ -5,25 +5,30 @@
 {% block page_title %}{{ brand }} Dashboard{% endblock %}
 
 {% block content %}
-<!-- Brand Toggle -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div class="brand-toggle">
-        <a href="{{ url_for('dashboard', brand='URBRAND') }}" 
-           class="btn {% if brand == 'URBRAND' %}active{% else %}btn-secondary{% endif %}">
-            URBRAND
-        </a>
-        <a href="{{ url_for('dashboard', brand='SURVACCI') }}" 
-           class="btn {% if brand == 'SURVACCI' %}active{% else %}btn-secondary{% endif %}">
-            SURVACCI
-        </a>
+<!-- Brand Toggle & Time Filters -->
+<div class="dashboard-controls mb-4">
+    <!-- Brand Toggle -->
+    <div class="brand-toggle-container">
+        <div class="brand-toggle">
+            <a href="{{ url_for('dashboard', brand='URBRAND') }}" 
+               class="btn {% if brand == 'URBRAND' %}active{% else %}btn-secondary{% endif %}">
+                URBRAND
+            </a>
+            <a href="{{ url_for('dashboard', brand='SURVACCI') }}" 
+               class="btn {% if brand == 'SURVACCI' %}active{% else %}btn-secondary{% endif %}">
+                SURVACCI
+            </a>
+        </div>
     </div>
     
     <!-- Time Filters -->
-    <div class="time-filters">
-        <button class="time-filter-btn active" onclick="setTimeFilter('7d')">7 Days</button>
-        <button class="time-filter-btn" onclick="setTimeFilter('30d')">30 Days</button>
-        <button class="time-filter-btn" onclick="setTimeFilter('90d')">90 Days</button>
-        <button class="time-filter-btn" onclick="setTimeFilter('1y')">1 Year</button>
+    <div class="time-filters-container">
+        <div class="time-filters">
+            <button class="time-filter-btn active" onclick="setTimeFilter('7d')">7 Days</button>
+            <button class="time-filter-btn" onclick="setTimeFilter('30d')">30 Days</button>
+            <button class="time-filter-btn" onclick="setTimeFilter('90d')">90 Days</button>
+            <button class="time-filter-btn" onclick="setTimeFilter('1y')">1 Year</button>
+        </div>
     </div>
 </div>
 

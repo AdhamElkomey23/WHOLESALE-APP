@@ -485,7 +485,18 @@ body {
     color: var(--white);
 }
 
-/* Brand Toggle */
+/* Dashboard Controls */
+.dashboard-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+
+.brand-toggle-container {
+    flex-shrink: 0;
+}
+
 .brand-toggle {
     display: inline-flex;
     background: var(--gray-100);
@@ -514,10 +525,15 @@ body {
 }
 
 /* Time Filter Tabs */
+.time-filters-container {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
 .time-filters {
     display: flex;
     gap: 0.5rem;
-    margin-bottom: 1.5rem;
     flex-wrap: wrap;
 }
 
@@ -739,13 +755,39 @@ body {
         grid-template-columns: 1fr;
     }
     
+    /* Mobile Dashboard Controls */
+    .dashboard-controls {
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .brand-toggle-container {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+    }
+    
     .brand-toggle {
+        width: auto;
+    }
+    
+    .time-filters-container {
         width: 100%;
         justify-content: center;
     }
     
     .time-filters {
         justify-content: center;
+        gap: 0.5rem;
+    }
+    
+    .time-filter-btn {
+        flex: 1;
+        min-width: 70px;
+        max-width: 80px;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.75rem;
     }
 }
 
