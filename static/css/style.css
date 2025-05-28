@@ -240,8 +240,8 @@ body {
     visibility: visible;
 }
 
-/* Top Header */
-.top-header {
+/* Mobile Header */
+.mobile-header {
     position: fixed;
     top: 0;
     left: 0;
@@ -253,55 +253,48 @@ body {
     z-index: 998;
     display: flex;
     align-items: center;
-    justify-content: space-between;
     padding: 0 1.5rem;
-}
-
-.header-left {
-    display: flex;
-    align-items: center;
     gap: 1rem;
 }
 
 .page-title {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
 }
 
-.header-right {
-    display: flex;
-    align-items: center;
+/* Sidebar Sections */
+.sidebar-divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 1rem 0;
 }
 
-.header-actions {
-    display: flex;
-    gap: 0.5rem;
+.sidebar-section {
+    margin-bottom: 1rem;
 }
 
-.header-btn {
-    width: 40px;
-    height: 40px;
+.sidebar-section-title {
+    display: block;
+    padding: 0.5rem 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.sidebar-btn {
     background: none;
     border: none;
-    border-radius: var(--radius-md);
-    color: var(--text-secondary);
+    width: 100%;
+    text-align: left;
     cursor: pointer;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.header-btn:hover {
-    background: var(--gray-100);
-    color: var(--accent-primary);
 }
 
 /* Main Content */
 .main-content {
-    padding-top: var(--header-height);
     min-height: 100vh;
     transition: all 0.3s ease;
 }
@@ -717,15 +710,19 @@ body {
 @media (min-width: 992px) {
     .sidebar {
         transform: translateX(0);
-        position: relative;
+        position: fixed;
     }
     
     .main-content.with-sidebar {
         margin-left: var(--sidebar-width);
     }
     
-    .top-header {
-        left: var(--sidebar-width);
+    .mobile-header {
+        display: none !important;
+    }
+    
+    .main-content {
+        padding-top: 0;
     }
     
     .sidebar-toggle {
@@ -734,6 +731,10 @@ body {
 }
 
 @media (max-width: 991px) {
+    .main-content {
+        padding-top: var(--header-height);
+    }
+    
     .page-content {
         padding: 1.5rem 1rem;
     }

@@ -53,6 +53,28 @@
                 <i class="fas fa-download"></i>
                 <span>Export</span>
             </a>
+            
+            <div class="sidebar-divider"></div>
+            
+            <div class="sidebar-section">
+                <span class="sidebar-section-title">Quick Actions</span>
+                <a href="{{ url_for('new_order') }}" class="sidebar-item">
+                    <i class="fas fa-plus"></i>
+                    <span>New Order</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-section">
+                <span class="sidebar-section-title">Settings</span>
+                <button class="sidebar-item sidebar-btn" onclick="showNotifications()">
+                    <i class="fas fa-bell"></i>
+                    <span>Notifications</span>
+                </button>
+                <button class="sidebar-item sidebar-btn" onclick="showSettings()">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </button>
+            </div>
         </div>
         
         <div class="sidebar-footer">
@@ -74,24 +96,12 @@
     <!-- Mobile Menu Overlay -->
     <div class="sidebar-overlay d-lg-none" onclick="toggleSidebar()"></div>
 
-    <!-- Top Header -->
-    <header class="top-header">
-        <div class="header-left">
-            <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
-                <i class="fas fa-bars"></i>
-            </button>
-            <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
-        </div>
-        <div class="header-right">
-            <div class="header-actions">
-                <button class="header-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Notifications">
-                    <i class="fas fa-bell"></i>
-                </button>
-                <button class="header-btn" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Settings">
-                    <i class="fas fa-cog"></i>
-                </button>
-            </div>
-        </div>
+    <!-- Mobile Header for Menu Toggle -->
+    <header class="mobile-header d-lg-none">
+        <button class="sidebar-toggle" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
     </header>
     {% endif %}
 
@@ -134,6 +144,15 @@
             const overlay = document.querySelector('.sidebar-overlay');
             sidebar.classList.toggle('show');
             overlay.classList.toggle('show');
+        }
+
+        // Placeholder functions for sidebar buttons
+        function showNotifications() {
+            alert('Notifications feature coming soon!');
+        }
+
+        function showSettings() {
+            alert('Settings panel coming soon!');
         }
     </script>
     
