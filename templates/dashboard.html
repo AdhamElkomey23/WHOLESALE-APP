@@ -116,10 +116,11 @@
                     
                     <!-- Product Legend -->
                     <div class="product-legend mt-3">
+                        {% set colors = ['#A25D28', '#D9A05B', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'] %}
                         {% for product, quantity in top_products %}
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <div class="d-flex align-items-center">
-                                    <div class="legend-color me-2" style="background-color: {{ loop.index0 | product_color }};"></div>
+                                    <div class="legend-color me-2" style="background-color: {{ colors[loop.index0 % colors|length] }};"></div>
                                     <span class="text-sm">{{ product }}</span>
                                 </div>
                                 <span class="badge bg-secondary">{{ quantity }}</span>

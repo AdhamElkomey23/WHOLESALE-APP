@@ -24,85 +24,59 @@
 </head>
 <body>
     {% if current_user.is_authenticated %}
-    <!-- Sidebar Navigation -->
-    <nav class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <i class="fas fa-store"></i>
-                <span class="logo-text">Wholesale Manager</span>
-            </div>
-            <button class="sidebar-toggle d-lg-none" onclick="toggleSidebar()">
-                <i class="fas fa-times"></i>
-            </button>
+    <!-- Left Sidebar Navigation -->
+    <div class="left-sidebar">
+        <!-- Logo Section -->
+        <div class="sidebar-brand">
+            <i class="fas fa-store"></i>
+            <span>Wholesale Manager</span>
         </div>
         
-        <div class="sidebar-menu">
-            <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="sidebar-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-chart-line"></i>
                 <span>Dashboard</span>
             </a>
-            <a href="{{ url_for('orders') }}" class="sidebar-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
+            <a href="{{ url_for('orders') }}" class="nav-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
                 <i class="fas fa-shopping-cart"></i>
                 <span>Orders</span>
             </a>
-            <a href="{{ url_for('products') }}" class="sidebar-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
+            <a href="{{ url_for('products') }}" class="nav-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
                 <i class="fas fa-tags"></i>
                 <span>Products</span>
             </a>
-            <a href="{{ url_for('export') }}" class="sidebar-item {% if request.endpoint == 'export' %}active{% endif %}">
+            <a href="{{ url_for('export') }}" class="nav-item {% if request.endpoint == 'export' %}active{% endif %}">
                 <i class="fas fa-download"></i>
                 <span>Export</span>
             </a>
-            
-            <div class="sidebar-divider"></div>
-            
-            <div class="sidebar-section">
-                <span class="sidebar-section-title">Quick Actions</span>
-                <a href="{{ url_for('new_order') }}" class="sidebar-item">
-                    <i class="fas fa-plus"></i>
-                    <span>New Order</span>
-                </a>
-            </div>
-            
-            <div class="sidebar-section">
-                <span class="sidebar-section-title">Settings</span>
-                <button class="sidebar-item sidebar-btn" onclick="showNotifications()">
-                    <i class="fas fa-bell"></i>
-                    <span>Notifications</span>
-                </button>
-                <button class="sidebar-item sidebar-btn" onclick="showSettings()">
-                    <i class="fas fa-cog"></i>
-                    <span>Settings</span>
-                </button>
-            </div>
-        </div>
+        </nav>
         
-        <div class="sidebar-footer">
-            <div class="user-info">
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
-                </div>
-                <div class="user-details">
-                    <span class="user-name">{{ current_user.username }}</span>
-                    <span class="user-role">Administrator</span>
-                </div>
+        <!-- User Section -->
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
             </div>
-            <a href="{{ url_for('logout') }}" class="logout-btn">
+            <div class="user-info">
+                <div class="user-name">{{ current_user.username }}</div>
+                <div class="user-role">Administrator</div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-link">
                 <i class="fas fa-sign-out-alt"></i>
             </a>
         </div>
-    </nav>
+    </div>
 
-    <!-- Mobile Menu Overlay -->
-    <div class="sidebar-overlay d-lg-none" onclick="toggleSidebar()"></div>
-
-    <!-- Mobile Header for Menu Toggle -->
-    <header class="mobile-header d-lg-none">
-        <button class="sidebar-toggle" onclick="toggleSidebar()">
+    <!-- Mobile Header -->
+    <div class="mobile-header d-lg-none">
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
             <i class="fas fa-bars"></i>
         </button>
-        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
-    </header>
+        <span class="mobile-title">{% block page_title %}Dashboard{% endblock %}</span>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay d-lg-none" onclick="toggleMobileMenu()"></div>
     {% endif %}
 
     <!-- Main Content -->
@@ -138,21 +112,12 @@
             return new bootstrap.Tooltip(tooltipTriggerEl);
         });
 
-        // Sidebar toggle functionality
-        function toggleSidebar() {
-            const sidebar = document.getElementById('sidebar');
-            const overlay = document.querySelector('.sidebar-overlay');
-            sidebar.classList.toggle('show');
+        // Mobile menu toggle functionality
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.left-sidebar');
+            const overlay = document.querySelector('.mobile-overlay');
+            sidebar.classList.toggle('mobile-open');
             overlay.classList.toggle('show');
-        }
-
-        // Placeholder functions for sidebar buttons
-        function showNotifications() {
-            alert('Notifications feature coming soon!');
-        }
-
-        function showSettings() {
-            alert('Settings panel coming soon!');
         }
     </script>
     
