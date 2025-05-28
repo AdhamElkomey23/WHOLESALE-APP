@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}{{ brand }} Dashboard - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Brand Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2><i class="fas fa-chart-bar"></i> {{ brand }} Dashboard</h2>
+                <div class="btn-group" role="group">
+                    <a href="{{ url_for('dashboard', brand='URBRAND') }}" 
+                       class="btn {% if brand == 'URBRAND' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        URBRAND
+                    </a>
+                    <a href="{{ url_for('dashboard', brand='SURVACCI') }}" 
+                       class="btn {% if brand == 'SURVACCI' %}btn-primary{% else %}btn-outline-secondary{% endif %}">
+                        SURVACCI
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analytics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 mb-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Revenue</h5>
+                            <h3>{{ "{:,.2f}".format(total_revenue) }} EGP</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-money-bill-wave fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Cost</h5>
+                            <h3>{{ "{:,.2f}".format(total_cost) }} EGP</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-coins fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Profit</h5>
+                            <h3>{{ "{:,.2f}".format(total_profit) }} EGP</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Orders</h5>
+                            <h3>{{ orders_count }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row">
+        <!-- Sales Over Time Chart -->
+        <div class="col-lg-8 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line"></i> Sales Over Time</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="salesChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Top Products -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-star"></i> Top Selling Products</h5>
+                </div>
+                <div class="card-body">
+                    {% if top_products %}
+                        <div class="list-group list-group-flush">
+                            {% for product, quantity in top_products %}
+                                <div class="list-group-item d-flex justify-content-between align-items-center">
+                                    {{ product }}
+                                    <span class="badge bg-primary rounded-pill">{{ quantity }} pieces</span>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-box-open fa-3x mb-3"></i>
+                            <p>No products sold yet</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bolt"></i> Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('new_order') }}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus"></i> New Order
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-list"></i> View All Orders
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('products') }}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-tags"></i> Manage Products
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-2">
+                            <a href="{{ url_for('export') }}" class="btn btn-outline-secondary w-100">
+                                <i class="fas fa-download"></i> Export Data
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+    // Initialize the sales chart
+    initSalesChart('{{ brand }}');
+</script>
+{% endblock %}

@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="d-flex align-items-center">
+                <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary me-3">
+                    <i class="fas fa-arrow-left"></i>
+                </a>
+                <h2><i class="fas fa-edit"></i> {{ title }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Order Details</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="row">
+                            <!-- Client Information -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Client Information</h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.client_name.label(class="form-label") }}
+                                    {{ form.client_name(class="form-control" + (" is-invalid" if form.client_name.errors else "")) }}
+                                    {% if form.client_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.client_name.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.phone_number.label(class="form-label") }}
+                                    {{ form.phone_number(class="form-control" + (" is-invalid" if form.phone_number.errors else "")) }}
+                                    {% if form.phone_number.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.date.label(class="form-label") }}
+                                    {{ form.date(class="form-control" + (" is-invalid" if form.date.errors else "")) }}
+                                    {% if form.date.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.date.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.brand.label(class="form-label") }}
+                                    {{ form.brand(class="form-select" + (" is-invalid" if form.brand.errors else "")) }}
+                                    {% if form.brand.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.brand.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Product Information -->
+                            <div class="col-md-6">
+                                <h6 class="text-muted mb-3">Product Information</h6>
+                                
+                                <div class="mb-3">
+                                    {{ form.product_type_id.label(class="form-label") }}
+                                    {{ form.product_type_id(class="form-select" + (" is-invalid" if form.product_type_id.errors else "")) }}
+                                    {% if form.product_type_id.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.product_type_id.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.total_pieces.label(class="form-label") }}
+                                    {{ form.total_pieces(class="form-control" + (" is-invalid" if form.total_pieces.errors else ""), id="totalPieces") }}
+                                    {% if form.total_pieces.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.total_pieces.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-sm-6">
+                                        <div class="mb-3">
+                                            {{ form.number_of_colors.label(class="form-label") }}
+                                            {{ form.number_of_colors(class="form-control" + (" is-invalid" if form.number_of_colors.errors else ""), id="numColors") }}
+                                            {% if form.number_of_colors.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in form.number_of_colors.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="mb-3">
+                                            {{ form.pieces_per_color.label(class="form-label") }}
+                                            {{ form.pieces_per_color(class="form-control" + (" is-invalid" if form.pieces_per_color.errors else ""), id="piecesPerColor") }}
+                                            {% if form.pieces_per_color.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in form.pieces_per_color.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_printed(class="form-check-input") }}
+                                        {{ form.is_printed.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Information -->
+                        <hr>
+                        <h6 class="text-muted mb-3">Payment Information</h6>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.paid_amount.label(class="form-label") }}
+                                    {{ form.paid_amount(class="form-control" + (" is-invalid" if form.paid_amount.errors else "")) }}
+                                    {% if form.paid_amount.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.paid_amount.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    {{ form.remaining_amount.label(class="form-label") }}
+                                    {{ form.remaining_amount(class="form-control" + (" is-invalid" if form.remaining_amount.errors else "")) }}
+                                    {% if form.remaining_amount.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.remaining_amount.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('orders') }}" class="btn btn-secondary">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Auto-calculate pieces per color based on total pieces and number of colors
+document.addEventListener('DOMContentLoaded', function() {
+    const totalPieces = document.getElementById('totalPieces');
+    const numColors = document.getElementById('numColors');
+    const piecesPerColor = document.getElementById('piecesPerColor');
+    
+    function calculatePiecesPerColor() {
+        const total = parseInt(totalPieces.value) || 0;
+        const colors = parseInt(numColors.value) || 1;
+        
+        if (total > 0 && colors > 0) {
+            piecesPerColor.value = Math.floor(total / colors);
+        }
+    }
+    
+    totalPieces.addEventListener('input', calculatePiecesPerColor);
+    numColors.addEventListener('input', calculatePiecesPerColor);
+});
+</script>
+{% endblock %}
