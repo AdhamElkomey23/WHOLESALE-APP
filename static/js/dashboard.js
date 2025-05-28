@@ -4,6 +4,21 @@
  */
 
 let salesChart = null;
+let topProductsChart = null;
+
+// Modern color palette for charts
+const chartColors = {
+    primary: '#A25D28',
+    secondary: '#D9A05B',
+    success: '#10B981',
+    warning: '#F59E0B',
+    danger: '#EF4444',
+    info: '#3B82F6',
+    gradients: [
+        '#A25D28', '#D9A05B', '#10B981', '#3B82F6', '#F59E0B',
+        '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'
+    ]
+};
 
 /**
  * Initialize the sales chart for the specified brand
@@ -51,7 +66,7 @@ function initSalesChart(brand) {
  * @param {string} brand - The brand name
  */
 function createSalesChart(ctx, data, brand) {
-    const brandColor = brand === 'URBRAND' ? '#0d6efd' : '#198754';
+    const brandColor = brand === 'URBRAND' ? chartColors.primary : chartColors.success;
     
     salesChart = new Chart(ctx, {
         type: 'line',
@@ -68,11 +83,11 @@ function createSalesChart(ctx, data, brand) {
                 pointBackgroundColor: brandColor,
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 7,
+                pointRadius: 6,
+                pointHoverRadius: 8,
                 pointHoverBackgroundColor: brandColor,
                 pointHoverBorderColor: '#fff',
-                pointHoverBorderWidth: 2
+                pointHoverBorderWidth: 3
             }]
         },
         options: {
@@ -80,27 +95,28 @@ function createSalesChart(ctx, data, brand) {
             maintainAspectRatio: false,
             plugins: {
                 legend: {
-                    display: true,
-                    position: 'top',
-                    labels: {
-                        font: {
-                            weight: '500'
-                        },
-                        usePointStyle: true,
-                        padding: 20
-                    }
+                    display: false
                 },
                 tooltip: {
-                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    backgroundColor: 'rgba(47, 47, 47, 0.95)',
                     titleColor: '#fff',
                     bodyColor: '#fff',
                     borderColor: brandColor,
                     borderWidth: 1,
-                    cornerRadius: 8,
+                    cornerRadius: 12,
                     displayColors: false,
+                    titleFont: {
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        size: 13,
+                        weight: '500'
+                    },
+                    padding: 12,
                     callbacks: {
                         label: function(context) {
-                            return `Sales: ${formatCurrency(context.parsed.y)} EGP`;
+                            return `Revenue: ${formatCurrency(context.parsed.y)} EGP`;
                         }
                     }
                 }
@@ -110,23 +126,36 @@ function createSalesChart(ctx, data, brand) {
                     grid: {
                         display: false
                     },
+                    border: {
+                        display: false
+                    },
                     ticks: {
+                        color: '#6B7280',
                         font: {
+                            size: 12,
                             weight: '500'
-                        }
+                        },
+                        padding: 8
                     }
                 },
                 y: {
                     beginAtZero: true,
+                    border: {
+                        display: false
+                    },
                     grid: {
-                        color: 'rgba(0, 0, 0, 0.1)'
+                        color: '#E5E7EB',
+                        drawTicks: false
                     },
                     ticks: {
+                        color: '#6B7280',
                         font: {
+                            size: 12,
                             weight: '500'
                         },
+                        padding: 8,
                         callback: function(value) {
-                            return formatCurrency(value) + ' EGP';
+                            return formatCurrency(value);
                         }
                     }
                 }
@@ -136,7 +165,79 @@ function createSalesChart(ctx, data, brand) {
                 mode: 'index'
             },
             animation: {
-                duration: 2000,
+                duration: 1500,
+                easing: 'easeInOutQuart'
+            }
+        }
+    });
+}
+
+/**
+ * Initialize the top products pie chart
+ * @param {Array} productsData - Array of [product_name, quantity] tuples
+ */
+function initTopProductsChart(productsData) {
+    const ctx = document.getElementById('topProductsChart');
+    if (!ctx || !productsData || productsData.length === 0) {
+        return;
+    }
+
+    // Destroy existing chart if it exists
+    if (topProductsChart) {
+        topProductsChart.destroy();
+    }
+
+    const labels = productsData.map(item => item[0]);
+    const data = productsData.map(item => item[1]);
+    const colors = chartColors.gradients.slice(0, labels.length);
+
+    topProductsChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colors,
+                borderColor: '#fff',
+                borderWidth: 3,
+                hoverBorderWidth: 4,
+                hoverOffset: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(47, 47, 47, 0.95)',
+                    titleColor: '#fff',
+                    bodyColor: '#fff',
+                    borderWidth: 0,
+                    cornerRadius: 12,
+                    titleFont: {
+                        size: 14,
+                        weight: '600'
+                    },
+                    bodyFont: {
+                        size: 13,
+                        weight: '500'
+                    },
+                    padding: 12,
+                    callbacks: {
+                        label: function(context) {
+                            const total = data.reduce((a, b) => a + b, 0);
+                            const percentage = Math.round((context.parsed / total) * 100);
+                            return `${context.label}: ${context.parsed} pieces (${percentage}%)`;
+                        }
+                    }
+                }
+            },
+            cutout: '60%',
+            animation: {
+                duration: 1500,
                 easing: 'easeInOutQuart'
             }
         }

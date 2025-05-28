@@ -3,47 +3,46 @@
 {% block title %}Login - Wholesale Management{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center min-vh-100 align-items-center">
-        <div class="col-md-6 col-lg-4">
-            <div class="card shadow">
-                <div class="card-header text-center">
-                    <h3><i class="fas fa-store"></i> Wholesale Manager</h3>
-                    <p class="text-muted">Sign in to your account</p>
-                </div>
-                <div class="card-body">
-                    <form method="POST">
-                        {{ form.hidden_tag() }}
-                        
-                        <div class="mb-3">
-                            {{ form.username.label(class="form-label") }}
-                            {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else "")) }}
-                            {% if form.username.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.username.errors %}{{ error }}{% endfor %}
-                                </div>
-                            {% endif %}
+<div class="login-container">
+    <div class="login-card fade-in-up">
+        <div class="login-header">
+            <i class="fas fa-store fa-2x mb-3"></i>
+            <h3>Wholesale Manager</h3>
+            <p>Sign in to your account</p>
+        </div>
+        
+        <div class="login-body">
+            <form method="POST">
+                {{ form.hidden_tag() }}
+                
+                <div class="mb-3">
+                    {{ form.username.label(class="form-label") }}
+                    {{ form.username(class="form-control" + (" is-invalid" if form.username.errors else ""), placeholder="Enter your username") }}
+                    {% if form.username.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.username.errors %}{{ error }}{% endfor %}
                         </div>
-                        
-                        <div class="mb-3">
-                            {{ form.password.label(class="form-label") }}
-                            {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else "")) }}
-                            {% if form.password.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.password.errors %}{{ error }}{% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                        
-                        <div class="d-grid">
-                            {{ form.submit(class="btn btn-primary") }}
-                        </div>
-                    </form>
+                    {% endif %}
                 </div>
-                <div class="card-footer text-center text-muted">
-                    <small>Default credentials: admin / admin123</small>
+                
+                <div class="mb-4">
+                    {{ form.password.label(class="form-label") }}
+                    {{ form.password(class="form-control" + (" is-invalid" if form.password.errors else ""), placeholder="Enter your password") }}
+                    {% if form.password.errors %}
+                        <div class="invalid-feedback">
+                            {% for error in form.password.errors %}{{ error }}{% endfor %}
+                        </div>
+                    {% endif %}
                 </div>
-            </div>
+                
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+        
+        <div class="login-footer">
+            <small>Default credentials: <strong>admin</strong> / <strong>admin123</strong></small>
         </div>
     </div>
 </div>
