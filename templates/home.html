@@ -3,26 +3,23 @@
 {% block title %}Home - Wholesale Management{% endblock %}
 
 {% block content %}
-<!-- Welcome Message Modal -->
-<div class="modal fade" id="welcomeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-body text-center p-5">
-                <div class="welcome-animation">
-                    <div class="welcome-icon mb-4">
-                        <i class="fas fa-user-circle fa-5x text-primary animate__animated animate__bounceIn"></i>
-                    </div>
-                    <h2 class="welcome-text animate__animated animate__fadeInUp animate__delay-1s">
-                        Hello {{ current_user.username.title() }}
-                    </h2>
-                    <h4 class="text-muted mb-4 animate__animated animate__fadeInUp animate__delay-2s">
-                        Welcome back!
-                    </h4>
-                    <div class="welcome-sparkles animate__animated animate__pulse animate__infinite">
-                        <i class="fas fa-star text-warning"></i>
-                        <i class="fas fa-star text-warning mx-2"></i>
-                        <i class="fas fa-star text-warning"></i>
-                    </div>
+<!-- Full Screen Welcome Animation -->
+<div id="welcomeScreen" class="welcome-fullscreen">
+    <div class="welcome-content">
+        <div class="laptop-screen">
+            <div class="screen-glow"></div>
+            <div class="welcome-text-container">
+                <div class="welcome-icon mb-4">
+                    <i class="fas fa-laptop fa-6x text-white animate__animated animate__bounceIn"></i>
+                </div>
+                <h1 class="welcome-title animate__animated animate__fadeInUp animate__delay-1s">
+                    Hello {{ current_user.username.title() }}
+                </h1>
+                <h3 class="welcome-subtitle animate__animated animate__fadeInUp animate__delay-2s">
+                    Welcome back!
+                </h3>
+                <div class="typing-effect animate__animated animate__fadeIn animate__delay-3s">
+                    <span id="typingText"></span>
                 </div>
             </div>
         </div>
@@ -220,34 +217,106 @@
     </div>
 </div>
 
-<!-- Custom Styles for Welcome Animation -->
+<!-- Custom Styles for Full Screen Welcome Animation -->
 <style>
-.welcome-animation {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
+.welcome-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #0c1115 0%, #1a1a2e 50%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 1s ease-out;
 }
 
-.welcome-icon i {
-    animation: float 3s ease-in-out infinite;
+.welcome-fullscreen.fade-out {
+    opacity: 0;
+    pointer-events: none;
 }
 
-@keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-10px); }
+.welcome-content {
+    text-align: center;
+    position: relative;
 }
 
-.welcome-sparkles {
-    animation: sparkle 2s ease-in-out infinite;
+.laptop-screen {
+    position: relative;
+    background: linear-gradient(145deg, #1e293b, #334155);
+    border-radius: 20px;
+    padding: 60px;
+    box-shadow: 
+        0 0 100px rgba(59, 130, 246, 0.3),
+        0 0 200px rgba(59, 130, 246, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: screenPowerOn 2s ease-out;
 }
 
-@keyframes sparkle {
-    0%, 100% { opacity: 0.5; transform: scale(1); }
-    50% { opacity: 1; transform: scale(1.2); }
+.screen-glow {
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    right: -50px;
+    bottom: -50px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+    border-radius: 50px;
+    animation: glow 3s ease-in-out infinite alternate;
 }
 
-/* Animate.css CDN styles */
+.welcome-text-container {
+    position: relative;
+    z-index: 1;
+}
+
+.welcome-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+    margin-bottom: 20px;
+}
+
+.welcome-subtitle {
+    font-size: 1.8rem;
+    color: #94a3b8;
+    margin-bottom: 30px;
+}
+
+.typing-effect {
+    font-size: 1.2rem;
+    color: #3b82f6;
+    min-height: 30px;
+}
+
+@keyframes screenPowerOn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+        box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 
+            0 0 100px rgba(59, 130, 246, 0.3),
+            0 0 200px rgba(59, 130, 246, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+}
+
+@keyframes glow {
+    from { opacity: 0.5; transform: scale(1); }
+    to { opacity: 0.8; transform: scale(1.05); }
+}
+
 @keyframes bounceIn {
     from, 20%, 40%, 60%, 80%, to {
         animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
@@ -265,10 +334,9 @@
     to { opacity: 1; transform: translate3d(0, 0, 0); }
 }
 
-@keyframes pulse {
-    from { transform: scale3d(1, 1, 1); }
-    50% { transform: scale3d(1.05, 1.05, 1.05); }
-    to { transform: scale3d(1, 1, 1); }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .animate__animated {
@@ -276,16 +344,12 @@
     animation-fill-mode: both;
 }
 
-.animate__bounceIn { animation-name: bounceIn; animation-duration: 1s; }
+.animate__bounceIn { animation-name: bounceIn; animation-duration: 1.5s; }
 .animate__fadeInUp { animation-name: fadeInUp; }
-.animate__pulse { animation-name: pulse; animation-duration: 2s; }
-.animate__infinite { animation-iteration-count: infinite; }
+.animate__fadeIn { animation-name: fadeIn; }
 .animate__delay-1s { animation-delay: 1s; }
 .animate__delay-2s { animation-delay: 2s; }
-
-.modal-content {
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-}
+.animate__delay-3s { animation-delay: 3s; }
 </style>
 
 <script>
@@ -298,15 +362,41 @@ document.addEventListener('DOMContentLoaded', function() {
         // Clear the flag
         sessionStorage.removeItem('justLoggedIn');
         
-        // Show welcome modal
-        const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
-        welcomeModal.show();
+        // Show full-screen welcome animation
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        welcomeScreen.style.display = 'flex';
         
-        // Auto-close after 4 seconds
+        // Start typing animation after 4 seconds
         setTimeout(function() {
-            welcomeModal.hide();
+            typeWriter("System ready. Loading your dashboard...", 50);
         }, 4000);
+        
+        // Hide welcome screen after 8 seconds
+        setTimeout(function() {
+            welcomeScreen.classList.add('fade-out');
+            setTimeout(function() {
+                welcomeScreen.style.display = 'none';
+            }, 1000);
+        }, 8000);
+    } else {
+        // Hide welcome screen if not from login
+        document.getElementById('welcomeScreen').style.display = 'none';
     }
 });
+
+function typeWriter(text, speed) {
+    const typingElement = document.getElementById('typingText');
+    let i = 0;
+    
+    function type() {
+        if (i < text.length) {
+            typingElement.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    
+    type();
+}
 </script>
 {% endblock %}
