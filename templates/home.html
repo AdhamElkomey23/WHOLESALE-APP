@@ -544,31 +544,53 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Check if this is a fresh login (comes from login page)
     const urlParams = new URLSearchParams(window.location.search);
-    const fromLogin = urlParams.get('from') === 'login' || sessionStorage.getItem('justLoggedIn');
+    const fromLogin = urlParams.get('from') === 'login' || 
+                     sessionStorage.getItem('justLoggedIn') ||
+                     localStorage.getItem('showWelcome') ||
+                     document.referrer.includes('/login') ||
+                     {{ 'true' if session.get('show_welcome') else 'false' }};
     
     if (fromLogin) {
-        // Clear the flag
+        // Clear all flags
         sessionStorage.removeItem('justLoggedIn');
+        localStorage.removeItem('showWelcome');
         
         // Show full-screen welcome animation
         const welcomeScreen = document.getElementById('welcomeScreen');
-        welcomeScreen.style.display = 'flex';
-        
-        // Start typing animation after 4 seconds
-        setTimeout(function() {
-            typeWriter("System ready. Loading your dashboard...", 50);
-        }, 4000);
-        
-        // Hide welcome screen after 8 seconds
-        setTimeout(function() {
-            welcomeScreen.classList.add('fade-out');
+        if (welcomeScreen) {
+            welcomeScreen.style.display = 'flex';
+            welcomeScreen.style.position = 'fixed';
+            welcomeScreen.style.zIndex = '99999';
+            
+            // Force show on mobile by adding specific styles
+            if (window.innerWidth <= 768) {
+                welcomeScreen.style.top = '0';
+                welcomeScreen.style.left = '0';
+                welcomeScreen.style.width = '100vw';
+                welcomeScreen.style.height = '100vh';
+                document.body.style.overflow = 'hidden';
+            }
+            
+            // Start typing animation after 4 seconds
             setTimeout(function() {
-                welcomeScreen.style.display = 'none';
-            }, 1000);
-        }, 8000);
+                typeWriter("System ready. Loading your dashboard...", 50);
+            }, 4000);
+            
+            // Hide welcome screen after 8 seconds
+            setTimeout(function() {
+                welcomeScreen.classList.add('fade-out');
+                setTimeout(function() {
+                    welcomeScreen.style.display = 'none';
+                    document.body.style.overflow = '';
+                }, 1000);
+            }, 8000);
+        }
     } else {
         // Hide welcome screen if not from login
-        document.getElementById('welcomeScreen').style.display = 'none';
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        if (welcomeScreen) {
+            welcomeScreen.style.display = 'none';
+        }
     }
 });
 

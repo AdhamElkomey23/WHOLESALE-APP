@@ -1,4 +1,4 @@
-from flask import render_template, redirect, url_for, flash, request, jsonify, make_response
+from flask import render_template, redirect, url_for, flash, request, jsonify, make_response, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, db
@@ -13,6 +13,8 @@ import json
 @login_required
 def index():
     """Home page with brand overview and performance indicators"""
+    # Clear welcome flag after first visit
+    show_welcome = session.pop('show_welcome', False)
     from models import Order, Expense
     
     # Calculate performance for each brand
@@ -61,6 +63,7 @@ def login():
         user = User.query.filter_by(username=form.username.data).first()
         if user and check_password_hash(user.password_hash, form.password.data):
             login_user(user)
+            session['show_welcome'] = True
             next_page = request.args.get('next')
             return redirect(next_page + '?from=login') if next_page else redirect(url_for('index') + '?from=login')
         flash('Invalid username or password', 'danger')
