@@ -43,13 +43,13 @@
                 <span class="nav-section-title">Overview</span>
                 <a href="{{ url_for('index') }}" class="modern-nav-item {% if request.endpoint == 'index' %}active{% endif %}">
                     <div class="nav-icon">
-                        <i class="fas fa-grid-2"></i>
+                        <i class="fas fa-home"></i>
                     </div>
                     <span class="nav-text">Dashboard</span>
                 </a>
                 <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="modern-nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
                     <div class="nav-icon">
-                        <i class="fas fa-chart-mixed"></i>
+                        <i class="fas fa-chart-line"></i>
                     </div>
                     <span class="nav-text">Analytics</span>
                 </a>
@@ -59,13 +59,13 @@
                 <span class="nav-section-title">Business</span>
                 <a href="{{ url_for('orders') }}" class="modern-nav-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
                     <div class="nav-icon">
-                        <i class="fas fa-shopping-bag"></i>
+                        <i class="fas fa-shopping-cart"></i>
                     </div>
                     <span class="nav-text">Orders</span>
                 </a>
                 <a href="{{ url_for('products') }}" class="modern-nav-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
                     <div class="nav-icon">
-                        <i class="fas fa-box"></i>
+                        <i class="fas fa-tags"></i>
                     </div>
                     <span class="nav-text">Products</span>
                 </a>
@@ -93,7 +93,7 @@
                 </a>
                 <a href="{{ url_for('profile') }}" class="modern-nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
                     <div class="nav-icon">
-                        <i class="fas fa-user-circle"></i>
+                        <i class="fas fa-user-cog"></i>
                     </div>
                     <span class="nav-text">Settings</span>
                 </a>
