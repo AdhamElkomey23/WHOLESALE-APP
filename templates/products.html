@@ -69,6 +69,17 @@
                                 {% endif %}
                             </div>
                             
+                            <div class="mb-3">
+                                {{ form.available_colors.label(class="form-label") }}
+                                {{ form.available_colors(class="form-control" + (" is-invalid" if form.available_colors.errors else ""), placeholder="e.g., Black,White,Navy,Green") }}
+                                <div class="form-text">Enter colors separated by commas</div>
+                                {% if form.available_colors.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.available_colors.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
                             <div class="d-grid">
                                 {{ form.submit(class="btn btn-primary") }}
                             </div>
