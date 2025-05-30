@@ -38,13 +38,7 @@ class ProductTypeForm(FlaskForm):
     cost_price = FloatField('Cost Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     selling_price = FloatField('Selling Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     brand_group = SelectField('Brand Group', choices=[('SHARED', 'URBRAND/SURVACCI (Shared Storage)'), ('AZIZ', 'AZIZ (Separate Storage)')], validators=[DataRequired()])
-    available_colors = SelectField('Available Colors', choices=[
-        ('Black,White,Green,Brown,Beige,Navy', 'All Colors'),
-        ('Black,White', 'Black & White'),
-        ('Black,Green,Brown', 'Dark Colors'),
-        ('White,Beige', 'Light Colors'),
-        ('Navy,Brown,Beige', 'Earth Tones')
-    ], validators=[DataRequired()])
+    available_colors = StringField('Available Colors (comma-separated)', validators=[DataRequired()], default='Black,White,Green,Brown,Beige,Navy')
     submit = SubmitField('Save Product')
     
     def validate_selling_price(self, field):

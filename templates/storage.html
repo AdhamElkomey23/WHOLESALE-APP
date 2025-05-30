@@ -8,8 +8,22 @@
         <h1 class="page-title">Storage Management</h1>
     </div>
 
-    <!-- Shared Storage (URBRAND + SURVACCI) -->
+    <!-- Storage Type Filter -->
     <div class="card mb-4">
+        <div class="card-body py-2">
+            <div class="btn-group w-100" role="group" aria-label="Storage Filter">
+                <button type="button" class="btn btn-primary active" id="sharedBtn" onclick="showStorage('shared')">
+                    <i class="fas fa-boxes me-2"></i>URBRAND/SURVACCI (Shared)
+                </button>
+                <button type="button" class="btn btn-outline-warning" id="azizBtn" onclick="showStorage('aziz')">
+                    <i class="fas fa-star me-2"></i>AZIZ (Independent)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Shared Storage (URBRAND + SURVACCI) -->
+    <div class="card mb-4" id="sharedStorage">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-warehouse me-2"></i>
@@ -60,7 +74,7 @@
     </div>
 
     <!-- AZIZ Storage -->
-    <div class="card mb-4">
+    <div class="card mb-4" id="azizStorage" style="display: none;">
         <div class="card-header">
             <h5 class="mb-0">
                 <i class="fas fa-warehouse me-2"></i>
@@ -160,6 +174,25 @@
 </div>
 
 <script>
+function showStorage(type) {
+    const sharedStorage = document.getElementById('sharedStorage');
+    const azizStorage = document.getElementById('azizStorage');
+    const sharedBtn = document.getElementById('sharedBtn');
+    const azizBtn = document.getElementById('azizBtn');
+    
+    if (type === 'shared') {
+        sharedStorage.style.display = 'block';
+        azizStorage.style.display = 'none';
+        sharedBtn.className = 'btn btn-primary active';
+        azizBtn.className = 'btn btn-outline-warning';
+    } else {
+        sharedStorage.style.display = 'none';
+        azizStorage.style.display = 'block';
+        sharedBtn.className = 'btn btn-outline-primary';
+        azizBtn.className = 'btn btn-warning active';
+    }
+}
+
 function openStockModal(productId, productName, storageType, adjustmentType) {
     document.getElementById('modalProductId').value = productId;
     document.getElementById('modalStorageType').value = storageType;
