@@ -996,6 +996,9 @@ p {
         height: 100vh;
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        padding-bottom: 2rem;
+        display: flex;
+        flex-direction: column;
     }
     
     .left-sidebar.mobile-open {
@@ -1010,6 +1013,19 @@ p {
     .mobile-overlay.show {
         opacity: 1;
         visibility: visible;
+    }
+    
+    /* Mobile sidebar improvements */
+    .sidebar-nav {
+        flex: 1;
+        padding-bottom: 1rem;
+    }
+    
+    .sidebar-user {
+        margin-top: auto;
+        border-top: 1px solid var(--gray-200);
+        padding-top: 1rem;
+        flex-shrink: 0;
     }
 }
 
