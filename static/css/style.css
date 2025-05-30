@@ -52,6 +52,12 @@
     
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-size-base: 16px;
+    --font-size-sm: 14px;
+    --font-size-lg: 18px;
+    --font-size-xl: 20px;
+    --line-height-base: 1.6;
+    --line-height-tight: 1.4;
 }
 
 /* Base Styles */
@@ -65,9 +71,29 @@ body {
     color: var(--text-primary);
     margin: 0;
     padding: 0;
-    line-height: 1.5;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography improvements */
+h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-family);
+    font-weight: 600;
+    line-height: var(--line-height-tight);
+    color: var(--text-primary);
+    margin-bottom: 0.75rem;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: var(--font-size-xl); }
+h3 { font-size: var(--font-size-lg); }
+h4, h5, h6 { font-size: var(--font-size-base); }
+
+p {
+    line-height: var(--line-height-base);
+    margin-bottom: 1rem;
 }
 
 /* Left Sidebar Styles */
@@ -117,6 +143,7 @@ body {
     color: var(--text-secondary);
     text-decoration: none;
     font-weight: 500;
+    font-size: var(--font-size-base);
     transition: all 0.2s ease;
     border-right: 3px solid transparent;
     margin: 0.25rem 0;
@@ -426,7 +453,8 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.875rem;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-tight);
 }
 
 .btn:hover {
@@ -613,12 +641,15 @@ body {
     font-weight: 600;
     border-bottom: 1px solid var(--gray-200);
     padding: 1rem;
+    font-size: var(--font-size-sm);
 }
 
 .table td {
     padding: 1rem;
     border-bottom: 1px solid var(--gray-100);
     vertical-align: middle;
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
 }
 
 .table tbody tr:hover {
@@ -630,6 +661,7 @@ body {
     font-weight: 500;
     color: var(--text-primary);
     margin-bottom: 0.5rem;
+    font-size: var(--font-size-base);
 }
 
 .form-control,
@@ -639,6 +671,8 @@ body {
     padding: 0.75rem;
     transition: all 0.2s ease;
     background: var(--white);
+    font-size: var(--font-size-base);
+    line-height: var(--line-height-base);
 }
 
 .form-control:focus,
