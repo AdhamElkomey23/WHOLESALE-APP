@@ -80,6 +80,23 @@
         
         <!-- Products List -->
         <div class="col-lg-8">
+            <!-- Brand Filter Buttons -->
+            <div class="card mb-3">
+                <div class="card-body py-2">
+                    <div class="btn-group w-100" role="group" aria-label="Brand Filter">
+                        <button type="button" class="btn btn-outline-primary active" id="filter-all" onclick="filterProducts('all')">
+                            <i class="fas fa-list me-2"></i>All Products
+                        </button>
+                        <button type="button" class="btn btn-outline-primary" id="filter-shared" onclick="filterProducts('SHARED')">
+                            <i class="fas fa-handshake me-2"></i>URBRAND/SURVACCI
+                        </button>
+                        <button type="button" class="btn btn-outline-warning" id="filter-aziz" onclick="filterProducts('AZIZ')">
+                            <i class="fas fa-crown me-2"></i>AZIZ
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
             <div class="card">
                 <div class="card-header">
                     <h5>Current Product Types</h5>
@@ -101,7 +118,7 @@
                                 </thead>
                                 <tbody>
                                     {% for product in products %}
-                                        <tr>
+                                        <tr data-brand-group="{{ product.brand_group }}" class="product-row">
                                             <td><strong>{{ product.name }}</strong></td>
                                             <td>{{ "{:,.2f}".format(product.cost_price) }}</td>
                                             <td>{{ "{:,.2f}".format(product.selling_price) }}</td>
@@ -212,6 +229,60 @@
 
 {% block scripts %}
 <script>
+function filterProducts(brandGroup) {
+    // Remove active class from all buttons
+    document.querySelectorAll('.btn-group button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.add('btn-outline-primary', 'btn-outline-warning');
+        btn.classList.remove('btn-primary', 'btn-warning');
+    });
+    
+    // Add active class to clicked button
+    const activeButton = document.getElementById(`filter-${brandGroup === 'all' ? 'all' : brandGroup.toLowerCase()}`);
+    if (activeButton) {
+        activeButton.classList.add('active');
+        if (brandGroup === 'AZIZ') {
+            activeButton.classList.remove('btn-outline-warning');
+            activeButton.classList.add('btn-warning');
+        } else {
+            activeButton.classList.remove('btn-outline-primary');
+            activeButton.classList.add('btn-primary');
+        }
+    }
+    
+    // Show/hide product rows based on filter
+    const productRows = document.querySelectorAll('.product-row');
+    let visibleCount = 0;
+    
+    productRows.forEach(row => {
+        const rowBrandGroup = row.getAttribute('data-brand-group');
+        if (brandGroup === 'all' || rowBrandGroup === brandGroup) {
+            row.style.display = '';
+            visibleCount++;
+        } else {
+            row.style.display = 'none';
+        }
+    });
+    
+    // Update table visibility message if no products match filter
+    const tableContainer = document.querySelector('.table-responsive');
+    const noProductsMessage = document.getElementById('no-products-message');
+    
+    if (visibleCount === 0) {
+        if (tableContainer) tableContainer.style.display = 'none';
+        if (!noProductsMessage) {
+            const message = document.createElement('p');
+            message.id = 'no-products-message';
+            message.className = 'text-muted text-center';
+            message.textContent = `No products found for ${brandGroup === 'SHARED' ? 'URBRAND/SURVACCI' : brandGroup === 'AZIZ' ? 'AZIZ' : 'this filter'}.`;
+            tableContainer.parentNode.appendChild(message);
+        }
+    } else {
+        if (tableContainer) tableContainer.style.display = '';
+        if (noProductsMessage) noProductsMessage.remove();
+    }
+}
+
 function editProduct(id, name, costPrice, sellingPrice, brandGroup) {
     document.getElementById('editForm').action = `/products/${id}/edit`;
     document.getElementById('editName').value = name;
