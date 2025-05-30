@@ -993,6 +993,9 @@ p {
         transition: transform 0.3s ease;
         z-index: 1050;
         position: fixed;
+        height: 100vh;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
     
     .left-sidebar.mobile-open {
