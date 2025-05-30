@@ -235,8 +235,9 @@ def generate_invoice(id):
 @app.route('/products')
 @login_required
 def products():
+    form = ProductTypeForm()
     products = ProductType.query.all()
-    return render_template('products.html', products=products)
+    return render_template('products.html', form=form, products=products)
 
 @app.route('/products/new', methods=['GET', 'POST'])
 @login_required
