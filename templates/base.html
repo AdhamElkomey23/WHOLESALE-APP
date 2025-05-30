@@ -62,6 +62,10 @@
                 <i class="fas fa-download"></i>
                 <span>Export</span>
             </a>
+            <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+                <i class="fas fa-user-cog"></i>
+                <span>Profile</span>
+            </a>
         </nav>
         
         <!-- User Section -->

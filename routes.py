@@ -1,9 +1,9 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify, make_response
 from flask_login import login_user, logout_user, login_required, current_user
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, db
 from models import User, Order, ProductType
-from forms import LoginForm, OrderForm, ProductTypeForm
+from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm
 from utils import generate_invoice_pdf, export_data_csv
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
@@ -548,3 +548,37 @@ def get_product_colors(product_id):
     colors = [color.strip() for color in product.available_colors.split(',') if color.strip()]
     
     return jsonify({'colors': colors})
+
+@app.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    """User profile page to update username and password"""
+    form = UserProfileForm(current_user.username, current_user.email)
+    
+    if form.validate_on_submit():
+        # Verify current password
+        if not check_password_hash(current_user.password_hash, form.current_password.data):
+            flash('Current password is incorrect', 'danger')
+            return render_template('profile.html', form=form)
+        
+        # Update username and email
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        
+        # Update password if provided
+        if form.new_password.data:
+            current_user.password_hash = generate_password_hash(form.new_password.data)
+        
+        try:
+            db.session.commit()
+            flash('Profile updated successfully!', 'success')
+            return redirect(url_for('profile'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating profile. Please try again.', 'danger')
+    
+    # Pre-populate form with current user data
+    form.username.data = current_user.username
+    form.email.data = current_user.email
+    
+    return render_template('profile.html', form=form)
