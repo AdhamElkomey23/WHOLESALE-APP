@@ -74,16 +74,25 @@
                     </div>
                 </div>
                 <div class="card-footer bg-transparent">
-                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                        <a href="{{ url_for('dashboard', brand=brand) }}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-chart-line me-1"></i>Dashboard
-                        </a>
-                        <a href="{{ url_for('orders', brand=brand) }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="fas fa-shopping-cart me-1"></i>Orders
-                        </a>
-                        <a href="{{ url_for('expenses', brand=brand) }}" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-receipt me-1"></i>Expenses
-                        </a>
+                    <div class="row g-1">
+                        <div class="col-4">
+                            <a href="{{ url_for('dashboard', brand=brand) }}" class="btn btn-outline-primary btn-sm w-100">
+                                <i class="fas fa-chart-line d-block mb-1"></i>
+                                <small>Dashboard</small>
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <a href="{{ url_for('orders', brand=brand) }}" class="btn btn-outline-secondary btn-sm w-100">
+                                <i class="fas fa-shopping-cart d-block mb-1"></i>
+                                <small>Orders</small>
+                            </a>
+                        </div>
+                        <div class="col-4">
+                            <a href="{{ url_for('expenses', brand=brand) }}" class="btn btn-outline-info btn-sm w-100">
+                                <i class="fas fa-receipt d-block mb-1"></i>
+                                <small>Expenses</small>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
