@@ -17,7 +17,7 @@
             </h5>
         </div>
         <div class="card-body">
-            {% if products %}
+            {% if shared_products %}
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -28,7 +28,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for product in products %}
+                        {% for product in shared_products %}
                         <tr>
                             <td>{{ product.name }}</td>
                             <td>
@@ -54,7 +54,7 @@
                 </table>
             </div>
             {% else %}
-            <p class="text-muted">No products available. <a href="{{ url_for('products') }}">Add products first</a>.</p>
+            <p class="text-muted">No URBRAND/SURVACCI products available. <a href="{{ url_for('products') }}">Add products with shared storage first</a>.</p>
             {% endif %}
         </div>
     </div>
@@ -68,7 +68,7 @@
             </h5>
         </div>
         <div class="card-body">
-            {% if products %}
+            {% if aziz_products %}
             <div class="table-responsive">
                 <table class="table table-hover">
                     <thead>
@@ -79,7 +79,7 @@
                         </tr>
                     </thead>
                     <tbody>
-                        {% for product in products %}
+                        {% for product in aziz_products %}
                         <tr>
                             <td>{{ product.name }}</td>
                             <td>
@@ -105,7 +105,7 @@
                 </table>
             </div>
             {% else %}
-            <p class="text-muted">No products available. <a href="{{ url_for('products') }}">Add products first</a>.</p>
+            <p class="text-muted">No AZIZ products available. <a href="{{ url_for('products') }}">Add products with AZIZ storage first</a>.</p>
             {% endif %}
         </div>
     </div>

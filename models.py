@@ -80,13 +80,16 @@ class Inventory(db.Model):
     @staticmethod
     def get_available_stock(product_type_id, brand):
         """Get available stock for a product based on brand"""
-        if brand in ['URBRAND', 'SURVACCI']:
-            storage_type = 'SHARED'
-        elif brand == 'AZIZ':
-            storage_type = 'AZIZ'
-        else:
+        from models import ProductType
+        
+        # Get the product to check its brand group
+        product = ProductType.query.get(product_type_id)
+        if not product:
             return 0
-            
+        
+        # Use the product's assigned brand group for storage type
+        storage_type = product.brand_group
+        
         inventory = Inventory.query.filter_by(
             product_type_id=product_type_id,
             storage_type=storage_type
@@ -97,12 +100,15 @@ class Inventory(db.Model):
     @staticmethod
     def update_stock(product_type_id, brand, quantity_used):
         """Update stock when an order is placed"""
-        if brand in ['URBRAND', 'SURVACCI']:
-            storage_type = 'SHARED'
-        elif brand == 'AZIZ':
-            storage_type = 'AZIZ'
-        else:
+        from models import ProductType
+        
+        # Get the product to check its brand group
+        product = ProductType.query.get(product_type_id)
+        if not product:
             return False
+        
+        # Use the product's assigned brand group for storage type
+        storage_type = product.brand_group
             
         inventory = Inventory.query.filter_by(
             product_type_id=product_type_id,

@@ -316,22 +316,22 @@ def storage():
     """Storage management page"""
     from models import ProductType, Inventory
     
-    # Get all products
-    products = ProductType.query.all()
+    # Get products filtered by brand group
+    shared_products = ProductType.query.filter_by(brand_group='SHARED').all()
+    aziz_products = ProductType.query.filter_by(brand_group='AZIZ').all()
     
-    # Get inventory data for both storage types
+    # Get inventory data for shared storage products
     shared_inventory = {}
-    aziz_inventory = {}
-    
-    for product in products:
-        # Get shared storage (URBRAND + SURVACCI)
+    for product in shared_products:
         shared_stock = Inventory.query.filter_by(
             product_type_id=product.id,
             storage_type='SHARED'
         ).first()
         shared_inventory[product.id] = shared_stock.quantity if shared_stock else 0
-        
-        # Get AZIZ storage
+    
+    # Get inventory data for AZIZ storage products
+    aziz_inventory = {}
+    for product in aziz_products:
         aziz_stock = Inventory.query.filter_by(
             product_type_id=product.id,
             storage_type='AZIZ'
@@ -339,7 +339,8 @@ def storage():
         aziz_inventory[product.id] = aziz_stock.quantity if aziz_stock else 0
     
     return render_template('storage.html',
-                         products=products,
+                         shared_products=shared_products,
+                         aziz_products=aziz_products,
                          shared_inventory=shared_inventory,
                          aziz_inventory=aziz_inventory)
 

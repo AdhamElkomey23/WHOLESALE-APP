@@ -171,6 +171,13 @@
                         <label for="editSellingPrice" class="form-label">Selling Price (EGP)</label>
                         <input type="number" step="0.01" min="0" class="form-control" id="editSellingPrice" name="selling_price" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="editBrandGroup" class="form-label">Brand Group</label>
+                        <select class="form-select" id="editBrandGroup" name="brand_group" required>
+                            <option value="SHARED">URBRAND/SURVACCI (Shared Storage)</option>
+                            <option value="AZIZ">AZIZ (Separate Storage)</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -205,11 +212,12 @@
 
 {% block scripts %}
 <script>
-function editProduct(id, name, costPrice, sellingPrice) {
+function editProduct(id, name, costPrice, sellingPrice, brandGroup) {
     document.getElementById('editForm').action = `/products/${id}/edit`;
     document.getElementById('editName').value = name;
     document.getElementById('editCostPrice').value = costPrice;
     document.getElementById('editSellingPrice').value = sellingPrice;
+    document.getElementById('editBrandGroup').value = brandGroup;
     new bootstrap.Modal(document.getElementById('editModal')).show();
 }
 
