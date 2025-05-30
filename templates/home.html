@@ -229,6 +229,7 @@
     z-index: 9999;
     opacity: 1;
     transition: opacity 1s ease-out;
+    overflow: hidden;
 }
 
 .welcome-fullscreen.fade-out {
@@ -251,6 +252,8 @@
         0 0 200px rgba(59, 130, 246, 0.2),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     animation: screenPowerOn 2s ease-out;
+    max-width: 90vw;
+    max-height: 80vh;
 }
 
 .screen-glow {
@@ -347,6 +350,69 @@
 .animate__delay-1s { animation-delay: 1s; }
 .animate__delay-2s { animation-delay: 2s; }
 .animate__delay-3s { animation-delay: 3s; }
+
+/* Mobile Responsive Welcome Animation */
+@media (max-width: 768px) {
+    .laptop-screen {
+        padding: 30px 20px;
+        border-radius: 15px;
+        max-width: 95vw;
+        margin: 0 10px;
+    }
+    
+    .screen-glow {
+        top: -30px;
+        left: -30px;
+        right: -30px;
+        bottom: -30px;
+        border-radius: 35px;
+    }
+    
+    .welcome-title {
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+    }
+    
+    .typing-effect {
+        font-size: 1rem;
+        min-height: 25px;
+    }
+    
+    .welcome-icon i {
+        font-size: 4rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .laptop-screen {
+        padding: 20px 15px;
+        border-radius: 12px;
+    }
+    
+    .welcome-title {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .typing-effect {
+        font-size: 0.9rem;
+        min-height: 20px;
+    }
+    
+    .welcome-icon i {
+        font-size: 3rem !important;
+    }
+}
 
 /* Simple improvements */
 .card {

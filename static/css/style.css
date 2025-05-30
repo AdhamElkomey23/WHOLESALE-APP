@@ -1166,29 +1166,7 @@ p {
         font-size: 0.875rem;
     }
     
-    /* Welcome animation mobile fixes */
-    .welcome-fullscreen {
-        padding: 1rem;
-        overflow-y: auto;
-    }
-    
-    .laptop-screen {
-        margin: 1rem 0;
-        padding: 2rem 1.5rem;
-        max-width: 100%;
-    }
-    
-    .welcome-title {
-        font-size: 2rem;
-    }
-    
-    .welcome-subtitle {
-        font-size: 1.2rem;
-    }
-    
-    .typing-effect {
-        font-size: 1rem;
-    }
+
     
     /* Header actions hide on mobile */
     .header-actions {
