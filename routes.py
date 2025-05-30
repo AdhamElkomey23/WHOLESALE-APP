@@ -137,6 +137,19 @@ def orders():
 def new_order():
     form = OrderForm()
     if form.validate_on_submit():
+        from models import Inventory, StockMovement
+        
+        # Check stock availability before creating order
+        available_stock = Inventory.get_available_stock(
+            form.product_type_id.data, 
+            form.brand.data
+        )
+        
+        if available_stock < form.total_pieces.data:
+            flash(f'Insufficient stock! Available: {available_stock}, Required: {form.total_pieces.data}', 'error')
+            return render_template('order_form.html', form=form, title='New Order')
+        
+        # Create the order
         order = Order(
             client_name=form.client_name.data,
             phone_number=form.phone_number.data,
@@ -151,8 +164,35 @@ def new_order():
             brand=form.brand.data
         )
         db.session.add(order)
-        db.session.commit()
-        flash('Order created successfully!', 'success')
+        db.session.flush()  # Get the order ID
+        
+        # Update stock
+        stock_updated = Inventory.update_stock(
+            form.product_type_id.data,
+            form.brand.data,
+            form.total_pieces.data
+        )
+        
+        if stock_updated:
+            # Create stock movement record
+            storage_type = 'SHARED' if form.brand.data in ['URBRAND', 'SURVACCI'] else 'AZIZ'
+            movement = StockMovement(
+                product_type_id=form.product_type_id.data,
+                storage_type=storage_type,
+                movement_type='ORDER',
+                quantity=form.total_pieces.data,
+                order_id=order.id,
+                notes=f'Order #{order.id} for {form.client_name.data}',
+                created_by=current_user.id
+            )
+            db.session.add(movement)
+            db.session.commit()
+            flash('Order created successfully and stock updated!', 'success')
+        else:
+            db.session.rollback()
+            flash('Error updating stock. Order not created.', 'error')
+            return render_template('order_form.html', form=form, title='New Order')
+        
         return redirect(url_for('orders'))
     
     return render_template('order_form.html', form=form, title='New Order')
