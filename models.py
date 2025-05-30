@@ -64,3 +64,106 @@ class Order(db.Model):
         if self.product_type_obj:
             return self.total_pieces * self.product_type_obj.selling_price
         return 0.0
+
+class Inventory(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
+    storage_type = db.Column(db.String(20), nullable=False)  # 'SHARED' or 'AZIZ'
+    quantity = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Composite unique constraint to ensure one record per product per storage type
+    __table_args__ = (db.UniqueConstraint('product_type_id', 'storage_type', name='unique_product_storage'),)
+    
+    @staticmethod
+    def get_available_stock(product_type_id, brand):
+        """Get available stock for a product based on brand"""
+        if brand in ['URBRAND', 'SURVACCI']:
+            storage_type = 'SHARED'
+        elif brand == 'AZIZ':
+            storage_type = 'AZIZ'
+        else:
+            return 0
+            
+        inventory = Inventory.query.filter_by(
+            product_type_id=product_type_id,
+            storage_type=storage_type
+        ).first()
+        
+        return inventory.quantity if inventory else 0
+    
+    @staticmethod
+    def update_stock(product_type_id, brand, quantity_used):
+        """Update stock when an order is placed"""
+        if brand in ['URBRAND', 'SURVACCI']:
+            storage_type = 'SHARED'
+        elif brand == 'AZIZ':
+            storage_type = 'AZIZ'
+        else:
+            return False
+            
+        inventory = Inventory.query.filter_by(
+            product_type_id=product_type_id,
+            storage_type=storage_type
+        ).first()
+        
+        if not inventory:
+            # Create inventory record if it doesn't exist
+            inventory = Inventory(
+                product_type_id=product_type_id,
+                storage_type=storage_type,
+                quantity=0
+            )
+            db.session.add(inventory)
+        
+        # Check if enough stock is available
+        if inventory.quantity >= quantity_used:
+            inventory.quantity -= quantity_used
+            inventory.updated_at = datetime.utcnow()
+            db.session.commit()
+            return True
+        else:
+            return False
+    
+    @staticmethod
+    def add_stock(product_type_id, storage_type, quantity):
+        """Add stock to inventory"""
+        inventory = Inventory.query.filter_by(
+            product_type_id=product_type_id,
+            storage_type=storage_type
+        ).first()
+        
+        if not inventory:
+            inventory = Inventory(
+                product_type_id=product_type_id,
+                storage_type=storage_type,
+                quantity=quantity
+            )
+            db.session.add(inventory)
+        else:
+            inventory.quantity += quantity
+            inventory.updated_at = datetime.utcnow()
+        
+        db.session.commit()
+        return inventory
+
+class StockMovement(db.Model):
+    """Track all stock movements for audit purposes"""
+    id = db.Column(db.Integer, primary_key=True)
+    product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
+    storage_type = db.Column(db.String(20), nullable=False)
+    movement_type = db.Column(db.String(20), nullable=False)  # 'ADD', 'REMOVE', 'ORDER'
+    quantity = db.Column(db.Integer, nullable=False)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=True)
+    notes = db.Column(db.String(500))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relationships
+    product_type = db.relationship('ProductType', backref='stock_movements')
+    order = db.relationship('Order', backref='stock_movements')
+    user = db.relationship('User', backref='stock_movements')
+
+# Add inventory relationships after all models are defined
+ProductType.inventory_items = db.relationship('Inventory', backref='product_type_obj', lazy=True)

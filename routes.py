@@ -266,3 +266,95 @@ def export_csv():
     response.headers['Content-Disposition'] = f'attachment; filename={filename}'
     
     return response
+
+@app.route('/storage')
+@login_required
+def storage():
+    """Storage management page"""
+    from models import ProductType, Inventory
+    
+    # Get all products
+    products = ProductType.query.all()
+    
+    # Get inventory data for both storage types
+    shared_inventory = {}
+    aziz_inventory = {}
+    
+    for product in products:
+        # Get shared storage (URBRAND + SURVACCI)
+        shared_stock = Inventory.query.filter_by(
+            product_type_id=product.id,
+            storage_type='SHARED'
+        ).first()
+        shared_inventory[product.id] = shared_stock.quantity if shared_stock else 0
+        
+        # Get AZIZ storage
+        aziz_stock = Inventory.query.filter_by(
+            product_type_id=product.id,
+            storage_type='AZIZ'
+        ).first()
+        aziz_inventory[product.id] = aziz_stock.quantity if aziz_stock else 0
+    
+    return render_template('storage.html',
+                         products=products,
+                         shared_inventory=shared_inventory,
+                         aziz_inventory=aziz_inventory)
+
+@app.route('/storage/adjust', methods=['POST'])
+@login_required
+def adjust_stock():
+    """Adjust stock levels"""
+    from models import Inventory, StockMovement
+    
+    product_id = int(request.form.get('product_id'))
+    storage_type = request.form.get('storage_type')
+    adjustment_type = request.form.get('adjustment_type')
+    quantity = int(request.form.get('quantity', 0))
+    notes = request.form.get('notes', '')
+    
+    try:
+        # Get or create inventory record
+        inventory = Inventory.query.filter_by(
+            product_type_id=product_id,
+            storage_type=storage_type
+        ).first()
+        
+        if not inventory:
+            inventory = Inventory(
+                product_type_id=product_id,
+                storage_type=storage_type,
+                quantity=0
+            )
+            db.session.add(inventory)
+        
+        # Apply adjustment
+        if adjustment_type == 'ADD':
+            inventory.quantity += quantity
+        elif adjustment_type == 'REMOVE':
+            if inventory.quantity >= quantity:
+                inventory.quantity -= quantity
+            else:
+                flash(f'Not enough stock to remove {quantity} items. Current stock: {inventory.quantity}', 'error')
+                return redirect(url_for('storage'))
+        
+        inventory.updated_at = datetime.utcnow()
+        
+        # Create stock movement record
+        movement = StockMovement(
+            product_type_id=product_id,
+            storage_type=storage_type,
+            movement_type=adjustment_type,
+            quantity=quantity,
+            notes=notes,
+            created_by=current_user.id
+        )
+        db.session.add(movement)
+        
+        db.session.commit()
+        flash(f'Stock {adjustment_type.lower()}ed successfully!', 'success')
+        
+    except Exception as e:
+        db.session.rollback()
+        flash(f'Error updating stock: {str(e)}', 'error')
+    
+    return redirect(url_for('storage'))

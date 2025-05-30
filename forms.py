@@ -41,3 +41,20 @@ class ProductTypeForm(FlaskForm):
     def validate_selling_price(self, field):
         if self.cost_price.data and field.data < self.cost_price.data:
             raise ValidationError('Selling price should be greater than or equal to cost price')
+
+class InventoryForm(FlaskForm):
+    product_type_id = SelectField('Product Type', coerce=int, validators=[DataRequired()])
+    storage_type = SelectField('Storage Type', choices=[('SHARED', 'URBRAND + SURVACCI (Shared)'), ('AZIZ', 'AZIZ (Independent)')], validators=[DataRequired()])
+    quantity = IntegerField('Quantity', validators=[DataRequired(), NumberRange(min=0)])
+    submit = SubmitField('Update Stock')
+    
+    def __init__(self, *args, **kwargs):
+        super(InventoryForm, self).__init__(*args, **kwargs)
+        from models import ProductType
+        self.product_type_id.choices = [(pt.id, pt.name) for pt in ProductType.query.all()]
+
+class StockAdjustmentForm(FlaskForm):
+    adjustment_type = SelectField('Adjustment Type', choices=[('ADD', 'Add Stock'), ('REMOVE', 'Remove Stock')], validators=[DataRequired()])
+    quantity = IntegerField('Quantity', validators=[DataRequired(), NumberRange(min=1)])
+    notes = StringField('Notes', validators=[Length(max=500)])
+    submit = SubmitField('Adjust Stock')
