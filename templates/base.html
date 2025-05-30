@@ -24,8 +24,16 @@
 </head>
 <body>
     {% if current_user.is_authenticated %}
+    <!-- Mobile Menu Toggle -->
+    <button class="mobile-menu-toggle d-md-none" onclick="toggleMobileMenu()">
+        <i class="fas fa-bars"></i>
+    </button>
+    
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay d-md-none" onclick="closeMobileMenu()"></div>
+    
     <!-- Left Sidebar Navigation -->
-    <div class="left-sidebar">
+    <div class="left-sidebar" id="leftSidebar">
         <!-- Logo Section -->
         <div class="sidebar-brand">
             <i class="fas fa-store"></i>
