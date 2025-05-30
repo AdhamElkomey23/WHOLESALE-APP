@@ -26,86 +26,49 @@
     {% if current_user.is_authenticated %}
     <!-- Left Sidebar Navigation -->
     <div class="left-sidebar" id="leftSidebar">
-        <!-- Modern Logo Section -->
-        <div class="modern-sidebar-header">
-            <div class="brand-icon">
-                <i class="fas fa-cube"></i>
-            </div>
-            <div class="brand-info">
-                <h5 class="brand-title">Wholesale</h5>
-                <span class="brand-subtitle">Manager</span>
-            </div>
+        <!-- Logo Section -->
+        <div class="sidebar-brand">
+            <i class="fas fa-store"></i>
+            <span class="brand-text">Wholesale Manager</span>
+            <button class="sidebar-toggle d-none d-lg-block" onclick="toggleDesktopSidebar()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
         </div>
         
-        <!-- Modern Navigation Menu -->
-        <nav class="modern-sidebar-nav">
-            <div class="nav-section">
-                <span class="nav-section-title">Overview</span>
-                <a href="{{ url_for('index') }}" class="modern-nav-item {% if request.endpoint == 'index' %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-home"></i>
-                    </div>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-                <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="modern-nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <span class="nav-text">Analytics</span>
-                </a>
-            </div>
-            
-            <div class="nav-section">
-                <span class="nav-section-title">Business</span>
-                <a href="{{ url_for('orders') }}" class="modern-nav-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <span class="nav-text">Orders</span>
-                </a>
-                <a href="{{ url_for('products') }}" class="modern-nav-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-tags"></i>
-                    </div>
-                    <span class="nav-text">Products</span>
-                </a>
-                <a href="{{ url_for('storage') }}" class="modern-nav-item {% if request.endpoint == 'storage' %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-warehouse"></i>
-                    </div>
-                    <span class="nav-text">Inventory</span>
-                </a>
-                <a href="{{ url_for('expenses') }}" class="modern-nav-item {% if request.endpoint == 'expenses' %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-receipt"></i>
-                    </div>
-                    <span class="nav-text">Expenses</span>
-                </a>
-            </div>
-            
-            <div class="nav-section">
-                <span class="nav-section-title">Tools</span>
-                <a href="{{ url_for('export') }}" class="modern-nav-item {% if request.endpoint == 'export' %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-download"></i>
-                    </div>
-                    <span class="nav-text">Export</span>
-                </a>
-                <a href="{{ url_for('profile') }}" class="modern-nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
-                    <div class="nav-icon">
-                        <i class="fas fa-user-cog"></i>
-                    </div>
-                    <span class="nav-text">Settings</span>
-                </a>
-            </div>
-            
-            <!-- Modern Collapse Toggle -->
-            <div class="modern-collapse-toggle d-none d-lg-block" onclick="toggleDesktopSidebar()">
-                <div class="collapse-icon">
-                    <i class="fas fa-chevron-left"></i>
-                </div>
-                <span class="collapse-text">Minimize</span>
-            </div>
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('expenses') }}" class="nav-item {% if request.endpoint == 'expenses' %}active{% endif %}">
+                <i class="fas fa-receipt"></i>
+                <span>Expenses</span>
+            </a>
+            <a href="{{ url_for('orders') }}" class="nav-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="{{ url_for('products') }}" class="nav-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
+                <i class="fas fa-tags"></i>
+                <span>Products</span>
+            </a>
+            <a href="{{ url_for('storage') }}" class="nav-item {% if request.endpoint == 'storage' %}active{% endif %}">
+                <i class="fas fa-warehouse"></i>
+                <span>Storage</span>
+            </a>
+            <a href="{{ url_for('export') }}" class="nav-item {% if request.endpoint == 'export' %}active{% endif %}">
+                <i class="fas fa-download"></i>
+                <span>Export</span>
+            </a>
+            <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+                <i class="fas fa-user-cog"></i>
+                <span>Profile</span>
+            </a>
         </nav>
         
         <!-- User Section -->
