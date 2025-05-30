@@ -34,6 +34,10 @@
         
         <!-- Navigation Menu -->
         <nav class="sidebar-nav">
+            <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
             <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-chart-line"></i>
                 <span>Dashboard</span>

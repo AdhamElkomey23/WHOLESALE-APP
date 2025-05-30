@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 mb-2">Welcome to Wholesale Manager</h1>
+            <p class="lead text-muted">Complete overview of your clothing wholesale business across all brands</p>
+        </div>
+    </div>
+
+    <!-- Brand Performance Overview -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Brand Performance Overview</h2>
+        </div>
+    </div>
+
+    <!-- Brand Cards -->
+    <div class="row mb-5">
+        {% for brand, data in brands_data.items() %}
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-{{ data.status_color }}">
+                <div class="card-header bg-{{ data.status_color }} bg-opacity-10 border-{{ data.status_color }}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            {% if brand == 'URBRAND' %}
+                                <i class="fas fa-tag me-2"></i>{{ brand }}
+                            {% elif brand == 'SURVACCI' %}
+                                <i class="fas fa-crown me-2"></i>{{ brand }}
+                            {% else %}
+                                <i class="fas fa-star me-2"></i>{{ brand }}
+                            {% endif %}
+                        </h5>
+                        <span class="badge bg-{{ data.status_color }} fs-6">
+                            {% if data.status == 'winning' %}
+                                <i class="fas fa-arrow-up me-1"></i>Winning
+                            {% elif data.status == 'neutral' %}
+                                <i class="fas fa-minus me-1"></i>Neutral
+                            {% else %}
+                                <i class="fas fa-arrow-down me-1"></i>Losing
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="border-end">
+                                <h4 class="text-primary mb-1">{{ data.total_orders }}</h4>
+                                <small class="text-muted">Total Orders</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4 class="text-info mb-1">{{ "{:,.0f}".format(data.total_revenue) }}</h4>
+                            <small class="text-muted">Revenue (EGP)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="border-end">
+                                <h4 class="text-warning mb-1">{{ "{:,.0f}".format(data.total_expenses) }}</h4>
+                                <small class="text-muted">Expenses (EGP)</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4 class="text-{{ data.status_color }} mb-1">{{ "{:,.0f}".format(data.total_profit) }}</h4>
+                            <small class="text-muted">Net Profit (EGP)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                        <a href="{{ url_for('dashboard', brand=brand) }}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-chart-line me-1"></i>Dashboard
+                        </a>
+                        <a href="{{ url_for('orders', brand=brand) }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-shopping-cart me-1"></i>Orders
+                        </a>
+                        <a href="{{ url_for('expenses', brand=brand) }}" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-receipt me-1"></i>Expenses
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Access Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="mb-4"><i class="fas fa-bolt me-2"></i>Quick Access</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Orders Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                    <h5>Orders</h5>
+                    <p class="text-muted mb-3">Manage customer orders and track sales</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('orders') }}" class="btn btn-primary">View Orders</a>
+                        <a href="{{ url_for('new_order') }}" class="btn btn-outline-primary">New Order</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-tags fa-3x text-success mb-3"></i>
+                    <h5>Products</h5>
+                    <p class="text-muted mb-3">Manage product types and pricing</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('products') }}" class="btn btn-success">View Products</a>
+                        <a href="{{ url_for('new_product') }}" class="btn btn-outline-success">New Product</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-warehouse fa-3x text-warning mb-3"></i>
+                    <h5>Storage</h5>
+                    <p class="text-muted mb-3">Monitor and adjust inventory levels</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('storage') }}" class="btn btn-warning">Manage Storage</a>
+                        <a href="{{ url_for('storage') }}" class="btn btn-outline-warning">Adjust Stock</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-download fa-3x text-info mb-3"></i>
+                    <h5>Export</h5>
+                    <p class="text-muted mb-3">Download reports and financial data</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('export') }}" class="btn btn-info">Export Data</a>
+                        <a href="{{ url_for('export_csv') }}" class="btn btn-outline-info">Download CSV</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Legend -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-info-circle me-2"></i>Performance Indicators</h6>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <span class="badge bg-success me-2">●</span>
+                            <strong>Winning:</strong> Net profit > 1,000 EGP
+                        </div>
+                        <div class="col-md-4">
+                            <span class="badge bg-warning me-2">●</span>
+                            <strong>Neutral:</strong> Net profit 0-1,000 EGP
+                        </div>
+                        <div class="col-md-4">
+                            <span class="badge bg-danger me-2">●</span>
+                            <strong>Losing:</strong> Net profit < 0 EGP
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

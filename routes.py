@@ -12,7 +12,44 @@ import json
 @app.route('/')
 @login_required
 def index():
-    return redirect(url_for('dashboard', brand='URBRAND'))
+    """Home page with brand overview and performance indicators"""
+    from models import Order, Expense
+    
+    # Calculate performance for each brand
+    brands_data = {}
+    
+    for brand in ['URBRAND', 'SURVACCI', 'AZIZ']:
+        # Get orders and expenses for this brand
+        orders = Order.query.filter_by(brand=brand).all()
+        expenses = Expense.query.filter_by(brand=brand).all()
+        
+        # Calculate metrics
+        total_revenue = sum(order.revenue for order in orders)
+        total_cost = sum(order.cost for order in orders)
+        total_expenses = sum(expense.amount for expense in expenses)
+        total_profit = total_revenue - total_cost - total_expenses
+        
+        # Determine performance status
+        if total_profit > 1000:  # Profitable
+            status = 'winning'
+            status_color = 'success'
+        elif total_profit > 0:  # Break-even or slight profit
+            status = 'neutral'
+            status_color = 'warning'
+        else:  # Loss
+            status = 'losing'
+            status_color = 'danger'
+        
+        brands_data[brand] = {
+            'total_orders': len(orders),
+            'total_revenue': total_revenue,
+            'total_expenses': total_expenses,
+            'total_profit': total_profit,
+            'status': status,
+            'status_color': status_color
+        }
+    
+    return render_template('home.html', brands_data=brands_data)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
