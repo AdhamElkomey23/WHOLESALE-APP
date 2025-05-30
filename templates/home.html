@@ -3,6 +3,31 @@
 {% block title %}Home - Wholesale Management{% endblock %}
 
 {% block content %}
+<!-- Welcome Message Modal -->
+<div class="modal fade" id="welcomeModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-body text-center p-5">
+                <div class="welcome-animation">
+                    <div class="welcome-icon mb-4">
+                        <i class="fas fa-user-circle fa-5x text-primary animate__animated animate__bounceIn"></i>
+                    </div>
+                    <h2 class="welcome-text animate__animated animate__fadeInUp animate__delay-1s">
+                        Hello {{ current_user.username.title() }}
+                    </h2>
+                    <h4 class="text-muted mb-4 animate__animated animate__fadeInUp animate__delay-2s">
+                        Welcome back!
+                    </h4>
+                    <div class="welcome-sparkles animate__animated animate__pulse animate__infinite">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning mx-2"></i>
+                        <i class="fas fa-star text-warning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 <div class="container mt-4">
     <!-- Welcome Header -->
     <div class="row mb-4">
@@ -194,4 +219,94 @@
         </div>
     </div>
 </div>
+
+<!-- Custom Styles for Welcome Animation -->
+<style>
+.welcome-animation {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+}
+
+.welcome-icon i {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+}
+
+.welcome-sparkles {
+    animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+
+/* Animate.css CDN styles */
+@keyframes bounceIn {
+    from, 20%, 40%, 60%, 80%, to {
+        animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    }
+    0% { opacity: 0; transform: scale3d(.3, .3, .3); }
+    20% { transform: scale3d(1.1, 1.1, 1.1); }
+    40% { transform: scale3d(.9, .9, .9); }
+    60% { opacity: 1; transform: scale3d(1.03, 1.03, 1.03); }
+    80% { transform: scale3d(.97, .97, .97); }
+    to { opacity: 1; transform: scale3d(1, 1, 1); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translate3d(0, 100%, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes pulse {
+    from { transform: scale3d(1, 1, 1); }
+    50% { transform: scale3d(1.05, 1.05, 1.05); }
+    to { transform: scale3d(1, 1, 1); }
+}
+
+.animate__animated {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+}
+
+.animate__bounceIn { animation-name: bounceIn; animation-duration: 1s; }
+.animate__fadeInUp { animation-name: fadeInUp; }
+.animate__pulse { animation-name: pulse; animation-duration: 2s; }
+.animate__infinite { animation-iteration-count: infinite; }
+.animate__delay-1s { animation-delay: 1s; }
+.animate__delay-2s { animation-delay: 2s; }
+
+.modal-content {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if this is a fresh login (comes from login page)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromLogin = urlParams.get('from') === 'login' || sessionStorage.getItem('justLoggedIn');
+    
+    if (fromLogin) {
+        // Clear the flag
+        sessionStorage.removeItem('justLoggedIn');
+        
+        // Show welcome modal
+        const welcomeModal = new bootstrap.Modal(document.getElementById('welcomeModal'));
+        welcomeModal.show();
+        
+        // Auto-close after 4 seconds
+        setTimeout(function() {
+            welcomeModal.hide();
+        }, 4000);
+    }
+});
+</script>
 {% endblock %}

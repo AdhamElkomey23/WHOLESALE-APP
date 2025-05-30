@@ -62,7 +62,7 @@ def login():
         if user and check_password_hash(user.password_hash, form.password.data):
             login_user(user)
             next_page = request.args.get('next')
-            return redirect(next_page) if next_page else redirect(url_for('index'))
+            return redirect(next_page + '?from=login') if next_page else redirect(url_for('index') + '?from=login')
         flash('Invalid username or password', 'danger')
     
     return render_template('login.html', form=form)
