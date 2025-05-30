@@ -29,7 +29,10 @@
         <!-- Logo Section -->
         <div class="sidebar-brand">
             <i class="fas fa-store"></i>
-            <span>Wholesale Manager</span>
+            <span class="brand-text">Wholesale Manager</span>
+            <button class="sidebar-toggle d-none d-lg-block" onclick="toggleDesktopSidebar()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
         </div>
         
         <!-- Navigation Menu -->
@@ -135,6 +138,30 @@
             sidebar.classList.toggle('mobile-open');
             overlay.classList.toggle('show');
         }
+
+        // Desktop sidebar toggle functionality
+        function toggleDesktopSidebar() {
+            const sidebar = document.querySelector('.left-sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('sidebar-collapsed');
+            
+            // Store the preference in localStorage
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        }
+
+        // Restore sidebar state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                const sidebar = document.querySelector('.left-sidebar');
+                const mainContent = document.querySelector('.main-content');
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('sidebar-collapsed');
+            }
+        });
     </script>
     
     {% block scripts %}{% endblock %}

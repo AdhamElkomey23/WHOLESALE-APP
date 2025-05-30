@@ -1262,6 +1262,72 @@ p {
     animation: fadeInUp 0.5s ease-out;
 }
 
+/* Desktop Sidebar Collapse Functionality */
+.left-sidebar.collapsed {
+    width: 70px;
+}
+
+.sidebar-toggle {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    padding: 0.5rem;
+    border-radius: var(--radius-sm);
+    margin-left: auto;
+    transition: all 0.3s ease;
+}
+
+.sidebar-toggle:hover {
+    background: var(--gray-100);
+    color: var(--accent-primary);
+}
+
+.sidebar-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.left-sidebar.collapsed .sidebar-toggle i {
+    transform: rotate(180deg);
+}
+
+.left-sidebar.collapsed .brand-text,
+.left-sidebar.collapsed .nav-item span,
+.left-sidebar.collapsed .user-name,
+.left-sidebar.collapsed .user-role {
+    opacity: 0;
+    visibility: hidden;
+    width: 0;
+    overflow: hidden;
+}
+
+.left-sidebar.collapsed .sidebar-brand {
+    justify-content: center;
+    padding: 1.5rem 1rem;
+}
+
+.left-sidebar.collapsed .nav-item {
+    justify-content: center;
+    padding: 0.75rem 1rem;
+}
+
+.left-sidebar.collapsed .sidebar-user {
+    padding: 1rem 0.5rem;
+    text-align: center;
+}
+
+.left-sidebar.collapsed .user-avatar {
+    margin: 0 auto;
+}
+
+.left-sidebar.collapsed .logout-link {
+    margin-top: 0.5rem;
+}
+
+/* Adjust main content when sidebar is collapsed */
+.main-content.sidebar-collapsed {
+    margin-left: 70px;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar {
     width: 6px;
