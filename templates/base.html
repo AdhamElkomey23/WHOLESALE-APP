@@ -54,6 +54,10 @@
                 <i class="fas fa-download"></i>
                 <span>Export</span>
             </a>
+            <a href="{{ url_for('expenses') }}" class="nav-item {% if request.endpoint == 'expenses' %}active{% endif %}">
+                <i class="fas fa-receipt"></i>
+                <span>Expenses</span>
+            </a>
         </nav>
         
         <!-- User Section -->

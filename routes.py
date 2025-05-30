@@ -403,3 +403,100 @@ def adjust_stock():
         flash(f'Error updating stock: {str(e)}', 'error')
     
     return redirect(url_for('storage'))
+
+@app.route('/expenses')
+@app.route('/expenses/<brand>')
+@login_required
+def expenses(brand='URBRAND'):
+    """Expenses management page"""
+    from models import Expense
+    from forms import ExpenseForm
+    
+    if brand not in ['URBRAND', 'SURVACCI', 'AZIZ']:
+        brand = 'URBRAND'
+    
+    expense_list = Expense.query.filter_by(brand=brand).order_by(Expense.date.desc()).all()
+    total_expenses = sum(expense.amount for expense in expense_list)
+    
+    form = ExpenseForm()
+    form.brand.data = brand
+    
+    return render_template('expenses.html', 
+                         expenses=expense_list, 
+                         total_expenses=total_expenses,
+                         selected_brand=brand,
+                         form=form)
+
+@app.route('/expenses/new', methods=['POST'])
+@login_required
+def new_expense():
+    """Create a new expense"""
+    from models import Expense
+    from forms import ExpenseForm
+    
+    form = ExpenseForm()
+    if form.validate_on_submit():
+        expense = Expense(
+            name=form.name.data,
+            amount=form.amount.data,
+            date=form.date.data,
+            brand=form.brand.data,
+            notes=form.notes.data,
+            created_by=current_user.id
+        )
+        db.session.add(expense)
+        db.session.commit()
+        flash('Expense added successfully!', 'success')
+        return redirect(url_for('expenses', brand=form.brand.data))
+    
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(f'{field}: {error}', 'error')
+    
+    return redirect(url_for('expenses'))
+
+@app.route('/expenses/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_expense(id):
+    """Delete an expense"""
+    from models import Expense
+    
+    expense = Expense.query.get_or_404(id)
+    brand = expense.brand
+    db.session.delete(expense)
+    db.session.commit()
+    flash('Expense deleted successfully!', 'success')
+    return redirect(url_for('expenses', brand=brand))
+
+@app.route('/expenses/export/<brand>')
+@login_required
+def export_expenses_csv(brand):
+    """Export expenses to CSV"""
+    from models import Expense
+    import csv
+    from io import StringIO
+    
+    expense_list = Expense.query.filter_by(brand=brand).order_by(Expense.date.desc()).all()
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    
+    writer.writerow(['Date', 'Expense Name', 'Amount (EGP)', 'Notes', 'Created At'])
+    
+    for expense in expense_list:
+        writer.writerow([
+            expense.date.strftime('%Y-%m-%d'),
+            expense.name,
+            f"{expense.amount:.2f}",
+            expense.notes,
+            expense.created_at.strftime('%Y-%m-%d %H:%M')
+        ])
+    
+    output.seek(0)
+    filename = f'{brand}_expenses_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+    
+    response = make_response(output.getvalue())
+    response.headers['Content-Type'] = 'text/csv'
+    response.headers['Content-Disposition'] = f'attachment; filename={filename}'
+    
+    return response

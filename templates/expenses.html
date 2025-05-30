@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2><i class="fas fa-receipt"></i> Expenses Management</h2>
+        </div>
+    </div>
+
+    <!-- Brand Filter Buttons -->
+    <div class="card mb-4">
+        <div class="card-body py-2">
+            <div class="btn-group w-100" role="group" aria-label="Brand Filter">
+                <a href="{{ url_for('expenses', brand='URBRAND') }}" 
+                   class="btn {% if selected_brand == 'URBRAND' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-tag me-2"></i>URBRAND
+                </a>
+                <a href="{{ url_for('expenses', brand='SURVACCI') }}" 
+                   class="btn {% if selected_brand == 'SURVACCI' %}btn-primary{% else %}btn-outline-primary{% endif %}">
+                    <i class="fas fa-crown me-2"></i>SURVACCI
+                </a>
+                <a href="{{ url_for('expenses', brand='AZIZ') }}" 
+                   class="btn {% if selected_brand == 'AZIZ' %}btn-warning{% else %}btn-outline-warning{% endif %}">
+                    <i class="fas fa-star me-2"></i>AZIZ
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Add Expense Form -->
+        <div class="col-lg-4 mb-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-plus"></i> Add New Expense</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" action="{{ url_for('new_expense') }}">
+                        {{ form.hidden_tag() }}
+                        
+                        <div class="mb-3">
+                            {{ form.name.label(class="form-label") }}
+                            {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
+                            {% if form.name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.name.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.amount.label(class="form-label") }}
+                            {{ form.amount(class="form-control" + (" is-invalid" if form.amount.errors else "")) }}
+                            {% if form.amount.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.amount.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.date.label(class="form-label") }}
+                            {{ form.date(class="form-control" + (" is-invalid" if form.date.errors else "")) }}
+                            {% if form.date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.date.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.brand.label(class="form-label") }}
+                            {{ form.brand(class="form-select" + (" is-invalid" if form.brand.errors else "")) }}
+                            {% if form.brand.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.brand.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.notes.label(class="form-label") }}
+                            {{ form.notes(class="form-control", rows="3") }}
+                            {% if form.notes.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.notes.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="d-grid">
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Expenses List -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5>{{ selected_brand }} Expenses</h5>
+                    <div>
+                        <a href="{{ url_for('export_expenses_csv', brand=selected_brand) }}" class="btn btn-outline-success btn-sm">
+                            <i class="fas fa-download me-1"></i>Export CSV
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if expenses %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Expense Name</th>
+                                        <th>Amount (EGP)</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for expense in expenses %}
+                                        <tr>
+                                            <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                                            <td><strong>{{ expense.name }}</strong></td>
+                                            <td>{{ "{:,.2f}".format(expense.amount) }}</td>
+                                            <td>{{ expense.notes[:50] + '...' if expense.notes|length > 50 else expense.notes }}</td>
+                                            <td>
+                                                <button type="button" class="btn btn-outline-danger btn-sm" 
+                                                        onclick="confirmDelete({{ expense.id }}, '{{ expense.name }}')">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Total Summary -->
+                        <div class="mt-3 p-3 bg-light rounded">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <strong>Total {{ selected_brand }} Expenses:</strong>
+                                </div>
+                                <div class="col-sm-6 text-end">
+                                    <span class="h5 text-danger">{{ "{:,.2f}".format(total_expenses) }} EGP</span>
+                                </div>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-5">
+                            <i class="fas fa-receipt fa-4x mb-3"></i>
+                            <h4>No expenses found</h4>
+                            <p>Start by adding your first expense for {{ selected_brand }}</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                Are you sure you want to delete this expense? This action cannot be undone.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="deleteForm" method="POST" style="display: inline;">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmDelete(expenseId, expenseName) {
+    document.getElementById('deleteForm').action = `/expenses/${expenseId}/delete`;
+    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+}
+</script>
+{% endblock %}
