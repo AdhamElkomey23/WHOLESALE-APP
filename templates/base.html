@@ -54,14 +54,6 @@
                 <i class="fas fa-tags"></i>
                 <span>Products</span>
             </a>
-            
-            <!-- Sidebar Toggle Button (small side icon) -->
-            <div class="sidebar-toggle-wrapper d-none d-lg-block">
-                <button class="sidebar-toggle-small" onclick="toggleDesktopSidebar()">
-                    <i class="fas fa-angle-double-left"></i>
-                </button>
-            </div>
-            
             <a href="{{ url_for('storage') }}" class="nav-item {% if request.endpoint == 'storage' %}active{% endif %}">
                 <i class="fas fa-warehouse"></i>
                 <span>Storage</span>
@@ -74,6 +66,13 @@
                 <i class="fas fa-user-cog"></i>
                 <span>Profile</span>
             </a>
+            
+            <!-- Sidebar Toggle Button (at the end of menu) -->
+            <div class="sidebar-toggle-wrapper d-none d-lg-block">
+                <button class="sidebar-toggle-small" onclick="toggleDesktopSidebar()">
+                    <i class="fas fa-angle-double-left"></i>
+                </button>
+            </div>
         </nav>
         
         <!-- User Section -->
