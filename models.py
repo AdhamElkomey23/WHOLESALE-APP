@@ -16,6 +16,7 @@ class ProductType(db.Model):
     cost_price = db.Column(db.Float, default=0.0)
     selling_price = db.Column(db.Float, default=0.0)
     brand_group = db.Column(db.String(20), nullable=False, default='SHARED')  # 'SHARED' or 'AZIZ'
+    available_colors = db.Column(db.Text, default='')  # Comma-separated list of colors
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship with orders
@@ -28,7 +29,7 @@ class Order(db.Model):
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
     total_pieces = db.Column(db.Integer, nullable=False)
-    number_of_colors = db.Column(db.Integer, nullable=False)
+    selected_colors = db.Column(db.Text, default='')  # Comma-separated list of selected colors
     pieces_per_color = db.Column(db.Integer, nullable=False)
     is_printed = db.Column(db.Boolean, default=False)
     paid_amount = db.Column(db.Float, default=0.0)
@@ -171,6 +172,19 @@ class StockMovement(db.Model):
     product_type = db.relationship('ProductType', backref='stock_movements')
     order = db.relationship('Order', backref='stock_movements')
     user = db.relationship('User', backref='stock_movements')
+
+class Expense(db.Model):
+    """Track expenses for each brand"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
+    brand = db.Column(db.String(50), nullable=False)  # URBRAND, SURVACCI, or AZIZ
+    notes = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    user = db.relationship('User', backref='expenses')
 
 # Add inventory relationships after all models are defined
 ProductType.inventory_items = db.relationship('Inventory', backref='product_type_obj', lazy=True)

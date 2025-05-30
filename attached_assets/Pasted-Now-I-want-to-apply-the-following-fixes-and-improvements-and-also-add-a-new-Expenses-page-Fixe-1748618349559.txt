@@ -1,0 +1,85 @@
+Now I want to apply the following fixes and improvements, and also add a new Expenses page:
+
+🔧 Fixes to Apply:
+Fix CSRF Error
+
+I'm getting a “CSRF token is missing” error when deleting an order.
+
+Ensure all forms, especially delete forms, include a valid CSRF token using {{ form.hidden_tag() }}.
+
+Fix Order Form – Color Selection
+
+Replace the “Number of Colors” input with a multi-select dropdown or checkboxes for actual color names:
+Black, White, Green, Brown, Beige, Navy, etc.
+
+Store selected colors in the database as a list or comma-separated string.
+
+Fix Product Creation – Product Colors
+
+When adding a product, allow choosing available colors for that product (also stored as a list).
+
+This should later be referenced when creating an order (filter colors based on the product selected).
+
+Fix Storage Page Layout
+
+Make the “+ Add” and “− Remove” buttons appear next to each other horizontally, not stacked vertically.
+
+Use a flex layout or inline buttons for this.
+
+Filter Products View by Brand Group
+
+On the Products page, add toggle buttons at the top:
+
+All Products, URBRAND/SURVACCI, and AZIZ
+
+Filter the product table dynamically based on the selected brand group.
+
+Add AZIZ Brand to All Brand Filters
+
+Ensure AZIZ appears and functions across:
+
+Orders page brand filters
+
+Dashboard brand toggles
+
+Export CSV options
+
+➕ New Feature: Expenses Page
+Add a new Expenses page with:
+
+Three toggle buttons at the top:
+URBRAND, SURVACCI, AZIZ
+
+A form to add a new expense:
+
+Expense Name
+
+Amount (EGP)
+
+Date
+
+Notes (optional)
+
+Brand (dropdown or selected toggle)
+
+A table showing all expenses for the selected brand with:
+
+Date
+
+Expense Name
+
+Amount
+
+Notes
+
+A total expense summary at the bottom of the table
+
+Include ability to edit/delete expenses
+
+Add export to CSV for each brand’s expenses
+
+✅ Maintain clean and consistent UI with the current dashboard style
+✅ Use Bootstrap or Tailwind for layout consistency
+✅ All changes should persist to the database correctly
+✅ Keep using EGP as the currency for all financial records
+✅ Ensure all new and updated features are responsive
