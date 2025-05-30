@@ -36,6 +36,7 @@ class ProductTypeForm(FlaskForm):
     name = StringField('Product Name', validators=[DataRequired(), Length(max=100)])
     cost_price = FloatField('Cost Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     selling_price = FloatField('Selling Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
+    brand_group = SelectField('Brand Group', choices=[('SHARED', 'URBRAND/SURVACCI (Shared Storage)'), ('AZIZ', 'AZIZ (Separate Storage)')], validators=[DataRequired()])
     submit = SubmitField('Save Product')
     
     def validate_selling_price(self, field):

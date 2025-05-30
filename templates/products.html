@@ -59,6 +59,16 @@
                                 {% endif %}
                             </div>
                             
+                            <div class="mb-3">
+                                {{ form.brand_group.label(class="form-label") }}
+                                {{ form.brand_group(class="form-select" + (" is-invalid" if form.brand_group.errors else "")) }}
+                                {% if form.brand_group.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.brand_group.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
                             <div class="d-grid">
                                 {{ form.submit(class="btn btn-primary") }}
                             </div>
@@ -83,6 +93,7 @@
                                         <th>Product Name</th>
                                         <th>Cost Price (EGP)</th>
                                         <th>Selling Price (EGP)</th>
+                                        <th>Brand Group</th>
                                         <th>Profit Margin</th>
                                         <th>Orders Count</th>
                                         <th>Actions</th>
@@ -95,6 +106,11 @@
                                             <td>{{ "{:,.2f}".format(product.cost_price) }}</td>
                                             <td>{{ "{:,.2f}".format(product.selling_price) }}</td>
                                             <td>
+                                                <span class="badge {% if product.brand_group == 'SHARED' %}bg-primary{% else %}bg-warning{% endif %}">
+                                                    {% if product.brand_group == 'SHARED' %}URBRAND/SURVACCI{% else %}AZIZ{% endif %}
+                                                </span>
+                                            </td>
+                                            <td>
                                                 {% set margin = ((product.selling_price - product.cost_price) / product.cost_price * 100) if product.cost_price > 0 else 0 %}
                                                 <span class="badge {% if margin > 50 %}bg-success{% elif margin > 20 %}bg-warning{% else %}bg-danger{% endif %}">
                                                     {{ "{:.1f}".format(margin) }}%
@@ -106,7 +122,7 @@
                                             <td>
                                                 <div class="btn-group btn-group-sm" role="group">
                                                     <button type="button" class="btn btn-outline-primary" 
-                                                            onclick="editProduct({{ product.id }}, '{{ product.name }}', {{ product.cost_price }}, {{ product.selling_price }})">
+                                                            onclick="editProduct({{ product.id }}, '{{ product.name }}', {{ product.cost_price }}, {{ product.selling_price }}, '{{ product.brand_group }}')">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
                                                     <button type="button" class="btn btn-outline-danger" 

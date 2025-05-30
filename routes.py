@@ -247,7 +247,8 @@ def new_product():
         product = ProductType(
             name=form.name.data,
             cost_price=form.cost_price.data,
-            selling_price=form.selling_price.data
+            selling_price=form.selling_price.data,
+            brand_group=form.brand_group.data
         )
         db.session.add(product)
         db.session.commit()
@@ -266,6 +267,7 @@ def edit_product(id):
         product.name = form.name.data
         product.cost_price = form.cost_price.data
         product.selling_price = form.selling_price.data
+        product.brand_group = form.brand_group.data
         db.session.commit()
         flash('Product updated successfully!', 'success')
     else:

@@ -15,6 +15,7 @@ class ProductType(db.Model):
     name = db.Column(db.String(100), nullable=False)
     cost_price = db.Column(db.Float, default=0.0)
     selling_price = db.Column(db.Float, default=0.0)
+    brand_group = db.Column(db.String(20), nullable=False, default='SHARED')  # 'SHARED' or 'AZIZ'
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship with orders
