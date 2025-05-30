@@ -38,6 +38,10 @@
                 <i class="fas fa-chart-line"></i>
                 <span>Dashboard</span>
             </a>
+            <a href="{{ url_for('expenses') }}" class="nav-item {% if request.endpoint == 'expenses' %}active{% endif %}">
+                <i class="fas fa-receipt"></i>
+                <span>Expenses</span>
+            </a>
             <a href="{{ url_for('orders') }}" class="nav-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
                 <i class="fas fa-shopping-cart"></i>
                 <span>Orders</span>
@@ -53,10 +57,6 @@
             <a href="{{ url_for('export') }}" class="nav-item {% if request.endpoint == 'export' %}active{% endif %}">
                 <i class="fas fa-download"></i>
                 <span>Export</span>
-            </a>
-            <a href="{{ url_for('expenses') }}" class="nav-item {% if request.endpoint == 'expenses' %}active{% endif %}">
-                <i class="fas fa-receipt"></i>
-                <span>Expenses</span>
             </a>
         </nav>
         
