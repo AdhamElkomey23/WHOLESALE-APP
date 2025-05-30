@@ -941,56 +941,210 @@ p {
     visibility: visible;
 }
 
+/* Mobile Header */
+.mobile-header {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: var(--white);
+    border-bottom: 1px solid var(--gray-200);
+    z-index: 1030;
+    padding: 0 1rem;
+    align-items: center;
+    box-shadow: var(--shadow-sm);
+}
+
+.mobile-menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-size: 1.25rem;
+    padding: 0.5rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+}
+
+.mobile-menu-btn:hover {
+    background: var(--gray-100);
+}
+
+.mobile-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-left: 1rem;
+}
+
 /* Enhanced Mobile Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 1023px) {
+    .mobile-header {
+        display: flex;
+    }
+    
     .main-content {
         margin-left: 0;
-        padding: 1rem;
+        padding-top: 70px;
     }
     
     .left-sidebar {
         transform: translateX(-100%);
         transition: transform 0.3s ease;
         z-index: 1050;
+        position: fixed;
     }
     
     .left-sidebar.mobile-open {
         transform: translateX(0);
     }
     
+    .mobile-overlay {
+        opacity: 0;
+        visibility: hidden;
+    }
+    
+    .mobile-overlay.show {
+        opacity: 1;
+        visibility: visible;
+    }
+}
+
+@media (max-width: 768px) {
     .page-content {
         padding: 1rem;
     }
     
     .container, .container-fluid {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+    }
+    
+    /* Typography adjustments */
+    .page-title {
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 1.75rem;
+    }
+    
+    .lead {
+        font-size: 1rem;
     }
     
     /* Form improvements for mobile */
     .form-control {
         font-size: 16px; /* Prevents zoom on iOS */
         padding: 0.875rem;
+        margin-bottom: 1rem;
+    }
+    
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 0.5rem;
+    }
+    
+    .input-group {
+        margin-bottom: 1rem;
     }
     
     /* Card improvements for mobile */
     .card {
         margin-bottom: 1rem;
+        border-radius: var(--radius-lg);
     }
     
     .card-body {
         padding: 1rem;
     }
     
+    .card-header {
+        padding: 0.75rem 1rem;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+    
+    .card-footer {
+        padding: 0.75rem 1rem;
+    }
+    
     /* Button improvements for mobile */
     .btn {
         padding: 0.75rem 1rem;
         font-size: 0.875rem;
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .btn-group {
+        flex-direction: column;
+        width: 100%;
+    }
+    
+    .btn-group .btn {
+        border-radius: var(--radius-md);
+        margin-bottom: 0.5rem;
     }
     
     /* Table improvements for mobile */
     .table-responsive {
         border: none;
+        margin-bottom: 1rem;
+    }
+    
+    .table {
+        font-size: 0.875rem;
+    }
+    
+    .table th,
+    .table td {
+        padding: 0.5rem;
+        vertical-align: middle;
+    }
+    
+    /* Stats cards mobile */
+    .stats-card {
+        margin-bottom: 1rem;
+        padding: 1rem;
+    }
+    
+    .stats-card h3 {
+        font-size: 1.5rem;
+    }
+    
+    .stats-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.25rem;
+    }
+    
+    /* Navigation improvements */
+    .time-filters {
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        justify-content: center;
+    }
+    
+    .time-filter-btn {
+        flex: 1;
+        min-width: 70px;
+        max-width: 100px;
+        padding: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Brand toggle improvements */
+    .brand-toggle {
+        width: 100%;
+        margin-bottom: 1rem;
+    }
+    
+    .brand-toggle .btn {
+        flex: 1;
+        padding: 0.75rem;
+        font-size: 0.875rem;
     }
     
     /* Welcome animation mobile fixes */
@@ -1015,6 +1169,73 @@ p {
     
     .typing-effect {
         font-size: 1rem;
+    }
+    
+    /* Header actions hide on mobile */
+    .header-actions {
+        display: none;
+    }
+    
+    /* Mobile-specific spacing */
+    .mb-mobile {
+        margin-bottom: 1rem;
+    }
+    
+    .mt-mobile {
+        margin-top: 1rem;
+    }
+    
+    /* Row adjustments for mobile */
+    .row {
+        margin-left: -0.5rem;
+        margin-right: -0.5rem;
+    }
+    
+    .row > * {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small screens */
+    .page-content {
+        padding: 0.75rem;
+    }
+    
+    .container, .container-fluid {
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+    }
+    
+    .page-title {
+        font-size: 1.25rem;
+    }
+    
+    .display-4 {
+        font-size: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 0.75rem;
+    }
+    
+    .btn {
+        padding: 0.625rem 0.875rem;
+        font-size: 0.8rem;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+    
+    .stats-card h3 {
+        font-size: 1.25rem;
+    }
+    
+    .time-filter-btn {
+        min-width: 60px;
+        font-size: 0.7rem;
     }
 }
 
