@@ -78,7 +78,7 @@
                                 
                                 <div class="mb-3">
                                     {{ form.product_type_id.label(class="form-label") }}
-                                    {{ form.product_type_id(class="form-select" + (" is-invalid" if form.product_type_id.errors else "")) }}
+                                    {{ form.product_type_id(class="form-select" + (" is-invalid" if form.product_type_id.errors else ""), id="productTypeSelect", onchange="loadProductColors()") }}
                                     {% if form.product_type_id.errors %}
                                         <div class="invalid-feedback">
                                             {% for error in form.product_type_id.errors %}{{ error }}{% endfor %}
@@ -176,8 +176,39 @@
 
 {% block scripts %}
 <script>
+// Load available colors when product is selected
+function loadProductColors() {
+    const productSelect = document.getElementById('productTypeSelect');
+    const colorsSelect = document.getElementById('selectedColors');
+    const productId = productSelect.value;
+    
+    // Clear current options
+    colorsSelect.innerHTML = '<option value="">Select a color...</option>';
+    
+    if (productId) {
+        fetch(`/api/product/${productId}/colors`)
+            .then(response => response.json())
+            .then(data => {
+                data.colors.forEach(color => {
+                    const option = document.createElement('option');
+                    option.value = color;
+                    option.textContent = color;
+                    colorsSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading colors:', error);
+            });
+    }
+}
+
 // Auto-calculate pieces per color based on total pieces and number of colors
 document.addEventListener('DOMContentLoaded', function() {
+    // Load colors if product is already selected (for edit mode)
+    const productSelect = document.getElementById('productTypeSelect');
+    if (productSelect.value) {
+        loadProductColors();
+    }
     const totalPieces = document.getElementById('totalPieces');
     const numColors = document.getElementById('numColors');
     const piecesPerColor = document.getElementById('piecesPerColor');

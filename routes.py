@@ -500,3 +500,14 @@ def export_expenses_csv(brand):
     response.headers['Content-Disposition'] = f'attachment; filename={filename}'
     
     return response
+
+@app.route('/api/product/<int:product_id>/colors')
+@login_required
+def get_product_colors(product_id):
+    """API endpoint to get available colors for a product"""
+    from models import ProductType
+    
+    product = ProductType.query.get_or_404(product_id)
+    colors = [color.strip() for color in product.available_colors.split(',') if color.strip()]
+    
+    return jsonify({'colors': colors})
