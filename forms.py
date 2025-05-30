@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField, IntegerField, FloatField, BooleanField, DateField, SubmitField, TextAreaField
-from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError
+from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError, EqualTo
 from wtforms.widgets import CheckboxInput, ListWidget
 from models import ProductType
 from datetime import datetime
@@ -69,3 +69,31 @@ class ExpenseForm(FlaskForm):
     brand = SelectField('Brand', choices=[('URBRAND', 'URBRAND'), ('SURVACCI', 'SURVACCI'), ('AZIZ', 'AZIZ')], validators=[DataRequired()])
     notes = TextAreaField('Notes', validators=[Length(max=500)])
     submit = SubmitField('Save Expense')
+
+class UserProfileForm(FlaskForm):
+    username = StringField('Username', validators=[DataRequired(), Length(min=4, max=64)])
+    email = StringField('Email', validators=[DataRequired(), Email(), Length(max=120)])
+    current_password = PasswordField('Current Password', validators=[DataRequired()])
+    new_password = PasswordField('New Password', validators=[Length(min=6, max=128)])
+    confirm_password = PasswordField('Confirm New Password', 
+                                   validators=[EqualTo('new_password', message='Passwords must match')])
+    submit = SubmitField('Update Profile')
+    
+    def __init__(self, original_username, original_email, *args, **kwargs):
+        super(UserProfileForm, self).__init__(*args, **kwargs)
+        self.original_username = original_username
+        self.original_email = original_email
+    
+    def validate_username(self, field):
+        if field.data != self.original_username:
+            from models import User
+            user = User.query.filter_by(username=field.data).first()
+            if user:
+                raise ValidationError('Username already taken. Please choose a different one.')
+    
+    def validate_email(self, field):
+        if field.data != self.original_email:
+            from models import User
+            user = User.query.filter_by(email=field.data).first()
+            if user:
+                raise ValidationError('Email already registered. Please choose a different one.')
