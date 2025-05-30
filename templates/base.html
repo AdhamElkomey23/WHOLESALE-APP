@@ -55,11 +55,12 @@
                 <span>Products</span>
             </a>
             
-            <!-- Sidebar Toggle Button (centered in menu) -->
-            <button class="sidebar-toggle-center d-none d-lg-block" onclick="toggleDesktopSidebar()">
-                <i class="fas fa-chevron-left"></i>
-                <span>Collapse Menu</span>
-            </button>
+            <!-- Sidebar Toggle Button (small side icon) -->
+            <div class="sidebar-toggle-wrapper d-none d-lg-block">
+                <button class="sidebar-toggle-small" onclick="toggleDesktopSidebar()">
+                    <i class="fas fa-angle-double-left"></i>
+                </button>
+            </div>
             
             <a href="{{ url_for('storage') }}" class="nav-item {% if request.endpoint == 'storage' %}active{% endif %}">
                 <i class="fas fa-warehouse"></i>
