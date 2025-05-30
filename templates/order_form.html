@@ -206,24 +206,26 @@ function loadProductColors() {
 document.addEventListener('DOMContentLoaded', function() {
     // Load colors if product is already selected (for edit mode)
     const productSelect = document.getElementById('productTypeSelect');
-    if (productSelect.value) {
+    if (productSelect && productSelect.value) {
         loadProductColors();
     }
+    
     const totalPieces = document.getElementById('totalPieces');
-    const numColors = document.getElementById('numColors');
     const piecesPerColor = document.getElementById('piecesPerColor');
     
-    function calculatePiecesPerColor() {
-        const total = parseInt(totalPieces.value) || 0;
-        const colors = parseInt(numColors.value) || 1;
-        
-        if (total > 0 && colors > 0) {
-            piecesPerColor.value = Math.floor(total / colors);
+    if (totalPieces && piecesPerColor) {
+        function calculatePiecesPerColor() {
+            const total = parseInt(totalPieces.value) || 0;
+            const selectedColor = document.getElementById('selectedColors').value;
+            
+            if (total > 0 && selectedColor) {
+                piecesPerColor.value = total; // All pieces go to the selected color
+            }
         }
+        
+        totalPieces.addEventListener('input', calculatePiecesPerColor);
+        document.getElementById('selectedColors').addEventListener('change', calculatePiecesPerColor);
     }
-    
-    totalPieces.addEventListener('input', calculatePiecesPerColor);
-    numColors.addEventListener('input', calculatePiecesPerColor);
 });
 </script>
 {% endblock %}

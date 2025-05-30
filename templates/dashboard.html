@@ -18,6 +18,10 @@
                class="btn {% if brand == 'SURVACCI' %}active{% else %}btn-secondary{% endif %}">
                 SURVACCI
             </a>
+            <a href="{{ url_for('dashboard', brand='AZIZ') }}" 
+               class="btn {% if brand == 'AZIZ' %}active{% else %}btn-warning{% endif %}">
+                AZIZ
+            </a>
         </div>
     </div>
     

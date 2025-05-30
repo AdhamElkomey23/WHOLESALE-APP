@@ -39,7 +39,7 @@ def logout():
 @app.route('/dashboard/<brand>')
 @login_required
 def dashboard(brand):
-    if brand not in ['URBRAND', 'SURVACCI']:
+    if brand not in ['URBRAND', 'SURVACCI', 'AZIZ']:
         brand = 'URBRAND'
     
     # Get orders for the selected brand
