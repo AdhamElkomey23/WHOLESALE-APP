@@ -156,7 +156,7 @@ def new_order():
             date=form.date.data,
             product_type_id=form.product_type_id.data,
             total_pieces=form.total_pieces.data,
-            number_of_colors=form.number_of_colors.data,
+            selected_colors=form.selected_colors.data,
             pieces_per_color=form.pieces_per_color.data,
             is_printed=form.is_printed.data,
             paid_amount=form.paid_amount.data,
@@ -248,7 +248,8 @@ def new_product():
             name=form.name.data,
             cost_price=form.cost_price.data,
             selling_price=form.selling_price.data,
-            brand_group=form.brand_group.data
+            brand_group=form.brand_group.data,
+            available_colors=form.available_colors.data
         )
         db.session.add(product)
         db.session.commit()

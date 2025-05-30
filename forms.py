@@ -1,6 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, IntegerField, FloatField, BooleanField, DateField, SubmitField
+from wtforms import StringField, PasswordField, SelectField, IntegerField, FloatField, BooleanField, DateField, SubmitField, TextAreaField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError
+from wtforms.widgets import CheckboxInput, ListWidget
 from models import ProductType
 from datetime import datetime
 
@@ -15,7 +16,7 @@ class OrderForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()], default=datetime.today)
     product_type_id = SelectField('Product Type', coerce=int, validators=[DataRequired()])
     total_pieces = IntegerField('Total Pieces', validators=[DataRequired(), NumberRange(min=1)])
-    number_of_colors = IntegerField('Number of Colors', validators=[DataRequired(), NumberRange(min=1)])
+    selected_colors = SelectField('Colors', choices=[], validators=[DataRequired()])
     pieces_per_color = IntegerField('Pieces per Color', validators=[DataRequired(), NumberRange(min=1)])
     is_printed = BooleanField('Printed')
     paid_amount = FloatField('Paid Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
@@ -28,15 +29,22 @@ class OrderForm(FlaskForm):
         self.product_type_id.choices = [(pt.id, pt.name) for pt in ProductType.query.all()]
     
     def validate_pieces_per_color(self, field):
-        if self.total_pieces.data and self.number_of_colors.data:
-            if self.total_pieces.data != (field.data * self.number_of_colors.data):
-                raise ValidationError('Total pieces must equal pieces per color × number of colors')
+        if self.total_pieces.data and field.data:
+            if (self.total_pieces.data % field.data) != 0:
+                raise ValidationError('Total pieces must be divisible by pieces per color.')
 
 class ProductTypeForm(FlaskForm):
     name = StringField('Product Name', validators=[DataRequired(), Length(max=100)])
     cost_price = FloatField('Cost Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     selling_price = FloatField('Selling Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     brand_group = SelectField('Brand Group', choices=[('SHARED', 'URBRAND/SURVACCI (Shared Storage)'), ('AZIZ', 'AZIZ (Separate Storage)')], validators=[DataRequired()])
+    available_colors = SelectField('Available Colors', choices=[
+        ('Black,White,Green,Brown,Beige,Navy', 'All Colors'),
+        ('Black,White', 'Black & White'),
+        ('Black,Green,Brown', 'Dark Colors'),
+        ('White,Beige', 'Light Colors'),
+        ('Navy,Brown,Beige', 'Earth Tones')
+    ], validators=[DataRequired()])
     submit = SubmitField('Save Product')
     
     def validate_selling_price(self, field):
@@ -59,3 +67,11 @@ class StockAdjustmentForm(FlaskForm):
     quantity = IntegerField('Quantity', validators=[DataRequired(), NumberRange(min=1)])
     notes = StringField('Notes', validators=[Length(max=500)])
     submit = SubmitField('Adjust Stock')
+
+class ExpenseForm(FlaskForm):
+    name = StringField('Expense Name', validators=[DataRequired(), Length(max=200)])
+    amount = FloatField('Amount (EGP)', validators=[DataRequired(), NumberRange(min=0)])
+    date = DateField('Date', validators=[DataRequired()], default=datetime.today)
+    brand = SelectField('Brand', choices=[('URBRAND', 'URBRAND'), ('SURVACCI', 'SURVACCI'), ('AZIZ', 'AZIZ')], validators=[DataRequired()])
+    notes = TextAreaField('Notes', validators=[Length(max=500)])
+    submit = SubmitField('Save Expense')

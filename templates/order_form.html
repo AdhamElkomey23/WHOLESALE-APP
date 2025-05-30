@@ -99,11 +99,11 @@
                                 <div class="row">
                                     <div class="col-sm-6">
                                         <div class="mb-3">
-                                            {{ form.number_of_colors.label(class="form-label") }}
-                                            {{ form.number_of_colors(class="form-control" + (" is-invalid" if form.number_of_colors.errors else ""), id="numColors") }}
-                                            {% if form.number_of_colors.errors %}
+                                            {{ form.selected_colors.label(class="form-label") }}
+                                            {{ form.selected_colors(class="form-select" + (" is-invalid" if form.selected_colors.errors else ""), id="selectedColors") }}
+                                            {% if form.selected_colors.errors %}
                                                 <div class="invalid-feedback">
-                                                    {% for error in form.number_of_colors.errors %}{{ error }}{% endfor %}
+                                                    {% for error in form.selected_colors.errors %}{{ error }}{% endfor %}
                                                 </div>
                                             {% endif %}
                                         </div>
