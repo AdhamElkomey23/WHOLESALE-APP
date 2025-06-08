@@ -71,11 +71,22 @@
                             
                             <div class="mb-3">
                                 {{ form.available_colors.label(class="form-label") }}
-                                {{ form.available_colors(class="form-control" + (" is-invalid" if form.available_colors.errors else ""), placeholder="e.g., Black,White,Navy,Green") }}
-                                <div class="form-text">Enter colors separated by commas</div>
+                                {{ form.available_colors(class="form-select" + (" is-invalid" if form.available_colors.errors else ""), multiple=True, size="5") }}
+                                <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple colors</div>
                                 {% if form.available_colors.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.available_colors.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="mb-3">
+                                {{ form.available_sizes.label(class="form-label") }}
+                                {{ form.available_sizes(class="form-select" + (" is-invalid" if form.available_sizes.errors else ""), multiple=True, size="5") }}
+                                <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple sizes</div>
+                                {% if form.available_sizes.errors %}
+                                    <div class="invalid-feedback">
+                                        {% for error in form.available_sizes.errors %}{{ error }}{% endfor %}
                                     </div>
                                 {% endif %}
                             </div>

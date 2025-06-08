@@ -289,8 +289,8 @@ def new_product():
             cost_price=form.cost_price.data,
             selling_price=form.selling_price.data,
             brand_group=form.brand_group.data,
-            available_colors=','.join(form.available_colors.data),
-            available_sizes=','.join(form.available_sizes.data)
+            available_colors=','.join(form.available_colors.data) if form.available_colors.data else '',
+            available_sizes=','.join(form.available_sizes.data) if form.available_sizes.data else ''
         )
         db.session.add(product)
         db.session.commit()
@@ -552,6 +552,17 @@ def get_product_colors(product_id):
     colors = [color.strip() for color in product.available_colors.split(',') if color.strip()]
     
     return jsonify({'colors': colors})
+
+@app.route('/api/product/<int:product_id>/sizes')
+@login_required
+def get_product_sizes(product_id):
+    """API endpoint to get available sizes for a product"""
+    from models import ProductType
+    
+    product = ProductType.query.get_or_404(product_id)
+    sizes = [size.strip() for size in product.available_sizes.split(',') if size.strip()]
+    
+    return jsonify({'sizes': sizes})
 
 @app.route('/profile', methods=['GET', 'POST'])
 @login_required

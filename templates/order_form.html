@@ -78,7 +78,7 @@
                                 
                                 <div class="mb-3">
                                     {{ form.product_type_id.label(class="form-label") }}
-                                    {{ form.product_type_id(class="form-select" + (" is-invalid" if form.product_type_id.errors else ""), id="productTypeSelect", onchange="loadProductColors()") }}
+                                    {{ form.product_type_id(class="form-select" + (" is-invalid" if form.product_type_id.errors else ""), id="productTypeSelect", onchange="loadProductOptions()") }}
                                     {% if form.product_type_id.errors %}
                                         <div class="invalid-feedback">
                                             {% for error in form.product_type_id.errors %}{{ error }}{% endfor %}
@@ -100,7 +100,8 @@
                                     <div class="col-sm-6">
                                         <div class="mb-3">
                                             {{ form.selected_colors.label(class="form-label") }}
-                                            {{ form.selected_colors(class="form-select" + (" is-invalid" if form.selected_colors.errors else ""), id="selectedColors") }}
+                                            {{ form.selected_colors(class="form-select" + (" is-invalid" if form.selected_colors.errors else ""), multiple=True, size="4", id="selectedColors") }}
+                                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple colors</div>
                                             {% if form.selected_colors.errors %}
                                                 <div class="invalid-feedback">
                                                     {% for error in form.selected_colors.errors %}{{ error }}{% endfor %}
@@ -108,6 +109,21 @@
                                             {% endif %}
                                         </div>
                                     </div>
+                                    <div class="col-sm-6">
+                                        <div class="mb-3">
+                                            {{ form.selected_sizes.label(class="form-label") }}
+                                            {{ form.selected_sizes(class="form-select" + (" is-invalid" if form.selected_sizes.errors else ""), multiple=True, size="4", id="selectedSizes") }}
+                                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple sizes</div>
+                                            {% if form.selected_sizes.errors %}
+                                                <div class="invalid-feedback">
+                                                    {% for error in form.selected_sizes.errors %}{{ error }}{% endfor %}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="row">
                                     <div class="col-sm-6">
                                         <div class="mb-3">
                                             {{ form.pieces_per_color.label(class="form-label") }}

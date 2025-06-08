@@ -28,6 +28,10 @@ class OrderForm(FlaskForm):
     def __init__(self, *args, **kwargs):
         super(OrderForm, self).__init__(*args, **kwargs)
         self.product_type_id.choices = [(pt.id, pt.name) for pt in ProductType.query.all()]
+        
+        # Initialize empty choices - will be populated by JavaScript based on selected product
+        self.selected_colors.choices = []
+        self.selected_sizes.choices = []
     
     def validate_pieces_per_color(self, field):
         if self.total_pieces.data and field.data:
