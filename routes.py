@@ -196,7 +196,8 @@ def new_order():
             date=form.date.data,
             product_type_id=form.product_type_id.data,
             total_pieces=form.total_pieces.data,
-            selected_colors=form.selected_colors.data,
+            selected_colors=','.join(form.selected_colors.data) if form.selected_colors.data else '',
+            selected_sizes=','.join(form.selected_sizes.data) if form.selected_sizes.data else '',
             pieces_per_color=form.pieces_per_color.data,
             is_printed=form.is_printed.data,
             paid_amount=form.paid_amount.data,
@@ -310,6 +311,8 @@ def edit_product(id):
         product.cost_price = form.cost_price.data
         product.selling_price = form.selling_price.data
         product.brand_group = form.brand_group.data
+        product.available_colors = ','.join(form.available_colors.data) if form.available_colors.data else ''
+        product.available_sizes = ','.join(form.available_sizes.data) if form.available_sizes.data else ''
         db.session.commit()
         flash('Product updated successfully!', 'success')
     else:

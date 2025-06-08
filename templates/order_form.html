@@ -192,16 +192,19 @@
 
 {% block scripts %}
 <script>
-// Load available colors when product is selected
-function loadProductColors() {
+// Load available colors and sizes when product is selected
+function loadProductOptions() {
     const productSelect = document.getElementById('productTypeSelect');
     const colorsSelect = document.getElementById('selectedColors');
+    const sizesSelect = document.getElementById('selectedSizes');
     const productId = productSelect.value;
     
     // Clear current options
-    colorsSelect.innerHTML = '<option value="">Select a color...</option>';
+    colorsSelect.innerHTML = '';
+    sizesSelect.innerHTML = '';
     
     if (productId) {
+        // Load colors
         fetch(`/api/product/${productId}/colors`)
             .then(response => response.json())
             .then(data => {
@@ -215,15 +218,30 @@ function loadProductColors() {
             .catch(error => {
                 console.error('Error loading colors:', error);
             });
+        
+        // Load sizes
+        fetch(`/api/product/${productId}/sizes`)
+            .then(response => response.json())
+            .then(data => {
+                data.sizes.forEach(size => {
+                    const option = document.createElement('option');
+                    option.value = size;
+                    option.textContent = size;
+                    sizesSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error loading sizes:', error);
+            });
     }
 }
 
 // Auto-calculate pieces per color based on total pieces and number of colors
 document.addEventListener('DOMContentLoaded', function() {
-    // Load colors if product is already selected (for edit mode)
+    // Load colors and sizes if product is already selected (for edit mode)
     const productSelect = document.getElementById('productTypeSelect');
     if (productSelect && productSelect.value) {
-        loadProductColors();
+        loadProductOptions();
     }
     
     const totalPieces = document.getElementById('totalPieces');
