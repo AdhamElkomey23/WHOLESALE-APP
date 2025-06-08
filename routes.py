@@ -633,6 +633,10 @@ def new_worker():
             phone_number=form.phone_number.data,
             daily_salary=form.daily_salary.data,
             overtime_rate=form.overtime_rate.data,
+            piece_rate_enabled=form.piece_rate_enabled.data,
+            base_piece_rate=form.base_piece_rate.data,
+            bonus_threshold=form.bonus_threshold.data,
+            bonus_piece_rate=form.bonus_piece_rate.data,
             position=form.position.data,
             hire_date=form.hire_date.data,
             is_active=form.is_active.data,
@@ -664,6 +668,10 @@ def edit_worker(id):
         worker.phone_number = form.phone_number.data
         worker.daily_salary = form.daily_salary.data
         worker.overtime_rate = form.overtime_rate.data
+        worker.piece_rate_enabled = form.piece_rate_enabled.data
+        worker.base_piece_rate = form.base_piece_rate.data
+        worker.bonus_threshold = form.bonus_threshold.data
+        worker.bonus_piece_rate = form.bonus_piece_rate.data
         worker.position = form.position.data
         worker.hire_date = form.hire_date.data
         worker.is_active = form.is_active.data
@@ -770,6 +778,7 @@ def new_attendance():
             check_in_time=form.check_in_time.data,
             check_out_time=form.check_out_time.data,
             overtime_hours=form.overtime_hours.data,
+            pieces_completed=form.pieces_completed.data,
             deductions=form.deductions.data,
             deduction_reason=form.deduction_reason.data,
             bonus=form.bonus.data,
@@ -804,6 +813,7 @@ def edit_attendance(id):
         attendance.check_in_time = form.check_in_time.data
         attendance.check_out_time = form.check_out_time.data
         attendance.overtime_hours = form.overtime_hours.data
+        attendance.pieces_completed = form.pieces_completed.data
         attendance.deductions = form.deductions.data
         attendance.deduction_reason = form.deduction_reason.data
         attendance.bonus = form.bonus.data

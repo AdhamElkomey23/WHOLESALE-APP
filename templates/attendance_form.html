@@ -64,8 +64,8 @@
                             </div>
                         </div>
 
-                        <!-- Overtime -->
-                        <div id="overtimeSection" class="row mb-3">
+                        <!-- Overtime and Pieces -->
+                        <div id="workSection" class="row mb-3">
                             <div class="col-md-6">
                                 {{ form.overtime_hours.label(class="form-label") }}
                                 <div class="input-group">
@@ -73,6 +73,14 @@
                                     <span class="input-group-text">hours</span>
                                 </div>
                                 <small class="text-muted">Manual overtime entry or auto-calculated from times</small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.pieces_completed.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.pieces_completed(class="form-control") }}
+                                    <span class="input-group-text">pieces</span>
+                                </div>
+                                <small class="text-muted">For piece-rate workers or tracking productivity</small>
                             </div>
                         </div>
 

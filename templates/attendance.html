@@ -77,6 +77,7 @@
                                     <th>Check Out</th>
                                     <th>Regular Hours</th>
                                     <th>Overtime</th>
+                                    <th>Pieces</th>
                                     <th>Deductions</th>
                                     <th>Bonus</th>
                                     <th>Daily Pay</th>
@@ -132,6 +133,16 @@
                                     <td>
                                         {% if attendance.overtime_hours > 0 %}
                                         <span class="badge bg-warning">{{ "{:.1f}".format(attendance.overtime_hours) }} hrs</span>
+                                        {% else %}
+                                        <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.pieces_completed > 0 %}
+                                        <span class="badge bg-info">{{ attendance.pieces_completed }} pieces</span>
+                                        {% if attendance.worker.piece_rate_enabled %}
+                                        <br><small class="text-success">{{ "{:,.0f}".format(attendance.calculate_piece_rate_pay()) }} EGP</small>
+                                        {% endif %}
                                         {% else %}
                                         <span class="text-muted">-</span>
                                         {% endif %}
