@@ -132,7 +132,7 @@ class AttendanceForm(FlaskForm):
 
 
 class AttendanceFilterForm(FlaskForm):
-    worker_id = SelectField('Filter by Worker', coerce=int, validators=[])
+    worker_id = SelectField('Filter by Worker', choices=[], validators=[])
     date_from = DateField('From Date', validators=[])
     date_to = DateField('To Date', validators=[])
     submit = SubmitField('Filter')
@@ -141,4 +141,4 @@ class AttendanceFilterForm(FlaskForm):
         super(AttendanceFilterForm, self).__init__(*args, **kwargs)
         from models import Worker
         workers = Worker.query.filter_by(is_active=True).all()
-        self.worker_id.choices = [('', 'All Workers')] + [(w.id, w.name) for w in workers]
+        self.worker_id.choices = [('0', 'All Workers')] + [(str(w.id), w.name) for w in workers]

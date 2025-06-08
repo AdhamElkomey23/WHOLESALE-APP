@@ -704,15 +704,20 @@ def attendance():
     filter_form = AttendanceFilterForm()
     
     # Get filter parameters
-    worker_id = request.args.get('worker_id', type=int)
+    worker_id_str = request.args.get('worker_id', '0')
     date_from = request.args.get('date_from')
     date_to = request.args.get('date_to')
     
     # Build query
     query = WorkerAttendance.query.join(Worker)
     
-    if worker_id:
-        query = query.filter(WorkerAttendance.worker_id == worker_id)
+    # Handle worker filter (0 means all workers)
+    try:
+        worker_id = int(worker_id_str) if worker_id_str and worker_id_str != '0' else None
+        if worker_id:
+            query = query.filter(WorkerAttendance.worker_id == worker_id)
+    except (ValueError, TypeError):
+        worker_id = None
     
     if date_from:
         try:
