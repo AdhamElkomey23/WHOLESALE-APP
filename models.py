@@ -17,6 +17,7 @@ class ProductType(db.Model):
     selling_price = db.Column(db.Float, default=0.0)
     brand_group = db.Column(db.String(20), nullable=False, default='SHARED')  # 'SHARED' or 'AZIZ'
     available_colors = db.Column(db.Text, default='')  # Comma-separated list of colors
+    available_sizes = db.Column(db.Text, default='')  # Comma-separated list of sizes
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationship with orders
@@ -30,6 +31,7 @@ class Order(db.Model):
     product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
     total_pieces = db.Column(db.Integer, nullable=False)
     selected_colors = db.Column(db.Text, default='')  # Comma-separated list of selected colors
+    selected_sizes = db.Column(db.Text, default='')  # Comma-separated list of selected sizes
     pieces_per_color = db.Column(db.Integer, nullable=False)
     is_printed = db.Column(db.Boolean, default=False)
     paid_amount = db.Column(db.Float, default=0.0)

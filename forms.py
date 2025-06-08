@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, IntegerField, FloatField, BooleanField, DateField, SubmitField, TextAreaField, TimeField
+from wtforms import StringField, PasswordField, SelectField, SelectMultipleField, IntegerField, FloatField, BooleanField, DateField, SubmitField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError, EqualTo
 from wtforms.widgets import CheckboxInput, ListWidget
 from models import ProductType
@@ -16,7 +16,8 @@ class OrderForm(FlaskForm):
     date = DateField('Date', validators=[DataRequired()], default=datetime.today)
     product_type_id = SelectField('Product Type', coerce=int, validators=[DataRequired()])
     total_pieces = IntegerField('Total Pieces', validators=[DataRequired(), NumberRange(min=1)])
-    selected_colors = SelectField('Colors', choices=[], validators=[DataRequired()])
+    selected_colors = SelectMultipleField('Colors', choices=[], validators=[DataRequired()])
+    selected_sizes = SelectMultipleField('Sizes', choices=[], validators=[DataRequired()])
     pieces_per_color = IntegerField('Pieces per Color', validators=[DataRequired(), NumberRange(min=1)])
     is_printed = BooleanField('Printed')
     paid_amount = FloatField('Paid Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
@@ -38,7 +39,17 @@ class ProductTypeForm(FlaskForm):
     cost_price = FloatField('Cost Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     selling_price = FloatField('Selling Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     brand_group = SelectField('Brand Group', choices=[('SHARED', 'URBRAND/SURVACCI (Shared Storage)'), ('AZIZ', 'AZIZ (Separate Storage)')], validators=[DataRequired()])
-    available_colors = StringField('Available Colors (comma-separated)', validators=[DataRequired()], default='Black,White,Green,Brown,Beige,Navy')
+    available_colors = SelectMultipleField('Available Colors', choices=[
+        ('Black', 'Black'), ('White', 'White'), ('Red', 'Red'), ('Blue', 'Blue'), 
+        ('Green', 'Green'), ('Yellow', 'Yellow'), ('Orange', 'Orange'), ('Purple', 'Purple'),
+        ('Pink', 'Pink'), ('Brown', 'Brown'), ('Beige', 'Beige'), ('Navy', 'Navy'),
+        ('Gray', 'Gray'), ('Maroon', 'Maroon'), ('Olive', 'Olive'), ('Teal', 'Teal')
+    ], validators=[DataRequired()])
+    available_sizes = SelectMultipleField('Available Sizes', choices=[
+        ('XS', 'Extra Small (XS)'), ('S', 'Small (S)'), ('M', 'Medium (M)'), 
+        ('L', 'Large (L)'), ('XL', 'Extra Large (XL)'), ('XXL', '2XL'), 
+        ('XXXL', '3XL'), ('XXXXL', '4XL'), ('XXXXXL', '5XL')
+    ], validators=[DataRequired()])
     submit = SubmitField('Save Product')
     
     def validate_selling_price(self, field):
