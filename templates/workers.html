@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+
+{% block title %}Workers Management - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="display-5 mb-2"><i class="fas fa-users me-2"></i>Workers Management</h1>
+                    <p class="lead text-muted">Manage workers, track attendance, and calculate salaries</p>
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('new_worker') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Add Worker
+                    </a>
+                    <a href="{{ url_for('attendance') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-clock me-2"></i>View Attendance
+                    </a>
+                    <a href="{{ url_for('new_attendance') }}" class="btn btn-outline-success">
+                        <i class="fas fa-calendar-check me-2"></i>Record Attendance
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workers Overview -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-users me-2"></i>Active Workers (This Month)</h5>
+                    <span class="badge bg-primary">{{ worker_stats|length }} Workers</span>
+                </div>
+                <div class="card-body">
+                    {% if worker_stats %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Worker</th>
+                                    <th>Position</th>
+                                    <th>Daily Salary</th>
+                                    <th>Overtime Rate</th>
+                                    <th>Days Worked</th>
+                                    <th>Total Overtime</th>
+                                    <th>Total Salary</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in worker_stats %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar-circle me-3">
+                                                {{ stat.worker.name[0].upper() }}
+                                            </div>
+                                            <div>
+                                                <strong>{{ stat.worker.name }}</strong>
+                                                {% if stat.worker.phone_number %}
+                                                <br><small class="text-muted">{{ stat.worker.phone_number }}</small>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{ stat.worker.position }}</td>
+                                    <td>{{ "{:,.0f}".format(stat.worker.daily_salary) }} EGP</td>
+                                    <td>{{ "{:,.0f}".format(stat.worker.overtime_rate) }} EGP/hr</td>
+                                    <td>
+                                        <span class="badge bg-info">{{ stat.days_worked }} days</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ "{:.1f}".format(stat.total_overtime) }} hrs</span>
+                                    </td>
+                                    <td>
+                                        <strong class="text-success">{{ "{:,.0f}".format(stat.total_salary) }} EGP</strong>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{{ url_for('worker_report', id=stat.worker.id) }}" class="btn btn-outline-primary" title="View Report">
+                                                <i class="fas fa-chart-line"></i>
+                                            </a>
+                                            <a href="{{ url_for('edit_worker', id=stat.worker.id) }}" class="btn btn-outline-secondary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <form method="POST" action="{{ url_for('delete_worker', id=stat.worker.id) }}" class="d-inline" 
+                                                  onsubmit="return confirm('Are you sure you want to deactivate this worker?')">
+                                                <button type="submit" class="btn btn-outline-danger" title="Deactivate">
+                                                    <i class="fas fa-user-times"></i>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Workers Found</h4>
+                        <p class="text-muted">Start by adding your first worker to track attendance and manage salaries.</p>
+                        <a href="{{ url_for('new_worker') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Add First Worker
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    background: var(--accent-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.875rem;
+}
+</style>
+{% endblock %}

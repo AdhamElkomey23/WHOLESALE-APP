@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify, m
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, db
-from models import User, Order, ProductType
+from models import User, Order, ProductType, Worker, WorkerAttendance
 from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm, WorkerForm, AttendanceForm, AttendanceFilterForm
 from utils import generate_invoice_pdf, export_data_csv
 from datetime import datetime, timedelta
@@ -585,3 +585,303 @@ def profile():
     form.email.data = current_user.email
     
     return render_template('profile.html', form=form)
+
+
+# Worker Management Routes
+
+@app.route('/workers')
+@login_required
+def workers():
+    """Workers management page"""
+    workers = Worker.query.filter_by(is_active=True).all()
+    
+    # Calculate monthly stats for each worker
+    today = datetime.utcnow().date()
+    start_of_month = today.replace(day=1)
+    
+    worker_stats = []
+    for worker in workers:
+        attendances = WorkerAttendance.query.filter(
+            WorkerAttendance.worker_id == worker.id,
+            WorkerAttendance.date >= start_of_month,
+            WorkerAttendance.date <= today
+        ).all()
+        
+        total_days = len([a for a in attendances if a.present])
+        total_salary = sum(a.calculate_daily_pay() for a in attendances)
+        total_overtime = sum(a.overtime_hours for a in attendances)
+        
+        worker_stats.append({
+            'worker': worker,
+            'days_worked': total_days,
+            'total_salary': total_salary,
+            'total_overtime': total_overtime
+        })
+    
+    return render_template('workers.html', worker_stats=worker_stats)
+
+
+@app.route('/workers/new', methods=['GET', 'POST'])
+@login_required
+def new_worker():
+    """Add a new worker"""
+    form = WorkerForm()
+    
+    if form.validate_on_submit():
+        worker = Worker(
+            name=form.name.data,
+            phone_number=form.phone_number.data,
+            daily_salary=form.daily_salary.data,
+            overtime_rate=form.overtime_rate.data,
+            position=form.position.data,
+            hire_date=form.hire_date.data,
+            is_active=form.is_active.data,
+            notes=form.notes.data,
+            created_by=current_user.id
+        )
+        
+        try:
+            db.session.add(worker)
+            db.session.commit()
+            flash('Worker added successfully', 'success')
+            return redirect(url_for('workers'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error adding worker', 'danger')
+    
+    return render_template('worker_form.html', form=form, title="Add New Worker")
+
+
+@app.route('/workers/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_worker(id):
+    """Edit a worker"""
+    worker = Worker.query.get_or_404(id)
+    form = WorkerForm(obj=worker)
+    
+    if form.validate_on_submit():
+        worker.name = form.name.data
+        worker.phone_number = form.phone_number.data
+        worker.daily_salary = form.daily_salary.data
+        worker.overtime_rate = form.overtime_rate.data
+        worker.position = form.position.data
+        worker.hire_date = form.hire_date.data
+        worker.is_active = form.is_active.data
+        worker.notes = form.notes.data
+        
+        try:
+            db.session.commit()
+            flash('Worker updated successfully', 'success')
+            return redirect(url_for('workers'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating worker', 'danger')
+    
+    return render_template('worker_form.html', form=form, worker=worker, title="Edit Worker")
+
+
+@app.route('/workers/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_worker(id):
+    """Deactivate a worker"""
+    worker = Worker.query.get_or_404(id)
+    worker.is_active = False
+    
+    try:
+        db.session.commit()
+        flash('Worker deactivated successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deactivating worker', 'danger')
+    
+    return redirect(url_for('workers'))
+
+
+@app.route('/attendance')
+@login_required
+def attendance():
+    """Attendance tracking page"""
+    filter_form = AttendanceFilterForm()
+    
+    # Get filter parameters
+    worker_id = request.args.get('worker_id', type=int)
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    
+    # Build query
+    query = WorkerAttendance.query.join(Worker)
+    
+    if worker_id:
+        query = query.filter(WorkerAttendance.worker_id == worker_id)
+    
+    if date_from:
+        try:
+            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+            query = query.filter(WorkerAttendance.date >= date_from)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+            query = query.filter(WorkerAttendance.date <= date_to)
+        except ValueError:
+            pass
+    
+    # Default to current month if no filters
+    if not any([worker_id, date_from, date_to]):
+        today = datetime.utcnow().date()
+        start_of_month = today.replace(day=1)
+        query = query.filter(WorkerAttendance.date >= start_of_month)
+    
+    attendances = query.order_by(WorkerAttendance.date.desc()).all()
+    
+    return render_template('attendance.html', 
+                         attendances=attendances, 
+                         filter_form=filter_form)
+
+
+@app.route('/attendance/new', methods=['GET', 'POST'])
+@login_required
+def new_attendance():
+    """Record new attendance"""
+    form = AttendanceForm()
+    
+    if form.validate_on_submit():
+        # Check if attendance already exists for this worker on this date
+        existing = WorkerAttendance.query.filter_by(
+            worker_id=form.worker_id.data,
+            date=form.date.data
+        ).first()
+        
+        if existing:
+            flash('Attendance already recorded for this worker on this date', 'warning')
+            return render_template('attendance_form.html', form=form, title="Record Attendance")
+        
+        attendance = WorkerAttendance(
+            worker_id=form.worker_id.data,
+            date=form.date.data,
+            present=form.present.data,
+            check_in_time=form.check_in_time.data,
+            check_out_time=form.check_out_time.data,
+            overtime_hours=form.overtime_hours.data,
+            deductions=form.deductions.data,
+            deduction_reason=form.deduction_reason.data,
+            bonus=form.bonus.data,
+            bonus_reason=form.bonus_reason.data,
+            notes=form.notes.data,
+            created_by=current_user.id
+        )
+        
+        try:
+            db.session.add(attendance)
+            db.session.commit()
+            flash('Attendance recorded successfully', 'success')
+            return redirect(url_for('attendance'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error recording attendance', 'danger')
+    
+    return render_template('attendance_form.html', form=form, title="Record Attendance")
+
+
+@app.route('/attendance/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_attendance(id):
+    """Edit attendance record"""
+    attendance = WorkerAttendance.query.get_or_404(id)
+    form = AttendanceForm(obj=attendance)
+    
+    if form.validate_on_submit():
+        attendance.worker_id = form.worker_id.data
+        attendance.date = form.date.data
+        attendance.present = form.present.data
+        attendance.check_in_time = form.check_in_time.data
+        attendance.check_out_time = form.check_out_time.data
+        attendance.overtime_hours = form.overtime_hours.data
+        attendance.deductions = form.deductions.data
+        attendance.deduction_reason = form.deduction_reason.data
+        attendance.bonus = form.bonus.data
+        attendance.bonus_reason = form.bonus_reason.data
+        attendance.notes = form.notes.data
+        
+        try:
+            db.session.commit()
+            flash('Attendance updated successfully', 'success')
+            return redirect(url_for('attendance'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error updating attendance', 'danger')
+    
+    return render_template('attendance_form.html', form=form, attendance=attendance, title="Edit Attendance")
+
+
+@app.route('/attendance/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_attendance(id):
+    """Delete attendance record"""
+    attendance = WorkerAttendance.query.get_or_404(id)
+    
+    try:
+        db.session.delete(attendance)
+        db.session.commit()
+        flash('Attendance record deleted successfully', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting attendance record', 'danger')
+    
+    return redirect(url_for('attendance'))
+
+
+@app.route('/workers/<int:id>/report')
+@login_required
+def worker_report(id):
+    """Generate detailed report for a specific worker"""
+    worker = Worker.query.get_or_404(id)
+    
+    # Get date range (default to current month)
+    date_from = request.args.get('date_from')
+    date_to = request.args.get('date_to')
+    
+    if not date_from or not date_to:
+        today = datetime.utcnow().date()
+        date_from = today.replace(day=1)
+        date_to = today
+    else:
+        try:
+            date_from = datetime.strptime(date_from, '%Y-%m-%d').date()
+            date_to = datetime.strptime(date_to, '%Y-%m-%d').date()
+        except ValueError:
+            today = datetime.utcnow().date()
+            date_from = today.replace(day=1)
+            date_to = today
+    
+    # Get attendance records
+    attendances = WorkerAttendance.query.filter(
+        WorkerAttendance.worker_id == worker.id,
+        WorkerAttendance.date >= date_from,
+        WorkerAttendance.date <= date_to
+    ).order_by(WorkerAttendance.date).all()
+    
+    # Calculate statistics
+    total_days = len([a for a in attendances if a.present])
+    total_salary = sum(a.calculate_daily_pay() for a in attendances)
+    total_overtime = sum(a.overtime_hours for a in attendances)
+    total_deductions = sum(a.deductions for a in attendances)
+    total_bonuses = sum(a.bonus for a in attendances)
+    
+    stats = {
+        'total_days': total_days,
+        'total_salary': total_salary,
+        'total_overtime': total_overtime,
+        'total_deductions': total_deductions,
+        'total_bonuses': total_bonuses,
+        'net_salary': total_salary
+    }
+    
+    return render_template('worker_report.html', 
+                         worker=worker, 
+                         attendances=attendances,
+                         stats=stats,
+                         date_from=date_from,
+                         date_to=date_to)

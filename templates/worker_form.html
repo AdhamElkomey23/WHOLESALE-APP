@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <h1 class="display-6">{{ title }}</h1>
+                <p class="text-muted">Manage worker information and salary details</p>
+            </div>
+
+            <!-- Worker Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-8">
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control") }}
+                                {% if form.name.errors %}
+                                    {% for error in form.name.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.phone_number.label(class="form-label") }}
+                                {{ form.phone_number(class="form-control") }}
+                            </div>
+                        </div>
+
+                        <!-- Position and Hire Date -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.position.label(class="form-label") }}
+                                {{ form.position(class="form-control") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.hire_date.label(class="form-label") }}
+                                {{ form.hire_date(class="form-control") }}
+                                {% if form.hire_date.errors %}
+                                    {% for error in form.hire_date.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Salary Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.daily_salary.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.daily_salary(class="form-control") }}
+                                    <span class="input-group-text">EGP</span>
+                                </div>
+                                {% if form.daily_salary.errors %}
+                                    {% for error in form.daily_salary.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.overtime_rate.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.overtime_rate(class="form-control") }}
+                                    <span class="input-group-text">EGP/hr</span>
+                                </div>
+                                <small class="text-muted">Hourly rate for overtime work</small>
+                            </div>
+                        </div>
+
+                        <!-- Status and Notes -->
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="form-check mb-3">
+                                    {{ form.is_active(class="form-check-input") }}
+                                    {{ form.is_active.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                            <div class="col-md-12">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3", placeholder="Additional notes about the worker...") }}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('workers') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Workers
+                            </a>
+                            <div>
+                                {% if worker %}
+                                <a href="{{ url_for('worker_report', id=worker.id) }}" class="btn btn-outline-info me-2">
+                                    <i class="fas fa-chart-line me-2"></i>View Report
+                                </a>
+                                {% endif %}
+                                {{ form.submit(class="btn btn-primary") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

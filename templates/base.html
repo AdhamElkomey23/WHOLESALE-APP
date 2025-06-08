@@ -49,6 +49,10 @@
                 <i class="fas fa-receipt"></i>
                 <span>Expenses</span>
             </a>
+            <a href="{{ url_for('workers') }}" class="nav-item {% if request.endpoint in ['workers', 'new_worker', 'edit_worker', 'attendance', 'new_attendance', 'edit_attendance'] %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Workers</span>
+            </a>
             <a href="{{ url_for('orders') }}" class="nav-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
                 <i class="fas fa-shopping-cart"></i>
                 <span>Orders</span>
