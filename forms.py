@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SelectField, IntegerField, FloatField, BooleanField, DateField, SubmitField, TextAreaField
+from wtforms import StringField, PasswordField, SelectField, IntegerField, FloatField, BooleanField, DateField, SubmitField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError, EqualTo
 from wtforms.widgets import CheckboxInput, ListWidget
 from models import ProductType
@@ -97,3 +97,48 @@ class UserProfileForm(FlaskForm):
             user = User.query.filter_by(email=field.data).first()
             if user:
                 raise ValidationError('Email already registered. Please choose a different one.')
+
+
+class WorkerForm(FlaskForm):
+    name = StringField('Worker Name', validators=[DataRequired(), Length(max=200)])
+    phone_number = StringField('Phone Number', validators=[Length(max=20)])
+    daily_salary = FloatField('Daily Salary (EGP)', validators=[DataRequired(), NumberRange(min=0)])
+    overtime_rate = FloatField('Overtime Rate (EGP/hour)', validators=[NumberRange(min=0)], default=0.0)
+    position = StringField('Position', validators=[Length(max=100)], default='Worker')
+    hire_date = DateField('Hire Date', validators=[DataRequired()], default=datetime.today)
+    is_active = BooleanField('Active Worker', default=True)
+    notes = TextAreaField('Notes', validators=[Length(max=500)])
+    submit = SubmitField('Save Worker')
+
+
+class AttendanceForm(FlaskForm):
+    worker_id = SelectField('Worker', coerce=int, validators=[DataRequired()])
+    date = DateField('Date', validators=[DataRequired()], default=datetime.today)
+    present = BooleanField('Present', default=True)
+    check_in_time = TimeField('Check In Time')
+    check_out_time = TimeField('Check Out Time')
+    overtime_hours = FloatField('Overtime Hours', validators=[NumberRange(min=0)], default=0.0)
+    deductions = FloatField('Deductions (EGP)', validators=[NumberRange(min=0)], default=0.0)
+    deduction_reason = StringField('Deduction Reason', validators=[Length(max=500)])
+    bonus = FloatField('Bonus (EGP)', validators=[NumberRange(min=0)], default=0.0)
+    bonus_reason = StringField('Bonus Reason', validators=[Length(max=500)])
+    notes = TextAreaField('Notes', validators=[Length(max=500)])
+    submit = SubmitField('Save Attendance')
+    
+    def __init__(self, *args, **kwargs):
+        super(AttendanceForm, self).__init__(*args, **kwargs)
+        from models import Worker
+        self.worker_id.choices = [(w.id, w.name) for w in Worker.query.filter_by(is_active=True).all()]
+
+
+class AttendanceFilterForm(FlaskForm):
+    worker_id = SelectField('Filter by Worker', coerce=int, validators=[])
+    date_from = DateField('From Date', validators=[])
+    date_to = DateField('To Date', validators=[])
+    submit = SubmitField('Filter')
+    
+    def __init__(self, *args, **kwargs):
+        super(AttendanceFilterForm, self).__init__(*args, **kwargs)
+        from models import Worker
+        workers = Worker.query.filter_by(is_active=True).all()
+        self.worker_id.choices = [('', 'All Workers')] + [(w.id, w.name) for w in workers]

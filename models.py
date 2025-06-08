@@ -1,6 +1,6 @@
 from app import db
 from flask_login import UserMixin
-from datetime import datetime
+from datetime import datetime, timedelta
 from sqlalchemy import func
 
 class User(UserMixin, db.Model):
@@ -185,6 +185,129 @@ class Expense(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     
     user = db.relationship('User', backref='expenses')
+
+class Worker(db.Model):
+    """Track workers/employees"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    phone_number = db.Column(db.String(20))
+    daily_salary = db.Column(db.Float, nullable=False, default=0.0)
+    overtime_rate = db.Column(db.Float, default=0.0)  # per hour
+    position = db.Column(db.String(100), default='Worker')
+    hire_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
+    is_active = db.Column(db.Boolean, default=True)
+    notes = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Relationships
+    user = db.relationship('User', backref='workers')
+    attendances = db.relationship('WorkerAttendance', backref='worker', lazy=True, cascade='all, delete-orphan')
+    
+    def __repr__(self):
+        return f'<Worker {self.name}>'
+    
+    def total_salary_for_period(self, start_date, end_date):
+        """Calculate total salary for a date range"""
+        attendances = WorkerAttendance.query.filter(
+            WorkerAttendance.worker_id == self.id,
+            WorkerAttendance.date >= start_date,
+            WorkerAttendance.date <= end_date
+        ).all()
+        
+        total = 0
+        for attendance in attendances:
+            total += attendance.calculate_daily_pay()
+        
+        return total
+    
+    def days_worked_this_month(self):
+        """Count days worked in current month"""
+        today = datetime.utcnow().date()
+        start_of_month = today.replace(day=1)
+        
+        return WorkerAttendance.query.filter(
+            WorkerAttendance.worker_id == self.id,
+            WorkerAttendance.date >= start_of_month,
+            WorkerAttendance.date <= today,
+            WorkerAttendance.present == True
+        ).count()
+
+
+class WorkerAttendance(db.Model):
+    """Daily attendance tracking for workers"""
+    id = db.Column(db.Integer, primary_key=True)
+    worker_id = db.Column(db.Integer, db.ForeignKey('worker.id'), nullable=False)
+    date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
+    present = db.Column(db.Boolean, default=False)
+    check_in_time = db.Column(db.Time)
+    check_out_time = db.Column(db.Time)
+    overtime_hours = db.Column(db.Float, default=0.0)
+    deductions = db.Column(db.Float, default=0.0)
+    deduction_reason = db.Column(db.String(500), default='')
+    bonus = db.Column(db.Float, default=0.0)
+    bonus_reason = db.Column(db.String(500), default='')
+    notes = db.Column(db.Text, default='')
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    
+    # Unique constraint to prevent duplicate entries for same worker on same date
+    __table_args__ = (db.UniqueConstraint('worker_id', 'date', name='unique_worker_date'),)
+    
+    # Relationships
+    user = db.relationship('User', backref='worker_attendances')
+    
+    def __repr__(self):
+        return f'<WorkerAttendance {self.worker.name} - {self.date}>'
+    
+    def calculate_regular_hours(self):
+        """Calculate regular working hours (8 hours standard)"""
+        if not self.present or not self.check_in_time or not self.check_out_time:
+            return 0
+        
+        # Convert times to datetime objects for calculation
+        check_in = datetime.combine(self.date, self.check_in_time)
+        check_out = datetime.combine(self.date, self.check_out_time)
+        
+        # Handle overnight shifts
+        if check_out < check_in:
+            check_out += timedelta(days=1)
+        
+        total_hours = (check_out - check_in).total_seconds() / 3600
+        regular_hours = min(total_hours, 8)  # Max 8 regular hours
+        
+        return round(regular_hours, 2)
+    
+    def calculate_overtime_hours_auto(self):
+        """Auto-calculate overtime based on check-in/out times"""
+        if not self.present or not self.check_in_time or not self.check_out_time:
+            return 0
+        
+        # Convert times to datetime objects for calculation
+        check_in = datetime.combine(self.date, self.check_in_time)
+        check_out = datetime.combine(self.date, self.check_out_time)
+        
+        # Handle overnight shifts
+        if check_out < check_in:
+            check_out += timedelta(days=1)
+        
+        total_hours = (check_out - check_in).total_seconds() / 3600
+        overtime_hours = max(0, total_hours - 8)  # Overtime after 8 hours
+        
+        return round(overtime_hours, 2)
+    
+    def calculate_daily_pay(self):
+        """Calculate total daily pay including overtime, deductions, and bonuses"""
+        if not self.present:
+            return 0
+        
+        base_pay = self.worker.daily_salary
+        overtime_pay = self.overtime_hours * self.worker.overtime_rate
+        total_pay = base_pay + overtime_pay + self.bonus - self.deductions
+        
+        return round(total_pay, 2)
+
 
 # Add inventory relationships after all models are defined
 ProductType.inventory_items = db.relationship('Inventory', backref='product_type_obj', lazy=True)
