@@ -100,8 +100,8 @@
                                     <div class="col-sm-6">
                                         <div class="mb-3">
                                             {{ form.selected_colors.label(class="form-label") }}
-                                            {{ form.selected_colors(class="form-select" + (" is-invalid" if form.selected_colors.errors else ""), multiple=True, size="4", id="selectedColors") }}
-                                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple colors</div>
+                                            {{ form.selected_colors(class="form-select modern-multiselect" + (" is-invalid" if form.selected_colors.errors else ""), multiple=True, id="selectedColors") }}
+                                            <div class="form-text">Select multiple colors for this order</div>
                                             {% if form.selected_colors.errors %}
                                                 <div class="invalid-feedback">
                                                     {% for error in form.selected_colors.errors %}{{ error }}{% endfor %}
@@ -112,8 +112,8 @@
                                     <div class="col-sm-6">
                                         <div class="mb-3">
                                             {{ form.selected_sizes.label(class="form-label") }}
-                                            {{ form.selected_sizes(class="form-select" + (" is-invalid" if form.selected_sizes.errors else ""), multiple=True, size="4", id="selectedSizes") }}
-                                            <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple sizes</div>
+                                            {{ form.selected_sizes(class="form-select modern-multiselect" + (" is-invalid" if form.selected_sizes.errors else ""), multiple=True, id="selectedSizes") }}
+                                            <div class="form-text">Select multiple sizes for this order</div>
                                             {% if form.selected_sizes.errors %}
                                                 <div class="invalid-feedback">
                                                     {% for error in form.selected_sizes.errors %}{{ error }}{% endfor %}
