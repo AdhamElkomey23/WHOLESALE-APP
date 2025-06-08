@@ -44,10 +44,8 @@ class ProductTypeForm(FlaskForm):
     selling_price = FloatField('Selling Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     brand_group = SelectField('Brand Group', choices=[('SHARED', 'URBRAND/SURVACCI (Shared Storage)'), ('AZIZ', 'AZIZ (Separate Storage)')], validators=[DataRequired()])
     available_colors = SelectMultipleField('Available Colors', choices=[
-        ('Black', 'Black'), ('White', 'White'), ('Red', 'Red'), ('Blue', 'Blue'), 
-        ('Green', 'Green'), ('Yellow', 'Yellow'), ('Orange', 'Orange'), ('Purple', 'Purple'),
-        ('Pink', 'Pink'), ('Brown', 'Brown'), ('Beige', 'Beige'), ('Navy', 'Navy'),
-        ('Gray', 'Gray'), ('Maroon', 'Maroon'), ('Olive', 'Olive'), ('Teal', 'Teal')
+        ('Black', 'Black'), ('White', 'White'), ('Green', 'Green'), ('Petrol', 'Petrol'), 
+        ('Burgundy', 'Burgundy'), ('Brown', 'Brown'), ('Baby Pink', 'Baby Pink')
     ], validators=[DataRequired()])
     available_sizes = SelectMultipleField('Available Sizes', choices=[
         ('XS', 'Extra Small (XS)'), ('S', 'Small (S)'), ('M', 'Medium (M)'), 

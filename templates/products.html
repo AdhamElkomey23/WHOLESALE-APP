@@ -71,8 +71,8 @@
                             
                             <div class="mb-3">
                                 {{ form.available_colors.label(class="form-label") }}
-                                {{ form.available_colors(class="form-select" + (" is-invalid" if form.available_colors.errors else ""), multiple=True, size="5") }}
-                                <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple colors</div>
+                                {{ form.available_colors(class="form-select modern-multiselect" + (" is-invalid" if form.available_colors.errors else ""), multiple=True, id="availableColors") }}
+                                <div class="form-text">Select multiple colors for this product</div>
                                 {% if form.available_colors.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.available_colors.errors %}{{ error }}{% endfor %}
@@ -82,8 +82,8 @@
                             
                             <div class="mb-3">
                                 {{ form.available_sizes.label(class="form-label") }}
-                                {{ form.available_sizes(class="form-select" + (" is-invalid" if form.available_sizes.errors else ""), multiple=True, size="5") }}
-                                <div class="form-text">Hold Ctrl (Cmd on Mac) to select multiple sizes</div>
+                                {{ form.available_sizes(class="form-select modern-multiselect" + (" is-invalid" if form.available_sizes.errors else ""), multiple=True, id="availableSizes") }}
+                                <div class="form-text">Select multiple sizes for this product</div>
                                 {% if form.available_sizes.errors %}
                                     <div class="invalid-feedback">
                                         {% for error in form.available_sizes.errors %}{{ error }}{% endfor %}

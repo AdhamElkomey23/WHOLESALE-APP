@@ -37,6 +37,8 @@
                     <thead>
                         <tr>
                             <th>Product</th>
+                            <th>Available Colors</th>
+                            <th>Available Sizes</th>
                             <th>Current Stock</th>
                             <th>Actions</th>
                         </tr>
@@ -44,7 +46,30 @@
                     <tbody>
                         {% for product in shared_products %}
                         <tr>
-                            <td>{{ product.name }}</td>
+                            <td>
+                                <strong>{{ product.name }}</strong>
+                                <div class="text-muted small">{{ product.brand_group }}</div>
+                            </td>
+                            <td>
+                                {% if product.available_colors %}
+                                    {% for color in product.available_colors.split(',') %}
+                                        <span class="badge me-1 mb-1" style="background-color: {% if color.strip() == 'Black' %}#000000{% elif color.strip() == 'White' %}#ffffff; color: #000000; border: 1px solid #ddd{% elif color.strip() == 'Green' %}#28a745{% elif color.strip() == 'Petrol' %}#17a2b8{% elif color.strip() == 'Burgundy' %}#6f1e1e{% elif color.strip() == 'Brown' %}#8b4513{% elif color.strip() == 'Baby Pink' %}#ffb6c1; color: #000000{% else %}#6c757d{% endif %}">
+                                            {{ color.strip() }}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">No colors set</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.available_sizes %}
+                                    {% for size in product.available_sizes.split(',') %}
+                                        <span class="badge bg-secondary me-1 mb-1">{{ size.strip() }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted">No sizes set</span>
+                                {% endif %}
+                            </td>
                             <td>
                                 <span class="badge bg-primary fs-6">
                                     {{ shared_inventory.get(product.id, 0) }} pieces
