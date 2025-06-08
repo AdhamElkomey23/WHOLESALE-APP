@@ -104,6 +104,13 @@ class WorkerForm(FlaskForm):
     phone_number = StringField('Phone Number', validators=[Length(max=20)])
     daily_salary = FloatField('Daily Salary (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     overtime_rate = FloatField('Overtime Rate (EGP/hour)', validators=[NumberRange(min=0)], default=0.0)
+    
+    # Piece-rate payment system
+    piece_rate_enabled = BooleanField('Enable Piece-Rate Payment')
+    base_piece_rate = FloatField('Base Rate per Piece (EGP)', validators=[NumberRange(min=0)], default=0.0)
+    bonus_threshold = IntegerField('Bonus Threshold (pieces)', validators=[NumberRange(min=1)], default=100)
+    bonus_piece_rate = FloatField('Bonus Rate per Piece (EGP)', validators=[NumberRange(min=0)], default=0.0)
+    
     position = StringField('Position', validators=[Length(max=100)], default='Worker')
     hire_date = DateField('Hire Date', validators=[DataRequired()], default=datetime.today)
     is_active = BooleanField('Active Worker', default=True)
@@ -118,6 +125,7 @@ class AttendanceForm(FlaskForm):
     check_in_time = TimeField('Check In Time')
     check_out_time = TimeField('Check Out Time')
     overtime_hours = FloatField('Overtime Hours', validators=[NumberRange(min=0)], default=0.0)
+    pieces_completed = IntegerField('Pieces Completed', validators=[NumberRange(min=0)], default=0)
     deductions = FloatField('Deductions (EGP)', validators=[NumberRange(min=0)], default=0.0)
     deduction_reason = StringField('Deduction Reason', validators=[Length(max=500)])
     bonus = FloatField('Bonus (EGP)', validators=[NumberRange(min=0)], default=0.0)

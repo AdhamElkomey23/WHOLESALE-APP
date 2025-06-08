@@ -193,6 +193,13 @@ class Worker(db.Model):
     phone_number = db.Column(db.String(20))
     daily_salary = db.Column(db.Float, nullable=False, default=0.0)
     overtime_rate = db.Column(db.Float, default=0.0)  # per hour
+    
+    # Piece-rate payment system
+    piece_rate_enabled = db.Column(db.Boolean, default=False)
+    base_piece_rate = db.Column(db.Float, default=0.0)  # price per piece for initial quantity
+    bonus_threshold = db.Column(db.Integer, default=100)  # pieces after which bonus rate applies
+    bonus_piece_rate = db.Column(db.Float, default=0.0)  # higher rate after threshold
+    
     position = db.Column(db.String(100), default='Worker')
     hire_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
     is_active = db.Column(db.Boolean, default=True)
@@ -243,6 +250,7 @@ class WorkerAttendance(db.Model):
     check_in_time = db.Column(db.Time)
     check_out_time = db.Column(db.Time)
     overtime_hours = db.Column(db.Float, default=0.0)
+    pieces_completed = db.Column(db.Integer, default=0)  # pieces completed that day
     deductions = db.Column(db.Float, default=0.0)
     deduction_reason = db.Column(db.String(500), default='')
     bonus = db.Column(db.Float, default=0.0)
@@ -297,16 +305,49 @@ class WorkerAttendance(db.Model):
         
         return round(overtime_hours, 2)
     
+    def calculate_piece_rate_pay(self):
+        """Calculate piece-rate pay based on completed pieces and thresholds"""
+        if not self.present or not self.worker.piece_rate_enabled or self.pieces_completed <= 0:
+            return 0.0
+        
+        total_piece_pay = 0.0
+        pieces_remaining = self.pieces_completed
+        
+        # Calculate pay for pieces up to threshold at base rate
+        if pieces_remaining > 0:
+            base_pieces = min(pieces_remaining, self.worker.bonus_threshold)
+            total_piece_pay += base_pieces * self.worker.base_piece_rate
+            pieces_remaining -= base_pieces
+        
+        # Calculate pay for pieces above threshold at bonus rate
+        if pieces_remaining > 0:
+            total_piece_pay += pieces_remaining * self.worker.bonus_piece_rate
+        
+        return total_piece_pay
+
     def calculate_daily_pay(self):
-        """Calculate total daily pay including overtime, deductions, and bonuses"""
+        """Calculate total daily pay including salary, overtime, piece-rate, deductions, and bonuses"""
         if not self.present:
             return 0
         
-        base_pay = self.worker.daily_salary
-        overtime_pay = self.overtime_hours * self.worker.overtime_rate
-        total_pay = base_pay + overtime_pay + self.bonus - self.deductions
+        total_pay = 0.0
         
-        return round(total_pay, 2)
+        # Add base daily salary (if not piece-rate only)
+        if not self.worker.piece_rate_enabled:
+            total_pay += self.worker.daily_salary
+        
+        # Add piece-rate pay if enabled
+        if self.worker.piece_rate_enabled:
+            total_pay += self.calculate_piece_rate_pay()
+        
+        # Add overtime pay
+        overtime_pay = self.overtime_hours * self.worker.overtime_rate
+        total_pay += overtime_pay
+        
+        # Add bonuses and subtract deductions
+        total_pay += self.bonus - self.deductions
+        
+        return round(max(0, total_pay), 2)  # Ensure no negative pay
 
 
 # Add inventory relationships after all models are defined
