@@ -289,7 +289,8 @@ def new_product():
             cost_price=form.cost_price.data,
             selling_price=form.selling_price.data,
             brand_group=form.brand_group.data,
-            available_colors=form.available_colors.data
+            available_colors=','.join(form.available_colors.data),
+            available_sizes=','.join(form.available_sizes.data)
         )
         db.session.add(product)
         db.session.commit()
