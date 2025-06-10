@@ -530,19 +530,54 @@ def expenses(brand='URBRAND'):
     """Expenses management page"""
     from models import Expense
     from forms import ExpenseForm
+    from datetime import datetime, timedelta
+    from sqlalchemy import func, extract
     
     if brand not in ['URBRAND', 'SURVACCI', 'AZIZ']:
         brand = 'URBRAND'
     
+    # Get all expenses for selected brand
     expense_list = Expense.query.filter_by(brand=brand).order_by(Expense.date.desc()).all()
+    
+    # Calculate statistics
     total_expenses = sum(expense.amount for expense in expense_list)
+    brand_expenses = total_expenses
+    
+    # Current month expenses
+    current_month = datetime.now().month
+    current_year = datetime.now().year
+    monthly_expenses = sum(
+        expense.amount for expense in expense_list 
+        if expense.date.month == current_month and expense.date.year == current_year
+    )
+    
+    # Calculate average monthly expenses
+    if expense_list:
+        # Group expenses by month
+        monthly_totals = {}
+        for expense in expense_list:
+            month_key = f"{expense.date.year}-{expense.date.month:02d}"
+            if month_key not in monthly_totals:
+                monthly_totals[month_key] = 0
+            monthly_totals[month_key] += expense.amount
+        
+        average_monthly = sum(monthly_totals.values()) / len(monthly_totals) if monthly_totals else 0
+    else:
+        average_monthly = 0
+    
+    # Get total expenses across all brands for comparison
+    all_expenses = Expense.query.all()
+    total_all_brands = sum(expense.amount for expense in all_expenses)
     
     form = ExpenseForm()
     form.brand.data = brand
     
     return render_template('expenses.html', 
                          expenses=expense_list, 
-                         total_expenses=total_expenses,
+                         total_expenses=total_all_brands,
+                         monthly_expenses=monthly_expenses,
+                         average_monthly=average_monthly,
+                         brand_expenses=brand_expenses,
                          selected_brand=brand,
                          form=form)
 
@@ -551,26 +586,46 @@ def expenses(brand='URBRAND'):
 def new_expense():
     """Create a new expense"""
     from models import Expense
-    from forms import ExpenseForm
+    from datetime import datetime
     
-    form = ExpenseForm()
-    if form.validate_on_submit():
+    try:
+        # Get form data directly from request
+        name = request.form.get('name')
+        amount = float(request.form.get('amount')) if request.form.get('amount') else 0.0
+        date_str = request.form.get('date')
+        brand = request.form.get('brand')
+        notes = request.form.get('notes', '')
+        
+        # Parse date
+        date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.today().date()
+        
+        # Validate required fields
+        if not all([name, amount > 0, brand]):
+            flash('Please fill in all required fields.', 'danger')
+            return redirect(url_for('expenses', brand=brand or 'URBRAND'))
+        
+        if brand not in ['URBRAND', 'SURVACCI', 'AZIZ']:
+            flash('Invalid brand selected.', 'danger')
+            return redirect(url_for('expenses', brand='URBRAND'))
+        
+        # Create expense
         expense = Expense(
-            name=form.name.data,
-            amount=form.amount.data,
-            date=form.date.data,
-            brand=form.brand.data,
-            notes=form.notes.data,
+            name=name,
+            amount=amount,
+            date=date,
+            brand=brand,
+            notes=notes,
             created_by=current_user.id
         )
         db.session.add(expense)
         db.session.commit()
         flash('Expense added successfully!', 'success')
-        return redirect(url_for('expenses', brand=form.brand.data))
-    
-    for field, errors in form.errors.items():
-        for error in errors:
-            flash(f'{field}: {error}', 'error')
+        return redirect(url_for('expenses', brand=brand))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error creating expense. Please try again.', 'danger')
+        return redirect(url_for('expenses', brand=request.form.get('brand', 'URBRAND')))
     
     return redirect(url_for('expenses'))
 
