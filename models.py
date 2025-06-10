@@ -196,11 +196,27 @@ class Worker(db.Model):
     daily_salary = db.Column(db.Float, nullable=False, default=0.0)
     overtime_rate = db.Column(db.Float, default=0.0)  # per hour
     
-    # Piece-rate payment system
+    # Department and Brand Assignment
+    department = db.Column(db.String(100), default='General')  # Print, Sewing, Packaging, etc.
+    assigned_brand = db.Column(db.String(50), default='SHARED')  # URBRAND, SURVACCI, AZIZ, or SHARED
+    
+    # Enhanced Piece-rate payment system with multiple tiers
     piece_rate_enabled = db.Column(db.Boolean, default=False)
-    base_piece_rate = db.Column(db.Float, default=0.0)  # price per piece for initial quantity
-    bonus_threshold = db.Column(db.Integer, default=100)  # pieces after which bonus rate applies
-    bonus_piece_rate = db.Column(db.Float, default=0.0)  # higher rate after threshold
+    
+    # Tier 1: Base pieces (0 to tier1_threshold)
+    tier1_threshold = db.Column(db.Integer, default=1000)  # pieces in tier 1
+    tier1_rate = db.Column(db.Float, default=3.0)  # rate per piece for tier 1
+    
+    # Tier 2: Second threshold (tier1_threshold+1 to tier2_threshold)
+    tier2_threshold = db.Column(db.Integer, default=1500)  # pieces at end of tier 2
+    tier2_rate = db.Column(db.Float, default=2.0)  # rate per piece for tier 2
+    
+    # Tier 3: Third threshold (tier2_threshold+1 to tier3_threshold)
+    tier3_threshold = db.Column(db.Integer, default=2000)  # pieces at end of tier 3
+    tier3_rate = db.Column(db.Float, default=3.0)  # rate per piece for tier 3
+    
+    # Tier 4+: Beyond tier3_threshold
+    tier4_rate = db.Column(db.Float, default=3.5)  # rate per piece beyond tier 3
     
     position = db.Column(db.String(100), default='Worker')
     hire_date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
@@ -308,24 +324,36 @@ class WorkerAttendance(db.Model):
         return round(overtime_hours, 2)
     
     def calculate_piece_rate_pay(self):
-        """Calculate piece-rate pay based on completed pieces and thresholds"""
+        """Calculate piece-rate pay based on completed pieces and multi-tier thresholds"""
         if not self.present or not self.worker.piece_rate_enabled or self.pieces_completed <= 0:
             return 0.0
         
         total_piece_pay = 0.0
         pieces_remaining = self.pieces_completed
         
-        # Calculate pay for pieces up to threshold at base rate
+        # Tier 1: 1 to tier1_threshold (e.g., 1-1000 pieces at 3 EGP each)
         if pieces_remaining > 0:
-            base_pieces = min(pieces_remaining, self.worker.bonus_threshold)
-            total_piece_pay += base_pieces * self.worker.base_piece_rate
-            pieces_remaining -= base_pieces
+            tier1_pieces = min(pieces_remaining, self.worker.tier1_threshold)
+            total_piece_pay += tier1_pieces * self.worker.tier1_rate
+            pieces_remaining -= tier1_pieces
         
-        # Calculate pay for pieces above threshold at bonus rate
+        # Tier 2: tier1_threshold+1 to tier2_threshold (e.g., 1001-1500 pieces at 2 EGP each)
         if pieces_remaining > 0:
-            total_piece_pay += pieces_remaining * self.worker.bonus_piece_rate
+            tier2_pieces = min(pieces_remaining, self.worker.tier2_threshold - self.worker.tier1_threshold)
+            total_piece_pay += tier2_pieces * self.worker.tier2_rate
+            pieces_remaining -= tier2_pieces
         
-        return total_piece_pay
+        # Tier 3: tier2_threshold+1 to tier3_threshold (e.g., 1501-2000 pieces at 3 EGP each)
+        if pieces_remaining > 0:
+            tier3_pieces = min(pieces_remaining, self.worker.tier3_threshold - self.worker.tier2_threshold)
+            total_piece_pay += tier3_pieces * self.worker.tier3_rate
+            pieces_remaining -= tier3_pieces
+        
+        # Tier 4+: Beyond tier3_threshold (e.g., 2001+ pieces at 3.5 EGP each)
+        if pieces_remaining > 0:
+            total_piece_pay += pieces_remaining * self.worker.tier4_rate
+        
+        return round(total_piece_pay, 2)
 
     def calculate_daily_pay(self):
         """Calculate total daily pay including salary, overtime, piece-rate, deductions, and bonuses"""

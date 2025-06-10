@@ -118,11 +118,40 @@ class WorkerForm(FlaskForm):
     daily_salary = FloatField('Daily Salary (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     overtime_rate = FloatField('Overtime Rate (EGP/hour)', validators=[NumberRange(min=0)], default=0.0)
     
-    # Piece-rate payment system
+    # Department and Brand Assignment
+    department = SelectField('Department', choices=[
+        ('General', 'General'), 
+        ('Print', 'Print (T-Shirt Printing)'), 
+        ('Sewing', 'Sewing'),
+        ('Cutting', 'Cutting'),
+        ('Packaging', 'Packaging'),
+        ('Quality Control', 'Quality Control'),
+        ('Finishing', 'Finishing')
+    ], validators=[DataRequired()])
+    assigned_brand = SelectField('Assigned Brand', choices=[
+        ('SHARED', 'SHARED (Works for all brands)'),
+        ('URBRAND', 'URBRAND Only'),
+        ('SURVACCI', 'SURVACCI Only'),
+        ('AZIZ', 'AZIZ Only')
+    ], validators=[DataRequired()])
+    
+    # Enhanced Piece-rate payment system with multiple tiers
     piece_rate_enabled = BooleanField('Enable Piece-Rate Payment')
-    base_piece_rate = FloatField('Base Rate per Piece (EGP)', validators=[NumberRange(min=0)], default=0.0)
-    bonus_threshold = IntegerField('Bonus Threshold (pieces)', validators=[NumberRange(min=1)], default=100)
-    bonus_piece_rate = FloatField('Bonus Rate per Piece (EGP)', validators=[NumberRange(min=0)], default=0.0)
+    
+    # Tier 1 Configuration
+    tier1_threshold = IntegerField('Tier 1 Threshold (pieces)', validators=[NumberRange(min=1)], default=1000)
+    tier1_rate = FloatField('Tier 1 Rate (EGP per piece)', validators=[NumberRange(min=0)], default=3.0)
+    
+    # Tier 2 Configuration
+    tier2_threshold = IntegerField('Tier 2 Threshold (pieces)', validators=[NumberRange(min=1)], default=1500)
+    tier2_rate = FloatField('Tier 2 Rate (EGP per piece)', validators=[NumberRange(min=0)], default=2.0)
+    
+    # Tier 3 Configuration
+    tier3_threshold = IntegerField('Tier 3 Threshold (pieces)', validators=[NumberRange(min=1)], default=2000)
+    tier3_rate = FloatField('Tier 3 Rate (EGP per piece)', validators=[NumberRange(min=0)], default=3.0)
+    
+    # Tier 4+ Configuration
+    tier4_rate = FloatField('Tier 4+ Rate (EGP per piece)', validators=[NumberRange(min=0)], default=3.5)
     
     position = StringField('Position', validators=[Length(max=100)], default='Worker')
     hire_date = DateField('Hire Date', validators=[DataRequired()], default=datetime.today)
