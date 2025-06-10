@@ -766,39 +766,75 @@ def workers():
     return render_template('workers.html', worker_stats=worker_stats)
 
 
-@app.route('/workers/new', methods=['GET', 'POST'])
+@app.route('/workers/new', methods=['POST'])
 @login_required
 def new_worker():
     """Add a new worker"""
-    form = WorkerForm()
+    from models import Worker
+    from datetime import datetime
     
-    if form.validate_on_submit():
+    try:
+        # Get form data directly from request
+        name = request.form.get('name')
+        phone_number = request.form.get('phone_number', '')
+        daily_salary = float(request.form.get('daily_salary')) if request.form.get('daily_salary') else 0.0
+        overtime_rate = float(request.form.get('overtime_rate')) if request.form.get('overtime_rate') else 0.0
+        department = request.form.get('department')
+        assigned_brand = request.form.get('assigned_brand')
+        position = request.form.get('position', 'Worker')
+        hire_date_str = request.form.get('hire_date')
+        notes = request.form.get('notes', '')
+        
+        # Piece-rate fields
+        piece_rate_enabled = bool(request.form.get('piece_rate_enabled'))
+        tier1_threshold = int(request.form.get('tier1_threshold')) if request.form.get('tier1_threshold') else 1000
+        tier1_rate = float(request.form.get('tier1_rate')) if request.form.get('tier1_rate') else 3.0
+        tier2_threshold = int(request.form.get('tier2_threshold')) if request.form.get('tier2_threshold') else 1500
+        tier2_rate = float(request.form.get('tier2_rate')) if request.form.get('tier2_rate') else 2.0
+        tier3_threshold = int(request.form.get('tier3_threshold')) if request.form.get('tier3_threshold') else 2000
+        tier3_rate = float(request.form.get('tier3_rate')) if request.form.get('tier3_rate') else 3.0
+        tier4_rate = float(request.form.get('tier4_rate')) if request.form.get('tier4_rate') else 3.5
+        
+        # Parse hire date
+        hire_date = datetime.strptime(hire_date_str, '%Y-%m-%d').date() if hire_date_str else datetime.today().date()
+        
+        # Validate required fields
+        if not all([name, department, assigned_brand, daily_salary >= 0]):
+            flash('Please fill in all required fields.', 'danger')
+            return redirect(url_for('workers'))
+        
+        # Create worker
         worker = Worker(
-            name=form.name.data,
-            phone_number=form.phone_number.data,
-            daily_salary=form.daily_salary.data,
-            overtime_rate=form.overtime_rate.data,
-            piece_rate_enabled=form.piece_rate_enabled.data,
-            base_piece_rate=form.base_piece_rate.data,
-            bonus_threshold=form.bonus_threshold.data,
-            bonus_piece_rate=form.bonus_piece_rate.data,
-            position=form.position.data,
-            hire_date=form.hire_date.data,
-            is_active=form.is_active.data,
-            notes=form.notes.data,
+            name=name,
+            phone_number=phone_number,
+            daily_salary=daily_salary,
+            overtime_rate=overtime_rate,
+            department=department,
+            assigned_brand=assigned_brand,
+            piece_rate_enabled=piece_rate_enabled,
+            tier1_threshold=tier1_threshold,
+            tier1_rate=tier1_rate,
+            tier2_threshold=tier2_threshold,
+            tier2_rate=tier2_rate,
+            tier3_threshold=tier3_threshold,
+            tier3_rate=tier3_rate,
+            tier4_rate=tier4_rate,
+            position=position,
+            hire_date=hire_date,
+            is_active=True,
+            notes=notes,
             created_by=current_user.id
         )
         
-        try:
-            db.session.add(worker)
-            db.session.commit()
-            flash('Worker added successfully', 'success')
-            return redirect(url_for('workers'))
-        except Exception as e:
-            db.session.rollback()
-            flash('Error adding worker', 'danger')
-    
-    return render_template('worker_form.html', form=form, title="Add New Worker")
+        db.session.add(worker)
+        db.session.commit()
+        flash('Worker added successfully!', 'success')
+        return redirect(url_for('workers'))
+        
+    except Exception as e:
+        db.session.rollback()
+        flash('Error creating worker. Please try again.', 'danger')
+        return redirect(url_for('workers'))
 
 
 @app.route('/workers/<int:id>/edit', methods=['GET', 'POST'])
