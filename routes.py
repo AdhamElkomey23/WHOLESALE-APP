@@ -338,7 +338,8 @@ def new_product():
             flash('Error creating product. Please try again.', 'danger')
             return redirect(url_for('products'))
     
-    return render_template('products.html', form=form, products=ProductType.query.all())
+    # Handle GET request - redirect to products page
+    return redirect(url_for('products'))
 
 @app.route('/products/<int:id>/edit', methods=['POST'])
 @login_required

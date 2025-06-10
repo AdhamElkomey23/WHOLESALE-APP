@@ -59,12 +59,16 @@
                                         <i class="fas fa-ellipsis-v"></i>
                                     </button>
                                     <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item" href="#" onclick="editProduct({{ product.id }})">
+                                        <li><a class="dropdown-item" href="{{ url_for('edit_product', id=product.id) }}">
                                             <i class="fas fa-edit me-2"></i>Edit
                                         </a></li>
-                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct({{ product.id }})">
-                                            <i class="fas fa-trash me-2"></i>Delete
-                                        </a></li>
+                                        <li>
+                                            <form method="POST" action="{{ url_for('delete_product', id=product.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                                <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
+                                                    <i class="fas fa-trash me-2"></i>Delete
+                                                </button>
+                                            </form>
+                                        </li>
                                     </ul>
                                 </div>
                             </div>
@@ -150,13 +154,105 @@
                 {% for product in products %}
                     {% if product.brand_group == 'SHARED' %}
                     <div class="col-xl-4 col-lg-6 col-md-6">
-                        <!-- Same card structure as above -->
                         <div class="card h-100 shadow-sm border-0 product-card">
-                            <!-- Product card content - same as above -->
+                            <div class="card-header bg-white border-bottom-0 pb-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1 fw-bold text-dark">{{ product.name }}</h5>
+                                        <span class="badge bg-primary mb-2">URBRAND/SURVACCI</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{{ url_for('edit_product', id=product.id) }}">
+                                                <i class="fas fa-edit me-2"></i>Edit
+                                            </a></li>
+                                            <li>
+                                                <form method="POST" action="{{ url_for('delete_product', id=product.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                                    <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
+                                                        <i class="fas fa-trash me-2"></i>Delete
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body pt-2">
+                                <!-- Price Information -->
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <div class="text-center p-2 bg-light rounded">
+                                            <div class="small text-muted">Cost Price</div>
+                                            <div class="fw-bold text-success">{{ "%.2f"|format(product.cost_price) }} EGP</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center p-2 bg-light rounded">
+                                            <div class="small text-muted">Selling Price</div>
+                                            <div class="fw-bold text-primary">{{ "%.2f"|format(product.selling_price) }} EGP</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Available Colors -->
+                                <div class="mb-3">
+                                    <div class="small text-muted fw-semibold mb-2">Available Colors</div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% if product.available_colors %}
+                                            {% for color in product.available_colors.split(',') %}
+                                                <span class="badge color-badge" style="background-color: {% if color.strip() == 'Black' %}#000000{% elif color.strip() == 'White' %}#ffffff; color: #000000; border: 1px solid #ddd{% elif color.strip() == 'Green' %}#28a745{% elif color.strip() == 'Petrol' %}#17a2b8{% elif color.strip() == 'Burgundy' %}#6f1e1e{% elif color.strip() == 'Brown' %}#8b4513{% elif color.strip() == 'Baby Pink' %}#ffb6c1; color: #000000{% else %}#6c757d{% endif %}">
+                                                    {{ color.strip() }}
+                                                </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted small">No colors set</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Available Sizes -->
+                                <div class="mb-3">
+                                    <div class="small text-muted fw-semibold mb-2">Available Sizes</div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% if product.available_sizes %}
+                                            {% for size in product.available_sizes.split(',') %}
+                                                <span class="badge bg-secondary size-badge">{{ size.strip() }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted small">No sizes set</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Profit Margin -->
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small text-muted">Profit Margin</span>
+                                        <span class="fw-bold text-success">
+                                            {{ "%.2f"|format(product.selling_price - product.cost_price) }} EGP
+                                            ({{ "%.1f"|format(((product.selling_price - product.cost_price) / product.cost_price * 100) if product.cost_price > 0 else 0) }}%)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
                 {% endfor %}
+                
+                {% if not products or not products|selectattr('brand_group', 'equalto', 'SHARED')|list %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No URBRAND/SURVACCI products yet</h4>
+                        <p class="text-muted">Create products for the shared storage system.</p>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
 
@@ -166,13 +262,105 @@
                 {% for product in products %}
                     {% if product.brand_group == 'AZIZ' %}
                     <div class="col-xl-4 col-lg-6 col-md-6">
-                        <!-- Same card structure as above -->
                         <div class="card h-100 shadow-sm border-0 product-card">
-                            <!-- Product card content - same as above -->
+                            <div class="card-header bg-white border-bottom-0 pb-0">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <h5 class="card-title mb-1 fw-bold text-dark">{{ product.name }}</h5>
+                                        <span class="badge bg-warning text-dark mb-2">AZIZ</span>
+                                    </div>
+                                    <div class="dropdown">
+                                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" href="{{ url_for('edit_product', id=product.id) }}">
+                                                <i class="fas fa-edit me-2"></i>Edit
+                                            </a></li>
+                                            <li>
+                                                <form method="POST" action="{{ url_for('delete_product', id=product.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                                    <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
+                                                        <i class="fas fa-trash me-2"></i>Delete
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body pt-2">
+                                <!-- Price Information -->
+                                <div class="row mb-3">
+                                    <div class="col-6">
+                                        <div class="text-center p-2 bg-light rounded">
+                                            <div class="small text-muted">Cost Price</div>
+                                            <div class="fw-bold text-success">{{ "%.2f"|format(product.cost_price) }} EGP</div>
+                                        </div>
+                                    </div>
+                                    <div class="col-6">
+                                        <div class="text-center p-2 bg-light rounded">
+                                            <div class="small text-muted">Selling Price</div>
+                                            <div class="fw-bold text-primary">{{ "%.2f"|format(product.selling_price) }} EGP</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Available Colors -->
+                                <div class="mb-3">
+                                    <div class="small text-muted fw-semibold mb-2">Available Colors</div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% if product.available_colors %}
+                                            {% for color in product.available_colors.split(',') %}
+                                                <span class="badge color-badge" style="background-color: {% if color.strip() == 'Black' %}#000000{% elif color.strip() == 'White' %}#ffffff; color: #000000; border: 1px solid #ddd{% elif color.strip() == 'Green' %}#28a745{% elif color.strip() == 'Petrol' %}#17a2b8{% elif color.strip() == 'Burgundy' %}#6f1e1e{% elif color.strip() == 'Brown' %}#8b4513{% elif color.strip() == 'Baby Pink' %}#ffb6c1; color: #000000{% else %}#6c757d{% endif %}">
+                                                    {{ color.strip() }}
+                                                </span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted small">No colors set</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Available Sizes -->
+                                <div class="mb-3">
+                                    <div class="small text-muted fw-semibold mb-2">Available Sizes</div>
+                                    <div class="d-flex flex-wrap gap-1">
+                                        {% if product.available_sizes %}
+                                            {% for size in product.available_sizes.split(',') %}
+                                                <span class="badge bg-secondary size-badge">{{ size.strip() }}</span>
+                                            {% endfor %}
+                                        {% else %}
+                                            <span class="text-muted small">No sizes set</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <!-- Profit Margin -->
+                                <div class="mt-auto">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="small text-muted">Profit Margin</span>
+                                        <span class="fw-bold text-success">
+                                            {{ "%.2f"|format(product.selling_price - product.cost_price) }} EGP
+                                            ({{ "%.1f"|format(((product.selling_price - product.cost_price) / product.cost_price * 100) if product.cost_price > 0 else 0) }}%)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     {% endif %}
                 {% endfor %}
+                
+                {% if not products or not products|selectattr('brand_group', 'equalto', 'AZIZ')|list %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No AZIZ products yet</h4>
+                        <p class="text-muted">Create products for the separate AZIZ storage system.</p>
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -446,11 +634,24 @@
 </style>
 
 <script>
-// Calculate profit margin in real-time
-document.getElementById('costPrice').addEventListener('input', calculateMargin);
-document.getElementById('sellingPrice').addEventListener('input', calculateMargin);
+// Add event listeners when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    const costInput = document.getElementById('costPrice');
+    const sellingInput = document.getElementById('sellingPrice');
+    
+    if (costInput && sellingInput) {
+        costInput.addEventListener('input', updateProfitDisplay);
+        sellingInput.addEventListener('input', updateProfitDisplay);
+    }
+});
 
-function calculateMargin() {
+// Reset form when modal is closed
+document.getElementById('productModal').addEventListener('hidden.bs.modal', function () {
+    document.getElementById('productForm').reset();
+});
+
+// Real-time profit calculation
+function updateProfitDisplay() {
     const cost = parseFloat(document.getElementById('costPrice').value) || 0;
     const selling = parseFloat(document.getElementById('sellingPrice').value) || 0;
     
@@ -458,20 +659,19 @@ function calculateMargin() {
         const margin = selling - cost;
         const percentage = (margin / cost * 100).toFixed(1);
         
-        // You can add a margin display element here if needed
-        console.log(`Margin: ${margin.toFixed(2)} EGP (${percentage}%)`);
-    }
-}
-
-function editProduct(productId) {
-    // Implementation for editing product
-    console.log('Edit product:', productId);
-}
-
-function deleteProduct(productId) {
-    if (confirm('Are you sure you want to delete this product?')) {
-        // Implementation for deleting product
-        console.log('Delete product:', productId);
+        // Update visual feedback
+        const costInput = document.getElementById('costPrice');
+        const sellingInput = document.getElementById('sellingPrice');
+        
+        if (selling <= cost) {
+            sellingInput.classList.add('is-invalid');
+            costInput.classList.add('is-invalid');
+        } else {
+            sellingInput.classList.remove('is-invalid');
+            costInput.classList.remove('is-invalid');
+            sellingInput.classList.add('is-valid');
+            costInput.classList.add('is-valid');
+        }
     }
 }
 </script>
