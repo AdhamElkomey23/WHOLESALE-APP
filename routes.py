@@ -2,7 +2,7 @@ from flask import render_template, redirect, url_for, flash, request, jsonify, m
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, db
-from models import User, Order, ProductType, Worker, WorkerAttendance
+from models import User, Order, ProductType, Inventory, StockMovement, Worker, WorkerAttendance
 from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm, WorkerForm, AttendanceForm, AttendanceFilterForm
 from utils import generate_invoice_pdf, export_data_csv
 from datetime import datetime, timedelta
@@ -283,20 +283,60 @@ def products():
 @app.route('/products/new', methods=['GET', 'POST'])
 @login_required
 def new_product():
-    form = ProductTypeForm()
-    if form.validate_on_submit():
-        product = ProductType(
-            name=form.name.data,
-            cost_price=form.cost_price.data,
-            selling_price=form.selling_price.data,
-            brand_group=form.brand_group.data,
-            available_colors=','.join(form.available_colors.data) if form.available_colors.data else '',
-            available_sizes=','.join(form.available_sizes.data) if form.available_sizes.data else ''
-        )
-        db.session.add(product)
-        db.session.commit()
-        flash('Product created successfully!', 'success')
-        return redirect(url_for('products'))
+    if request.method == 'POST':
+        try:
+            # Get form data from the modal form
+            name = request.form.get('name')
+            cost_price = float(request.form.get('cost_price', 0))
+            selling_price = float(request.form.get('selling_price', 0))
+            brand_group = request.form.get('brand_group')
+            
+            # Get selected colors and sizes from checkboxes
+            selected_colors = request.form.getlist('available_colors')
+            selected_sizes = request.form.getlist('available_sizes')
+            
+            # Validate required fields
+            if not name or not brand_group or cost_price <= 0 or selling_price <= 0:
+                flash('Please fill in all required fields with valid values.', 'danger')
+                return redirect(url_for('products'))
+            
+            if selling_price <= cost_price:
+                flash('Selling price must be higher than cost price.', 'danger')
+                return redirect(url_for('products'))
+            
+            if not selected_colors or not selected_sizes:
+                flash('Please select at least one color and one size.', 'danger')
+                return redirect(url_for('products'))
+            
+            # Create new product
+            product = ProductType(
+                name=name,
+                cost_price=cost_price,
+                selling_price=selling_price,
+                brand_group=brand_group,
+                available_colors=','.join(selected_colors),
+                available_sizes=','.join(selected_sizes)
+            )
+            db.session.add(product)
+            db.session.commit()
+            
+            # Create initial inventory records
+            storage_type = 'SHARED' if brand_group == 'SHARED' else 'AZIZ'
+            inventory = Inventory(
+                product_type_id=product.id,
+                storage_type=storage_type,
+                quantity=0
+            )
+            db.session.add(inventory)
+            db.session.commit()
+            
+            flash('Product created successfully!', 'success')
+            return redirect(url_for('products'))
+            
+        except Exception as e:
+            db.session.rollback()
+            flash('Error creating product. Please try again.', 'danger')
+            return redirect(url_for('products'))
     
     return render_template('products.html', form=form, products=ProductType.query.all())
 
@@ -330,10 +370,22 @@ def delete_product(id):
     # Check if product is used in any orders
     if product.orders:
         flash('Cannot delete product as it is used in existing orders!', 'danger')
-    else:
+        return redirect(url_for('products'))
+    
+    try:
+        # Delete related inventory records first
+        Inventory.query.filter_by(product_type_id=id).delete()
+        
+        # Delete related stock movements
+        StockMovement.query.filter_by(product_type_id=id).delete()
+        
+        # Now delete the product
         db.session.delete(product)
         db.session.commit()
         flash('Product deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting product. Please try again.', 'danger')
     
     return redirect(url_for('products'))
 

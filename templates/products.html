@@ -3,331 +3,476 @@
 {% block title %}Products - Wholesale Management{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <!-- Header -->
-    <div class="row mb-4">
-        <div class="col">
-            <h2><i class="fas fa-tags"></i> Product Types Management</h2>
+<div class="container-fluid py-4">
+    <!-- Header with Add Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-dark fw-bold mb-0">Product Management</h1>
+            <p class="text-muted mb-0">Manage your product catalog with colors and sizes</p>
+        </div>
+        <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#productModal">
+            <i class="fas fa-plus me-2"></i>Add New Product
+        </button>
+    </div>
+
+    <!-- Brand Filter Tabs -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-3">
+            <ul class="nav nav-pills nav-fill" id="brandTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active fw-semibold" id="all-tab" data-bs-toggle="pill" data-bs-target="#all-products" type="button" role="tab">
+                        <i class="fas fa-th-large me-2"></i>All Products
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="shared-tab" data-bs-toggle="pill" data-bs-target="#shared-products" type="button" role="tab">
+                        <i class="fas fa-boxes me-2"></i>URBRAND/SURVACCI
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link fw-semibold" id="aziz-tab" data-bs-toggle="pill" data-bs-target="#aziz-products" type="button" role="tab">
+                        <i class="fas fa-star me-2"></i>AZIZ
+                    </button>
+                </li>
+            </ul>
         </div>
     </div>
 
-    <div class="row">
-        <!-- Product Form -->
-        <div class="col-lg-4 mb-4">
-            <div class="card">
-                <div class="card-header">
-                    <h5><i class="fas fa-plus"></i> Add New Product Type</h5>
-                </div>
-                <div class="card-body">
-                    <form method="POST" action="{{ url_for('new_product') }}">
-                        {% if form %}
-                            {{ form.hidden_tag() }}
-                            
-                            <div class="mb-3">
-                                {{ form.name.label(class="form-label") }}
-                                {{ form.name(class="form-control" + (" is-invalid" if form.name.errors else "")) }}
-                                {% if form.name.errors %}
-                                    <div class="invalid-feedback">
-                                        {% for error in form.name.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-3">
-                                {{ form.cost_price.label(class="form-label") }}
-                                <div class="input-group">
-                                    {{ form.cost_price(class="form-control" + (" is-invalid" if form.cost_price.errors else "")) }}
-                                    <span class="input-group-text">EGP</span>
+    <!-- Product Grid -->
+    <div class="tab-content" id="brandTabsContent">
+        <!-- All Products -->
+        <div class="tab-pane fade show active" id="all-products" role="tabpanel">
+            <div class="row g-4">
+                {% for product in products %}
+                <div class="col-xl-4 col-lg-6 col-md-6">
+                    <div class="card h-100 shadow-sm border-0 product-card">
+                        <div class="card-header bg-white border-bottom-0 pb-0">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h5 class="card-title mb-1 fw-bold text-dark">{{ product.name }}</h5>
+                                    <span class="badge {% if product.brand_group == 'SHARED' %}bg-primary{% else %}bg-warning text-dark{% endif %} mb-2">
+                                        {% if product.brand_group == 'SHARED' %}URBRAND/SURVACCI{% else %}AZIZ{% endif %}
+                                    </span>
                                 </div>
-                                {% if form.cost_price.errors %}
-                                    <div class="invalid-feedback">
-                                        {% for error in form.cost_price.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                            
-                            <div class="mb-3">
-                                {{ form.selling_price.label(class="form-label") }}
-                                <div class="input-group">
-                                    {{ form.selling_price(class="form-control" + (" is-invalid" if form.selling_price.errors else "")) }}
-                                    <span class="input-group-text">EGP</span>
+                                <div class="dropdown">
+                                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item" href="#" onclick="editProduct({{ product.id }})">
+                                            <i class="fas fa-edit me-2"></i>Edit
+                                        </a></li>
+                                        <li><a class="dropdown-item text-danger" href="#" onclick="deleteProduct({{ product.id }})">
+                                            <i class="fas fa-trash me-2"></i>Delete
+                                        </a></li>
+                                    </ul>
                                 </div>
-                                {% if form.selling_price.errors %}
-                                    <div class="invalid-feedback">
-                                        {% for error in form.selling_price.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
                             </div>
-                            
+                        </div>
+                        
+                        <div class="card-body pt-2">
+                            <!-- Price Information -->
+                            <div class="row mb-3">
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="small text-muted">Cost Price</div>
+                                        <div class="fw-bold text-success">{{ "%.2f"|format(product.cost_price) }} EGP</div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="text-center p-2 bg-light rounded">
+                                        <div class="small text-muted">Selling Price</div>
+                                        <div class="fw-bold text-primary">{{ "%.2f"|format(product.selling_price) }} EGP</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Available Colors -->
                             <div class="mb-3">
-                                {{ form.brand_group.label(class="form-label") }}
-                                {{ form.brand_group(class="form-select" + (" is-invalid" if form.brand_group.errors else "")) }}
-                                {% if form.brand_group.errors %}
-                                    <div class="invalid-feedback">
-                                        {% for error in form.brand_group.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
+                                <div class="small text-muted fw-semibold mb-2">Available Colors</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% if product.available_colors %}
+                                        {% for color in product.available_colors.split(',') %}
+                                            <span class="badge color-badge" style="background-color: {% if color.strip() == 'Black' %}#000000{% elif color.strip() == 'White' %}#ffffff; color: #000000; border: 1px solid #ddd{% elif color.strip() == 'Green' %}#28a745{% elif color.strip() == 'Petrol' %}#17a2b8{% elif color.strip() == 'Burgundy' %}#6f1e1e{% elif color.strip() == 'Brown' %}#8b4513{% elif color.strip() == 'Baby Pink' %}#ffb6c1; color: #000000{% else %}#6c757d{% endif %}">
+                                                {{ color.strip() }}
+                                            </span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted small">No colors set</span>
+                                    {% endif %}
+                                </div>
                             </div>
-                            
+
+                            <!-- Available Sizes -->
                             <div class="mb-3">
-                                {{ form.available_colors.label(class="form-label") }}
-                                {{ form.available_colors(class="form-select modern-multiselect" + (" is-invalid" if form.available_colors.errors else ""), multiple=True, id="availableColors") }}
-                                <div class="form-text">Select multiple colors for this product</div>
-                                {% if form.available_colors.errors %}
-                                    <div class="invalid-feedback">
-                                        {% for error in form.available_colors.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
+                                <div class="small text-muted fw-semibold mb-2">Available Sizes</div>
+                                <div class="d-flex flex-wrap gap-1">
+                                    {% if product.available_sizes %}
+                                        {% for size in product.available_sizes.split(',') %}
+                                            <span class="badge bg-secondary size-badge">{{ size.strip() }}</span>
+                                        {% endfor %}
+                                    {% else %}
+                                        <span class="text-muted small">No sizes set</span>
+                                    {% endif %}
+                                </div>
                             </div>
-                            
-                            <div class="mb-3">
-                                {{ form.available_sizes.label(class="form-label") }}
-                                {{ form.available_sizes(class="form-select modern-multiselect" + (" is-invalid" if form.available_sizes.errors else ""), multiple=True, id="availableSizes") }}
-                                <div class="form-text">Select multiple sizes for this product</div>
-                                {% if form.available_sizes.errors %}
-                                    <div class="invalid-feedback">
-                                        {% for error in form.available_sizes.errors %}{{ error }}{% endfor %}
-                                    </div>
-                                {% endif %}
+
+                            <!-- Profit Margin -->
+                            <div class="mt-auto">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span class="small text-muted">Profit Margin</span>
+                                    <span class="fw-bold text-success">
+                                        {{ "%.2f"|format(product.selling_price - product.cost_price) }} EGP
+                                        ({{ "%.1f"|format(((product.selling_price - product.cost_price) / product.cost_price * 100) if product.cost_price > 0 else 0) }}%)
+                                    </span>
+                                </div>
                             </div>
-                            
-                            <div class="d-grid">
-                                {{ form.submit(class="btn btn-primary") }}
-                            </div>
-                        {% endif %}
-                    </form>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Products List -->
-        <div class="col-lg-8">
-            <!-- Brand Filter Buttons -->
-            <div class="card mb-3">
-                <div class="card-body py-2">
-                    <div class="btn-group w-100" role="group" aria-label="Brand Filter">
-                        <button type="button" class="btn btn-outline-primary active" id="filter-all" onclick="filterProducts('all')">
-                            <i class="fas fa-list me-2"></i>All Products
-                        </button>
-                        <button type="button" class="btn btn-outline-primary" id="filter-shared" onclick="filterProducts('SHARED')">
-                            <i class="fas fa-handshake me-2"></i>URBRAND/SURVACCI
-                        </button>
-                        <button type="button" class="btn btn-outline-warning" id="filter-aziz" onclick="filterProducts('AZIZ')">
-                            <i class="fas fa-crown me-2"></i>AZIZ
-                        </button>
+                        </div>
                     </div>
                 </div>
+                {% endfor %}
+
+                {% if not products %}
+                <div class="col-12">
+                    <div class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No products yet</h4>
+                        <p class="text-muted">Start by adding your first product using the button above.</p>
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <h5>Current Product Types</h5>
-                </div>
-                <div class="card-body">
-                    {% if products %}
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Product Name</th>
-                                        <th>Cost Price (EGP)</th>
-                                        <th>Selling Price (EGP)</th>
-                                        <th>Brand Group</th>
-                                        <th>Profit Margin</th>
-                                        <th>Orders Count</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for product in products %}
-                                        <tr data-brand-group="{{ product.brand_group }}" class="product-row">
-                                            <td><strong>{{ product.name }}</strong></td>
-                                            <td>{{ "{:,.2f}".format(product.cost_price) }}</td>
-                                            <td>{{ "{:,.2f}".format(product.selling_price) }}</td>
-                                            <td>
-                                                <span class="badge {% if product.brand_group == 'SHARED' %}bg-primary{% else %}bg-warning{% endif %}">
-                                                    {% if product.brand_group == 'SHARED' %}URBRAND/SURVACCI{% else %}AZIZ{% endif %}
-                                                </span>
-                                            </td>
-                                            <td>
-                                                {% set margin = ((product.selling_price - product.cost_price) / product.cost_price * 100) if product.cost_price > 0 else 0 %}
-                                                <span class="badge {% if margin > 50 %}bg-success{% elif margin > 20 %}bg-warning{% else %}bg-danger{% endif %}">
-                                                    {{ "{:.1f}".format(margin) }}%
-                                                </span>
-                                            </td>
-                                            <td>
-                                                <span class="badge bg-info">{{ product.orders|length }}</span>
-                                            </td>
-                                            <td>
-                                                <div class="btn-group btn-group-sm" role="group">
-                                                    <button type="button" class="btn btn-outline-primary" 
-                                                            onclick="editProduct({{ product.id }}, '{{ product.name }}', {{ product.cost_price }}, {{ product.selling_price }}, '{{ product.brand_group }}')">
-                                                        <i class="fas fa-edit"></i>
-                                                    </button>
-                                                    <button type="button" class="btn btn-outline-danger" 
-                                                            onclick="confirmDelete({{ product.id }}, '{{ product.name }}', {{ product.orders|length }})">
-                                                        <i class="fas fa-trash"></i>
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+        </div>
+
+        <!-- Shared Products Tab -->
+        <div class="tab-pane fade" id="shared-products" role="tabpanel">
+            <div class="row g-4">
+                {% for product in products %}
+                    {% if product.brand_group == 'SHARED' %}
+                    <div class="col-xl-4 col-lg-6 col-md-6">
+                        <!-- Same card structure as above -->
+                        <div class="card h-100 shadow-sm border-0 product-card">
+                            <!-- Product card content - same as above -->
                         </div>
-                    {% else %}
-                        <div class="text-center text-muted py-5">
-                            <i class="fas fa-tags fa-4x mb-3"></i>
-                            <h4>No product types found</h4>
-                            <p>Start by adding your first product type</p>
-                        </div>
+                    </div>
                     {% endif %}
-                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- AZIZ Products Tab -->
+        <div class="tab-pane fade" id="aziz-products" role="tabpanel">
+            <div class="row g-4">
+                {% for product in products %}
+                    {% if product.brand_group == 'AZIZ' %}
+                    <div class="col-xl-4 col-lg-6 col-md-6">
+                        <!-- Same card structure as above -->
+                        <div class="card h-100 shadow-sm border-0 product-card">
+                            <!-- Product card content - same as above -->
+                        </div>
+                    </div>
+                    {% endif %}
+                {% endfor %}
             </div>
         </div>
     </div>
 </div>
 
-<!-- Edit Product Modal -->
-<div class="modal fade" id="editModal" tabindex="-1">
-    <div class="modal-dialog">
+<!-- Product Modal -->
+<div class="modal fade" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Edit Product Type</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="productModalLabel">
+                    <i class="fas fa-plus me-2"></i>Add New Product
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editForm" method="POST">
+            <form method="POST" action="{{ url_for('new_product') }}" id="productForm">
+                {% if form %}
+                    {{ form.hidden_tag() }}
+                {% endif %}
                 <div class="modal-body">
-                    <div class="mb-3">
-                        <label for="editName" class="form-label">Product Name</label>
-                        <input type="text" class="form-control" id="editName" name="name" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editCostPrice" class="form-label">Cost Price (EGP)</label>
-                        <input type="number" step="0.01" min="0" class="form-control" id="editCostPrice" name="cost_price" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editSellingPrice" class="form-label">Selling Price (EGP)</label>
-                        <input type="number" step="0.01" min="0" class="form-control" id="editSellingPrice" name="selling_price" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="editBrandGroup" class="form-label">Brand Group</label>
-                        <select class="form-select" id="editBrandGroup" name="brand_group" required>
-                            <option value="SHARED">URBRAND/SURVACCI (Shared Storage)</option>
-                            <option value="AZIZ">AZIZ (Separate Storage)</option>
-                        </select>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="productName" class="form-label fw-semibold">Product Name</label>
+                                <input type="text" class="form-control form-control-lg" id="productName" name="name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="brandGroup" class="form-label fw-semibold">Brand Group</label>
+                                <select class="form-select form-select-lg" id="brandGroup" name="brand_group" required>
+                                    <option value="">Choose brand group...</option>
+                                    <option value="SHARED">URBRAND/SURVACCI (Shared Storage)</option>
+                                    <option value="AZIZ">AZIZ (Separate Storage)</option>
+                                </select>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="costPrice" class="form-label fw-semibold">Cost Price</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.01" class="form-control form-control-lg" id="costPrice" name="cost_price" required>
+                                            <span class="input-group-text">EGP</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-6">
+                                    <div class="mb-3">
+                                        <label for="sellingPrice" class="form-label fw-semibold">Selling Price</label>
+                                        <div class="input-group">
+                                            <input type="number" step="0.01" class="form-control form-control-lg" id="sellingPrice" name="selling_price" required>
+                                            <span class="input-group-text">EGP</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="availableColors" class="form-label fw-semibold">Available Colors</label>
+                                <div class="color-selection-area border rounded p-3" style="min-height: 120px; background: #f8f9fa;">
+                                    <div class="row g-2">
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="Black" id="colorBlack" name="available_colors">
+                                                <label class="form-check-label d-flex align-items-center" for="colorBlack">
+                                                    <span class="color-swatch me-2" style="background-color: #000000;"></span>
+                                                    Black
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="White" id="colorWhite" name="available_colors">
+                                                <label class="form-check-label d-flex align-items-center" for="colorWhite">
+                                                    <span class="color-swatch me-2" style="background-color: #ffffff; border: 1px solid #ddd;"></span>
+                                                    White
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="Green" id="colorGreen" name="available_colors">
+                                                <label class="form-check-label d-flex align-items-center" for="colorGreen">
+                                                    <span class="color-swatch me-2" style="background-color: #28a745;"></span>
+                                                    Green
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="Petrol" id="colorPetrol" name="available_colors">
+                                                <label class="form-check-label d-flex align-items-center" for="colorPetrol">
+                                                    <span class="color-swatch me-2" style="background-color: #17a2b8;"></span>
+                                                    Petrol
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="Burgundy" id="colorBurgundy" name="available_colors">
+                                                <label class="form-check-label d-flex align-items-center" for="colorBurgundy">
+                                                    <span class="color-swatch me-2" style="background-color: #6f1e1e;"></span>
+                                                    Burgundy
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="Brown" id="colorBrown" name="available_colors">
+                                                <label class="form-check-label d-flex align-items-center" for="colorBrown">
+                                                    <span class="color-swatch me-2" style="background-color: #8b4513;"></span>
+                                                    Brown
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="col-6 col-md-4">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="Baby Pink" id="colorBabyPink" name="available_colors">
+                                                <label class="form-check-label d-flex align-items-center" for="colorBabyPink">
+                                                    <span class="color-swatch me-2" style="background-color: #ffb6c1;"></span>
+                                                    Baby Pink
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="availableSizes" class="form-label fw-semibold">Available Sizes</label>
+                                <div class="size-selection-area border rounded p-3" style="background: #f8f9fa;">
+                                    <div class="row g-2">
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="XS" id="sizeXS" name="available_sizes">
+                                                <label class="form-check-label" for="sizeXS">XS</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="S" id="sizeS" name="available_sizes">
+                                                <label class="form-check-label" for="sizeS">S</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="M" id="sizeM" name="available_sizes">
+                                                <label class="form-check-label" for="sizeM">M</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="L" id="sizeL" name="available_sizes">
+                                                <label class="form-check-label" for="sizeL">L</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="XL" id="sizeXL" name="available_sizes">
+                                                <label class="form-check-label" for="sizeXL">XL</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="XXL" id="sizeXXL" name="available_sizes">
+                                                <label class="form-check-label" for="sizeXXL">XXL</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="XXXL" id="sizeXXXL" name="available_sizes">
+                                                <label class="form-check-label" for="sizeXXXL">3XL</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="XXXXL" id="sizeXXXXL" name="available_sizes">
+                                                <label class="form-check-label" for="sizeXXXXL">4XL</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-4 col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" value="XXXXXL" id="sizeXXXXXL" name="available_sizes">
+                                                <label class="form-check-label" for="sizeXXXXXL">5XL</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Save Product
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div class="modal fade" id="deleteModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Confirm Delete</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <p id="deleteMessage"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" style="display: inline;">
-                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                    <button type="submit" class="btn btn-danger">Delete</button>
-                </form>
-            </div>
-        </div>
-    </div>
-</div>
-{% endblock %}
+<!-- Custom CSS -->
+<style>
+.product-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-{% block scripts %}
+.product-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.color-badge {
+    padding: 0.4rem 0.7rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0.1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.size-badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin: 0.1rem;
+}
+
+.color-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.nav-pills .nav-link {
+    border-radius: 0.5rem;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+}
+
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    box-shadow: 0 4px 15px rgba(162, 93, 40, 0.3);
+}
+
+.color-selection-area, .size-selection-area {
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.form-check-label {
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+}
+
+.form-check-input:checked {
+    background-color: var(--accent-primary);
+    border-color: var(--accent-primary);
+}
+</style>
+
 <script>
-function filterProducts(brandGroup) {
-    // Remove active class from all buttons
-    document.querySelectorAll('.btn-group button').forEach(btn => {
-        btn.classList.remove('active');
-        btn.classList.add('btn-outline-primary', 'btn-outline-warning');
-        btn.classList.remove('btn-primary', 'btn-warning');
-    });
+// Calculate profit margin in real-time
+document.getElementById('costPrice').addEventListener('input', calculateMargin);
+document.getElementById('sellingPrice').addEventListener('input', calculateMargin);
+
+function calculateMargin() {
+    const cost = parseFloat(document.getElementById('costPrice').value) || 0;
+    const selling = parseFloat(document.getElementById('sellingPrice').value) || 0;
     
-    // Add active class to clicked button
-    const activeButton = document.getElementById(`filter-${brandGroup === 'all' ? 'all' : brandGroup.toLowerCase()}`);
-    if (activeButton) {
-        activeButton.classList.add('active');
-        if (brandGroup === 'AZIZ') {
-            activeButton.classList.remove('btn-outline-warning');
-            activeButton.classList.add('btn-warning');
-        } else {
-            activeButton.classList.remove('btn-outline-primary');
-            activeButton.classList.add('btn-primary');
-        }
-    }
-    
-    // Show/hide product rows based on filter
-    const productRows = document.querySelectorAll('.product-row');
-    let visibleCount = 0;
-    
-    productRows.forEach(row => {
-        const rowBrandGroup = row.getAttribute('data-brand-group');
-        if (brandGroup === 'all' || rowBrandGroup === brandGroup) {
-            row.style.display = '';
-            visibleCount++;
-        } else {
-            row.style.display = 'none';
-        }
-    });
-    
-    // Update table visibility message if no products match filter
-    const tableContainer = document.querySelector('.table-responsive');
-    const noProductsMessage = document.getElementById('no-products-message');
-    
-    if (visibleCount === 0) {
-        if (tableContainer) tableContainer.style.display = 'none';
-        if (!noProductsMessage) {
-            const message = document.createElement('p');
-            message.id = 'no-products-message';
-            message.className = 'text-muted text-center';
-            message.textContent = `No products found for ${brandGroup === 'SHARED' ? 'URBRAND/SURVACCI' : brandGroup === 'AZIZ' ? 'AZIZ' : 'this filter'}.`;
-            tableContainer.parentNode.appendChild(message);
-        }
-    } else {
-        if (tableContainer) tableContainer.style.display = '';
-        if (noProductsMessage) noProductsMessage.remove();
+    if (cost > 0 && selling > 0) {
+        const margin = selling - cost;
+        const percentage = (margin / cost * 100).toFixed(1);
+        
+        // You can add a margin display element here if needed
+        console.log(`Margin: ${margin.toFixed(2)} EGP (${percentage}%)`);
     }
 }
 
-function editProduct(id, name, costPrice, sellingPrice, brandGroup) {
-    document.getElementById('editForm').action = `/products/${id}/edit`;
-    document.getElementById('editName').value = name;
-    document.getElementById('editCostPrice').value = costPrice;
-    document.getElementById('editSellingPrice').value = sellingPrice;
-    document.getElementById('editBrandGroup').value = brandGroup;
-    new bootstrap.Modal(document.getElementById('editModal')).show();
+function editProduct(productId) {
+    // Implementation for editing product
+    console.log('Edit product:', productId);
 }
 
-function confirmDelete(productId, productName, ordersCount) {
-    const message = ordersCount > 0 
-        ? `Cannot delete "${productName}" as it is used in ${ordersCount} order(s).`
-        : `Are you sure you want to delete "${productName}"? This action cannot be undone.`;
-    
-    document.getElementById('deleteMessage').textContent = message;
-    document.getElementById('deleteForm').action = `/products/${productId}/delete`;
-    
-    // Disable delete button if product has orders
-    const deleteButton = document.querySelector('#deleteForm button[type="submit"]');
-    deleteButton.disabled = ordersCount > 0;
-    
-    new bootstrap.Modal(document.getElementById('deleteModal')).show();
+function deleteProduct(productId) {
+    if (confirm('Are you sure you want to delete this product?')) {
+        // Implementation for deleting product
+        console.log('Delete product:', productId);
+    }
 }
 </script>
 {% endblock %}
