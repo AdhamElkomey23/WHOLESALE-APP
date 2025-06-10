@@ -176,62 +176,84 @@ def orders():
 @login_required
 def new_order():
     form = OrderForm()
-    if form.validate_on_submit():
-        from models import Inventory, StockMovement
-        
-        # Check stock availability before creating order
-        available_stock = Inventory.get_available_stock(
-            form.product_type_id.data, 
-            form.brand.data
-        )
-        
-        if available_stock < form.total_pieces.data:
-            flash(f'Insufficient stock! Available: {available_stock}, Required: {form.total_pieces.data}', 'error')
-            return render_template('order_form.html', form=form, title='New Order')
-        
-        # Create the order
-        order = Order(
-            client_name=form.client_name.data,
-            phone_number=form.phone_number.data,
-            date=form.date.data,
-            product_type_id=form.product_type_id.data,
-            total_pieces=form.total_pieces.data,
-            selected_colors=','.join(form.selected_colors.data) if form.selected_colors.data else '',
-            selected_sizes=','.join(form.selected_sizes.data) if form.selected_sizes.data else '',
-            pieces_per_color=form.pieces_per_color.data,
-            is_printed=form.is_printed.data,
-            paid_amount=form.paid_amount.data,
-            remaining_amount=form.remaining_amount.data,
-            brand=form.brand.data
-        )
-        db.session.add(order)
-        db.session.flush()  # Get the order ID
-        
-        # Update stock
-        stock_updated = Inventory.update_stock(
-            form.product_type_id.data,
-            form.brand.data,
-            form.total_pieces.data
-        )
-        
-        if stock_updated:
-            # Create stock movement record
-            storage_type = 'SHARED' if form.brand.data in ['URBRAND', 'SURVACCI'] else 'AZIZ'
-            movement = StockMovement(
-                product_type_id=form.product_type_id.data,
-                storage_type=storage_type,
+    if request.method == 'POST':
+        try:
+            # Get form data
+            client_name = request.form.get('client_name')
+            phone_number = request.form.get('phone_number')
+            date_str = request.form.get('date')
+            product_type_id = int(request.form.get('product_type_id')) if request.form.get('product_type_id') else None
+            total_pieces = int(request.form.get('total_pieces')) if request.form.get('total_pieces') else 0
+            pieces_per_color = int(request.form.get('pieces_per_color')) if request.form.get('pieces_per_color') else 0
+            is_printed = bool(request.form.get('is_printed'))
+            paid_amount = float(request.form.get('paid_amount')) if request.form.get('paid_amount') else 0.0
+            remaining_amount = float(request.form.get('remaining_amount')) if request.form.get('remaining_amount') else 0.0
+            brand = request.form.get('brand')
+            
+            # Get selected colors and sizes from the hidden multi-select fields
+            selected_colors = request.form.getlist('selected_colors')
+            selected_sizes = request.form.getlist('selected_sizes')
+            
+            # Parse date
+            from datetime import datetime
+            date = datetime.strptime(date_str, '%Y-%m-%d').date() if date_str else datetime.today().date()
+            
+            # Validate required fields
+            if not all([client_name, phone_number, product_type_id, total_pieces, brand]):
+                flash('Please fill in all required fields.', 'danger')
+                return render_template('order_form.html', form=form, title='New Order')
+            
+            if not selected_colors or not selected_sizes:
+                flash('Please select at least one color and one size.', 'danger')
+                return render_template('order_form.html', form=form, title='New Order')
+            
+            # Check stock availability before creating order
+            available_stock = Inventory.get_available_stock(product_type_id, brand)
+            
+            if available_stock < total_pieces:
+                flash(f'Insufficient stock! Available: {available_stock}, Required: {total_pieces}', 'danger')
+                return render_template('order_form.html', form=form, title='New Order')
+            
+            # Create the order
+            order = Order(
+                client_name=client_name,
+                phone_number=phone_number,
+                date=date,
+                product_type_id=product_type_id,
+                total_pieces=total_pieces,
+                selected_colors=','.join(selected_colors),
+                selected_sizes=','.join(selected_sizes),
+                pieces_per_color=pieces_per_color,
+                is_printed=is_printed,
+                paid_amount=paid_amount,
+                remaining_amount=remaining_amount,
+                brand=brand
+            )
+            db.session.add(order)
+            db.session.flush()  # Get the order ID
+            
+            # Update inventory
+            Inventory.update_stock(product_type_id, brand, total_pieces)
+            
+            # Record stock movement
+            stock_movement = StockMovement(
+                product_type_id=product_type_id,
+                storage_type='SHARED' if brand in ['URBRAND', 'SURVACCI'] else 'AZIZ',
                 movement_type='ORDER',
-                quantity=form.total_pieces.data,
+                quantity=-total_pieces,
                 order_id=order.id,
-                notes=f'Order #{order.id} for {form.client_name.data}',
+                notes=f'Order #{order.id} for {client_name}',
                 created_by=current_user.id
             )
-            db.session.add(movement)
+            db.session.add(stock_movement)
             db.session.commit()
-            flash('Order created successfully and stock updated!', 'success')
-        else:
+            
+            flash('Order created successfully!', 'success')
+            return redirect(url_for('orders'))
+            
+        except Exception as e:
             db.session.rollback()
-            flash('Error updating stock. Order not created.', 'error')
+            flash('Error creating order. Please try again.', 'danger')
             return render_template('order_form.html', form=form, title='New Order')
         
         return redirect(url_for('orders'))
