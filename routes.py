@@ -419,12 +419,8 @@ def new_product():
             selected_sizes = request.form.getlist('available_sizes')
             
             # Validate required fields
-            if not name or not brand_group or cost_price <= 0 or selling_price <= 0:
+            if not name or not brand_group or selling_price <= 0:
                 flash('Please fill in all required fields with valid values.', 'danger')
-                return redirect(url_for('products'))
-            
-            if selling_price <= cost_price:
-                flash('Selling price must be higher than cost price.', 'danger')
                 return redirect(url_for('products'))
             
             if not selected_colors or not selected_sizes:
