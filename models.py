@@ -2,6 +2,7 @@ from app import db
 from flask_login import UserMixin
 from datetime import datetime, timedelta
 from sqlalchemy import func
+import json
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -9,6 +10,23 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+class Client(db.Model):
+    """Client database for managing customer information"""
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    phone_number = db.Column(db.String(20), nullable=False)
+    email = db.Column(db.String(120))
+    address = db.Column(db.Text)
+    notes = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relationships
+    orders = db.relationship('Order', backref='client_obj', lazy=True)
+    
+    def __repr__(self):
+        return f'<Client {self.name}>'
 
 class ProductType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -20,54 +38,156 @@ class ProductType(db.Model):
     available_sizes = db.Column(db.Text, default='')  # Comma-separated list of sizes
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relationship with orders
-    orders = db.relationship('Order', backref='product_type_obj', lazy=True)
+    # Relationships
+    color_inventories = db.relationship('ColorSizeInventory', backref='product_type', lazy=True, cascade='all, delete-orphan')
+    
+    def get_colors_list(self):
+        """Get list of available colors"""
+        return [color.strip() for color in self.available_colors.split(',') if color.strip()]
+    
+    def get_sizes_list(self):
+        """Get list of available sizes"""
+        return [size.strip() for size in self.available_sizes.split(',') if size.strip()]
 
 class Order(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    client_name = db.Column(db.String(200), nullable=False)
+    order_code = db.Column(db.String(50), unique=True, nullable=False)
+    client_id = db.Column(db.Integer, db.ForeignKey('client.id'), nullable=True)  # Optional for backward compatibility
+    client_name = db.Column(db.String(200), nullable=False)  # Keep for backward compatibility
     phone_number = db.Column(db.String(20), nullable=False)
     date = db.Column(db.Date, nullable=False, default=datetime.utcnow().date())
-    product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
-    total_pieces = db.Column(db.Integer, nullable=False)
-    selected_colors = db.Column(db.Text, default='')  # Comma-separated list of selected colors
-    selected_sizes = db.Column(db.Text, default='')  # Comma-separated list of selected sizes
-    pieces_per_color = db.Column(db.Integer, nullable=False)
+    total_pieces = db.Column(db.Integer, nullable=False, default=0)
     is_printed = db.Column(db.Boolean, default=False)
     paid_amount = db.Column(db.Float, default=0.0)
     remaining_amount = db.Column(db.Float, default=0.0)
     brand = db.Column(db.String(50), nullable=False)  # URBRAND or SURVACCI
+    notes = db.Column(db.Text, default='')
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    # Relationships
+    order_items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
+    
+    # Legacy properties for backward compatibility
+    @property
+    def product_type_obj(self):
+        if self.order_items:
+            return self.order_items[0].product_type
+        return None
+    
+    @staticmethod
+    def generate_order_code():
+        """Generate unique order code"""
+        import random
+        import string
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=8))
+            if not Order.query.filter_by(order_code=code).first():
+                return code
     
     @property
     def total_amount(self):
-        """Calculate total amount based on pieces and product price"""
-        if self.product_type_obj:
-            return self.total_pieces * self.product_type_obj.selling_price
-        return 0.0
+        """Calculate total amount based on order items"""
+        return sum(item.total_price for item in self.order_items)
     
     @property
     def profit(self):
         """Calculate profit for this order"""
-        if self.product_type_obj:
-            cost = self.total_pieces * self.product_type_obj.cost_price
-            revenue = self.total_pieces * self.product_type_obj.selling_price
-            return revenue - cost
-        return 0.0
+        return sum(item.profit for item in self.order_items)
     
     @property
     def cost(self):
         """Calculate total cost for this order"""
-        if self.product_type_obj:
-            return self.total_pieces * self.product_type_obj.cost_price
-        return 0.0
+        return sum(item.total_cost for item in self.order_items)
     
     @property
     def revenue(self):
         """Calculate revenue for this order"""
-        if self.product_type_obj:
-            return self.total_pieces * self.product_type_obj.selling_price
-        return 0.0
+        return self.total_amount
+
+class OrderItem(db.Model):
+    """Individual product items within an order"""
+    id = db.Column(db.Integer, primary_key=True)
+    order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
+    product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
+    quantity = db.Column(db.Integer, nullable=False)
+    unit_price = db.Column(db.Float, nullable=False)
+    color_size_breakdown = db.Column(db.Text, default='{}')  # JSON string storing color/size breakdown
+    
+    # Relationships
+    product_type = db.relationship('ProductType', backref='order_items')
+    
+    @property
+    def total_price(self):
+        """Calculate total price for this item"""
+        return self.quantity * self.unit_price
+    
+    @property
+    def total_cost(self):
+        """Calculate total cost for this item"""
+        return self.quantity * self.product_type.cost_price
+    
+    @property
+    def profit(self):
+        """Calculate profit for this item"""
+        return self.total_price - self.total_cost
+    
+    def get_color_size_breakdown(self):
+        """Get color/size breakdown as dictionary"""
+        try:
+            return json.loads(self.color_size_breakdown)
+        except:
+            return {}
+    
+    def set_color_size_breakdown(self, breakdown_dict):
+        """Set color/size breakdown from dictionary"""
+        self.color_size_breakdown = json.dumps(breakdown_dict)
+
+class ColorSizeInventory(db.Model):
+    """Detailed inventory tracking by color and size"""
+    id = db.Column(db.Integer, primary_key=True)
+    product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
+    storage_type = db.Column(db.String(20), nullable=False)  # 'SHARED' or 'AZIZ'
+    color = db.Column(db.String(50), nullable=False)
+    size = db.Column(db.String(20), nullable=True)  # Optional for size tracking
+    quantity = db.Column(db.Integer, default=0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Composite unique constraint
+    __table_args__ = (db.UniqueConstraint('product_type_id', 'storage_type', 'color', 'size', name='unique_product_color_size'),)
+    
+    @staticmethod
+    def get_inventory_for_product(product_type_id, storage_type):
+        """Get all inventory records for a product"""
+        return ColorSizeInventory.query.filter_by(
+            product_type_id=product_type_id,
+            storage_type=storage_type
+        ).all()
+    
+    @staticmethod
+    def update_inventory(product_type_id, storage_type, color, size, quantity_change):
+        """Update inventory for specific color/size combination"""
+        inventory = ColorSizeInventory.query.filter_by(
+            product_type_id=product_type_id,
+            storage_type=storage_type,
+            color=color,
+            size=size
+        ).first()
+        
+        if not inventory:
+            inventory = ColorSizeInventory(
+                product_type_id=product_type_id,
+                storage_type=storage_type,
+                color=color,
+                size=size,
+                quantity=max(0, quantity_change)
+            )
+            db.session.add(inventory)
+        else:
+            inventory.quantity = max(0, inventory.quantity + quantity_change)
+            inventory.updated_at = datetime.utcnow()
+        
+        return inventory
 
 class Inventory(db.Model):
     id = db.Column(db.Integer, primary_key=True)

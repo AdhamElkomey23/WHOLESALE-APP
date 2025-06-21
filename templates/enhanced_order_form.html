@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+
+{% block title %}New Order{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Create New Order</h2>
+            
+            <form method="POST" id="orderForm">
+                {{ form.hidden_tag() }}
+                
+                <!-- Order Basic Info -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Order Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.order_code.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.order_code(class="form-control") }}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateOrderCode()">
+                                        <i class="fas fa-refresh"></i> Generate
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.date.label(class="form-label") }}
+                                {{ form.date(class="form-control") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.brand.label(class="form-label") }}
+                                {{ form.brand(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Client Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Client Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                {{ form.client_id.label(class="form-label") }}
+                                {{ form.client_id(class="form-control", onchange="loadClientInfo()") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.client_name.label(class="form-label") }}
+                                {{ form.client_name(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                {{ form.phone_number.label(class="form-label") }}
+                                {{ form.phone_number(class="form-control") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control") }}
+                            </div>
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-success mt-4" onclick="saveAsNewClient()">
+                                    <i class="fas fa-user-plus"></i> Save as New Client
+                                </button>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                {{ form.address.label(class="form-label") }}
+                                {{ form.address(class="form-control", rows="2") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Order Items</h5>
+                        <button type="button" class="btn btn-primary btn-sm" onclick="addOrderItem()">
+                            <i class="fas fa-plus"></i> Add Product
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="orderItems">
+                            <!-- Order items will be added here dynamically -->
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-8"></div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total Pieces:</strong>
+                                            <span id="totalPieces">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total Amount:</strong>
+                                            <span id="totalAmount">EGP 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment & Additional Info -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Payment & Additional Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                {{ form.paid_amount.label(class="form-label") }}
+                                {{ form.paid_amount(class="form-control", onchange="calculateRemaining()") }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.remaining_amount.label(class="form-label") }}
+                                {{ form.remaining_amount(class="form-control", readonly=True) }}
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    {{ form.is_printed(class="form-check-input") }}
+                                    {{ form.is_printed.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{{ url_for('orders') }}" class="btn btn-secondary">Cancel</a>
+                    {{ form.submit(class="btn btn-primary") }}
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Order Item Template -->
+<template id="orderItemTemplate">
+    <div class="order-item border rounded p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h6>Product Item</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeOrderItem(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4">
+                <label class="form-label">Product</label>
+                <select class="form-control product-select" onchange="loadProductDetails(this)" required>
+                    <option value="">Select Product...</option>
+                    {% for product in products %}
+                    <option value="{{ product.id }}" data-price="{{ product.selling_price }}" data-colors="{{ product.available_colors }}" data-sizes="{{ product.available_sizes }}">
+                        {{ product.name }} - EGP {{ product.selling_price }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Quantity</label>
+                <input type="number" class="form-control quantity-input" min="1" onchange="updateItemTotal(this)" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Unit Price</label>
+                <input type="number" class="form-control unit-price" step="0.01" readonly>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Total Price</label>
+                <input type="number" class="form-control item-total" step="0.01" readonly>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="color-size-breakdown" style="display: none;">
+                    <h6>Color & Size Breakdown</h6>
+                    <div class="breakdown-content">
+                        <!-- Color/Size breakdown will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let orderItemCount = 0;
+
+function generateOrderCode() {
+    const code = 'ORD' + Date.now().toString().slice(-8).toUpperCase();
+    document.querySelector('[name="order_code"]').value = code;
+}
+
+function loadClientInfo() {
+    const clientSelect = document.querySelector('[name="client_id"]');
+    if (clientSelect.value) {
+        fetch(`/api/client/${clientSelect.value}`)
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('[name="client_name"]').value = data.name;
+                document.querySelector('[name="phone_number"]').value = data.phone_number;
+                document.querySelector('[name="email"]').value = data.email || '';
+                document.querySelector('[name="address"]').value = data.address || '';
+            });
+    }
+}
+
+function addOrderItem() {
+    const template = document.getElementById('orderItemTemplate');
+    const clone = template.content.cloneNode(true);
+    document.getElementById('orderItems').appendChild(clone);
+    orderItemCount++;
+}
+
+function removeOrderItem(button) {
+    button.closest('.order-item').remove();
+    calculateTotals();
+}
+
+function loadProductDetails(select) {
+    const option = select.selectedOptions[0];
+    const container = select.closest('.order-item');
+    
+    if (option.value) {
+        const price = option.dataset.price;
+        const colors = option.dataset.colors.split(',');
+        const sizes = option.dataset.sizes.split(',');
+        
+        container.querySelector('.unit-price').value = price;
+        
+        // Show color/size breakdown
+        const breakdown = container.querySelector('.color-size-breakdown');
+        breakdown.style.display = 'block';
+        
+        updateItemTotal(select);
+    }
+}
+
+function updateItemTotal(input) {
+    const container = input.closest('.order-item');
+    const quantity = parseInt(container.querySelector('.quantity-input').value) || 0;
+    const unitPrice = parseFloat(container.querySelector('.unit-price').value) || 0;
+    const total = quantity * unitPrice;
+    
+    container.querySelector('.item-total').value = total.toFixed(2);
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let totalPieces = 0;
+    let totalAmount = 0;
+    
+    document.querySelectorAll('.order-item').forEach(item => {
+        const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
+        const itemTotal = parseFloat(item.querySelector('.item-total').value) || 0;
+        
+        totalPieces += quantity;
+        totalAmount += itemTotal;
+    });
+    
+    document.getElementById('totalPieces').textContent = totalPieces;
+    document.getElementById('totalAmount').textContent = `EGP ${totalAmount.toFixed(2)}`;
+    
+    calculateRemaining();
+}
+
+function calculateRemaining() {
+    const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('EGP ', '')) || 0;
+    const paidAmount = parseFloat(document.querySelector('[name="paid_amount"]').value) || 0;
+    const remaining = Math.max(0, totalAmount - paidAmount);
+    
+    document.querySelector('[name="remaining_amount"]').value = remaining.toFixed(2);
+}
+
+function saveAsNewClient() {
+    const clientData = {
+        name: document.querySelector('[name="client_name"]').value,
+        phone_number: document.querySelector('[name="phone_number"]').value,
+        email: document.querySelector('[name="email"]').value,
+        address: document.querySelector('[name="address"]').value
+    };
+    
+    if (!clientData.name || !clientData.phone_number) {
+        alert('Please enter client name and phone number');
+        return;
+    }
+    
+    fetch('/api/clients', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name="csrf_token"]').value
+        },
+        body: JSON.stringify(clientData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update client dropdown
+            const clientSelect = document.querySelector('[name="client_id"]');
+            const option = new Option(`${data.client.name} - ${data.client.phone_number}`, data.client.id);
+            clientSelect.add(option);
+            clientSelect.value = data.client.id;
+            
+            alert('Client saved successfully!');
+        } else {
+            alert('Error saving client: ' + data.error);
+        }
+    });
+}
+
+// Initialize with one order item
+document.addEventListener('DOMContentLoaded', function() {
+    addOrderItem();
+    generateOrderCode();
+});
+</script>
+{% endblock %}

@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+
+{% block title %}Color & Size Inventory{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Detailed Inventory Management</h2>
+            
+            <!-- Product Selection -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Select Product to Manage</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" id="productForm">
+                        {{ form.hidden_tag() }}
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.product_type_id.label(class="form-label") }}
+                                {{ form.product_type_id(class="form-control", onchange="loadProductInventory()") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.storage_type.label(class="form-label") }}
+                                {{ form.storage_type(class="form-control", onchange="loadProductInventory()") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.submit(class="btn btn-primary mt-4") }}
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Inventory Grid -->
+            <div id="inventoryGrid" style="display: none;">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Inventory by Color & Size</h5>
+                        <button type="button" class="btn btn-success" onclick="saveAllInventory()">
+                            <i class="fas fa-save"></i> Save All Changes
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="inventoryTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Color</th>
+                                        <th>XS</th>
+                                        <th>S</th>
+                                        <th>M</th>
+                                        <th>L</th>
+                                        <th>XL</th>
+                                        <th>XXL</th>
+                                        <th>3XL</th>
+                                        <th>4XL</th>
+                                        <th>5XL</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventoryTableBody">
+                                    <!-- Inventory rows will be populated here -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <th>Total</th>
+                                        <th id="totalXS">0</th>
+                                        <th id="totalS">0</th>
+                                        <th id="totalM">0</th>
+                                        <th id="totalL">0</th>
+                                        <th id="totalXL">0</th>
+                                        <th id="totalXXL">0</th>
+                                        <th id="total3XL">0</th>
+                                        <th id="total4XL">0</th>
+                                        <th id="total5XL">0</th>
+                                        <th id="grandTotal">0</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <!-- Quick Actions -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h6>Quick Actions</h6>
+                                <div class="btn-group me-3">
+                                    <button type="button" class="btn btn-outline-success" onclick="bulkAdd()">
+                                        <i class="fas fa-plus"></i> Bulk Add
+                                    </button>
+                                    <button type="button" class="btn btn-outline-warning" onclick="bulkAdjust()">
+                                        <i class="fas fa-edit"></i> Bulk Adjust
+                                    </button>
+                                </div>
+                                <button type="button" class="btn btn-outline-info" onclick="exportInventory()">
+                                    <i class="fas fa-download"></i> Export to CSV
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Action Modal -->
+<div class="modal fade" id="bulkActionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bulkActionTitle">Bulk Action</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Action Type</label>
+                    <select class="form-control" id="bulkActionType">
+                        <option value="add">Add to all selected</option>
+                        <option value="set">Set all selected to</option>
+                        <option value="subtract">Subtract from all selected</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control" id="bulkQuantity" min="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Apply to:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAllColors">
+                        <label class="form-check-label">All Colors</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="selectAllSizes">
+                        <label class="form-check-label">All Sizes</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="applyBulkAction()">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'];
+let currentProductId = null;
+let currentStorageType = null;
+
+function loadProductInventory() {
+    const productId = document.querySelector('[name="product_type_id"]').value;
+    const storageType = document.querySelector('[name="storage_type"]').value;
+    
+    if (!productId || !storageType) return;
+    
+    currentProductId = productId;
+    currentStorageType = storageType;
+    
+    fetch(`/api/inventory/${productId}/${storageType}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateInventoryGrid(data.product, data.inventory);
+                document.getElementById('inventoryGrid').style.display = 'block';
+            }
+        });
+}
+
+function populateInventoryGrid(product, inventory) {
+    const tbody = document.getElementById('inventoryTableBody');
+    tbody.innerHTML = '';
+    
+    const colors = product.colors;
+    
+    colors.forEach(color => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${color}</strong></td>
+            ${sizes.map(size => {
+                const qty = inventory[color] && inventory[color][size] ? inventory[color][size] : 0;
+                return `<td>
+                    <input type="number" class="form-control form-control-sm inventory-input" 
+                           data-color="${color}" data-size="${size}" 
+                           value="${qty}" min="0" onchange="updateTotals()">
+                </td>`;
+            }).join('')}
+            <td class="color-total">0</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    updateTotals();
+}
+
+function updateTotals() {
+    const inputs = document.querySelectorAll('.inventory-input');
+    const sizeTotals = {};
+    sizes.forEach(size => sizeTotals[size] = 0);
+    
+    // Calculate totals for each color
+    document.querySelectorAll('tr').forEach(row => {
+        if (!row.querySelector('.inventory-input')) return;
+        
+        let colorTotal = 0;
+        row.querySelectorAll('.inventory-input').forEach(input => {
+            const value = parseInt(input.value) || 0;
+            const size = input.dataset.size;
+            
+            colorTotal += value;
+            sizeTotals[size] += value;
+        });
+        
+        const colorTotalCell = row.querySelector('.color-total');
+        if (colorTotalCell) {
+            colorTotalCell.textContent = colorTotal;
+        }
+    });
+    
+    // Update size totals in footer
+    let grandTotal = 0;
+    sizes.forEach(size => {
+        document.getElementById(`total${size}`).textContent = sizeTotals[size];
+        grandTotal += sizeTotals[size];
+    });
+    
+    document.getElementById('grandTotal').textContent = grandTotal;
+}
+
+function saveAllInventory() {
+    const inventoryData = {};
+    
+    document.querySelectorAll('.inventory-input').forEach(input => {
+        const color = input.dataset.color;
+        const size = input.dataset.size;
+        const quantity = parseInt(input.value) || 0;
+        
+        if (!inventoryData[color]) {
+            inventoryData[color] = {};
+        }
+        inventoryData[color][size] = quantity;
+    });
+    
+    fetch('/api/inventory/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name="csrf_token"]').value
+        },
+        body: JSON.stringify({
+            product_id: currentProductId,
+            storage_type: currentStorageType,
+            inventory: inventoryData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Inventory saved successfully!');
+        } else {
+            alert('Error saving inventory: ' + data.error);
+        }
+    });
+}
+
+function bulkAdd() {
+    document.getElementById('bulkActionTitle').textContent = 'Bulk Add Inventory';
+    document.getElementById('bulkActionType').value = 'add';
+    new bootstrap.Modal(document.getElementById('bulkActionModal')).show();
+}
+
+function bulkAdjust() {
+    document.getElementById('bulkActionTitle').textContent = 'Bulk Adjust Inventory';
+    new bootstrap.Modal(document.getElementById('bulkActionModal')).show();
+}
+
+function applyBulkAction() {
+    const actionType = document.getElementById('bulkActionType').value;
+    const quantity = parseInt(document.getElementById('bulkQuantity').value) || 0;
+    const allColors = document.getElementById('selectAllColors').checked;
+    const allSizes = document.getElementById('selectAllSizes').checked;
+    
+    document.querySelectorAll('.inventory-input').forEach(input => {
+        const currentValue = parseInt(input.value) || 0;
+        let newValue = currentValue;
+        
+        if (allColors || allSizes) {
+            switch (actionType) {
+                case 'add':
+                    newValue = currentValue + quantity;
+                    break;
+                case 'set':
+                    newValue = quantity;
+                    break;
+                case 'subtract':
+                    newValue = Math.max(0, currentValue - quantity);
+                    break;
+            }
+            input.value = newValue;
+        }
+    });
+    
+    updateTotals();
+    bootstrap.Modal.getInstance(document.getElementById('bulkActionModal')).hide();
+}
+
+function exportInventory() {
+    if (!currentProductId || !currentStorageType) return;
+    
+    window.location.href = `/api/inventory/export/${currentProductId}/${currentStorageType}`;
+}
+</script>
+{% endblock %}

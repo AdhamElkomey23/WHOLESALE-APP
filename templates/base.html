@@ -57,6 +57,14 @@
                 <i class="fas fa-shopping-cart"></i>
                 <span>Orders</span>
             </a>
+            <a href="{{ url_for('enhanced_order') }}" class="nav-item {% if request.endpoint == 'enhanced_order' %}active{% endif %}">
+                <i class="fas fa-plus-circle"></i>
+                <span>New Order</span>
+            </a>
+            <a href="{{ url_for('clients') }}" class="nav-item {% if request.endpoint == 'clients' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Clients</span>
+            </a>
             <a href="{{ url_for('products') }}" class="nav-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
                 <i class="fas fa-tags"></i>
                 <span>Products</span>
@@ -64,6 +72,10 @@
             <a href="{{ url_for('storage') }}" class="nav-item {% if request.endpoint == 'storage' %}active{% endif %}">
                 <i class="fas fa-warehouse"></i>
                 <span>Storage</span>
+            </a>
+            <a href="{{ url_for('color_size_inventory') }}" class="nav-item {% if request.endpoint == 'color_size_inventory' %}active{% endif %}">
+                <i class="fas fa-palette"></i>
+                <span>Color/Size Inventory</span>
             </a>
             <a href="{{ url_for('export') }}" class="nav-item {% if request.endpoint == 'export' %}active{% endif %}">
                 <i class="fas fa-download"></i>

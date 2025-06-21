@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, PasswordField, SelectField, SelectMultipleField, IntegerField, FloatField, BooleanField, DateField, SubmitField, TextAreaField, TimeField
 from wtforms.validators import DataRequired, Email, Length, NumberRange, ValidationError, EqualTo
 from wtforms.widgets import CheckboxInput, ListWidget
-from models import ProductType
+from models import ProductType, Client
 from datetime import datetime
 
 class LoginForm(FlaskForm):
@@ -11,32 +11,33 @@ class LoginForm(FlaskForm):
     submit = SubmitField('Sign In')
 
 class OrderForm(FlaskForm):
-    client_name = StringField('Client Name', validators=[DataRequired(), Length(max=200)])
+    order_code = StringField('Order Code', validators=[Length(max=50)])
+    client_id = SelectField('Select Client', coerce=int, validators=[])
+    client_name = StringField('Or Enter New Client Name', validators=[Length(max=200)])
     phone_number = StringField('Phone Number', validators=[DataRequired(), Length(max=20)])
+    email = StringField('Email', validators=[Email(), Length(max=120)])
+    address = TextAreaField('Address', validators=[Length(max=500)])
     date = DateField('Date', validators=[DataRequired()], default=datetime.today)
-    product_type_id = SelectField('Product Type', coerce=int, validators=[DataRequired()])
-    total_pieces = IntegerField('Total Pieces', validators=[DataRequired(), NumberRange(min=1)])
-    selected_colors = SelectMultipleField('Colors', choices=[], validators=[DataRequired()])
-    selected_sizes = SelectMultipleField('Sizes', choices=[], validators=[DataRequired()])
-    pieces_per_color = IntegerField('Pieces per Color', validators=[DataRequired(), NumberRange(min=1)])
     is_printed = BooleanField('Printed')
     paid_amount = FloatField('Paid Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
     remaining_amount = FloatField('Remaining Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
     brand = SelectField('Brand', choices=[('URBRAND', 'URBRAND'), ('SURVACCI', 'SURVACCI')], validators=[DataRequired()])
+    notes = TextAreaField('Order Notes', validators=[Length(max=500)])
     submit = SubmitField('Save Order')
     
     def __init__(self, *args, **kwargs):
         super(OrderForm, self).__init__(*args, **kwargs)
-        self.product_type_id.choices = [(pt.id, pt.name) for pt in ProductType.query.all()]
-        
-        # Initialize empty choices - will be populated by JavaScript based on selected product
-        self.selected_colors.choices = []
-        self.selected_sizes.choices = []
-    
-    def validate_pieces_per_color(self, field):
-        if self.total_pieces.data and field.data:
-            if (self.total_pieces.data % field.data) != 0:
-                raise ValidationError('Total pieces must be divisible by pieces per color.')
+        # Load clients for dropdown
+        clients = Client.query.all()
+        self.client_id.choices = [('', 'Select existing client...')] + [(c.id, f"{c.name} - {c.phone_number}") for c in clients]
+
+class ClientForm(FlaskForm):
+    name = StringField('Client Name', validators=[DataRequired(), Length(max=200)])
+    phone_number = StringField('Phone Number', validators=[DataRequired(), Length(max=20)])
+    email = StringField('Email', validators=[Email(), Length(max=120)])
+    address = TextAreaField('Address', validators=[Length(max=500)])
+    notes = TextAreaField('Notes', validators=[Length(max=500)])
+    submit = SubmitField('Save Client')
 
 class ProductTypeForm(FlaskForm):
     name = StringField('Product Name', validators=[DataRequired(), Length(max=100)])
@@ -57,6 +58,15 @@ class ProductTypeForm(FlaskForm):
     def validate_selling_price(self, field):
         if self.cost_price.data and field.data < self.cost_price.data:
             raise ValidationError('Selling price should be greater than or equal to cost price')
+
+class ColorSizeInventoryForm(FlaskForm):
+    product_type_id = SelectField('Product Type', coerce=int, validators=[DataRequired()])
+    storage_type = SelectField('Storage Type', choices=[('SHARED', 'URBRAND + SURVACCI (Shared)'), ('AZIZ', 'AZIZ (Independent)')], validators=[DataRequired()])
+    submit = SubmitField('Manage Inventory')
+    
+    def __init__(self, *args, **kwargs):
+        super(ColorSizeInventoryForm, self).__init__(*args, **kwargs)
+        self.product_type_id.choices = [(pt.id, pt.name) for pt in ProductType.query.all()]
 
 class InventoryForm(FlaskForm):
     product_type_id = SelectField('Product Type', coerce=int, validators=[DataRequired()])

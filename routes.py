@@ -2,8 +2,8 @@ from flask import render_template, redirect, url_for, flash, request, jsonify, m
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, db
-from models import User, Order, ProductType, Inventory, StockMovement, Worker, WorkerAttendance
-from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm, WorkerForm, AttendanceForm, AttendanceFilterForm
+from models import User, Order, ProductType, Inventory, StockMovement, Worker, WorkerAttendance, Client, OrderItem, ColorSizeInventory
+from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm, WorkerForm, AttendanceForm, AttendanceFilterForm, ClientForm, ColorSizeInventoryForm
 from utils import generate_invoice_pdf, export_data_csv
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
@@ -15,7 +15,7 @@ def index():
     """Home page with brand overview and performance indicators"""
     # Clear welcome flag after first visit
     show_welcome = session.pop('show_welcome', False)
-    from models import Order, Expense
+    from models import Expense
     
     # Calculate performance for each brand
     brands_data = {}
@@ -160,10 +160,13 @@ def sales_chart_data(brand):
 def orders():
     page = request.args.get('page', 1, type=int)
     brand_filter = request.args.get('brand', '')
+    client_id = request.args.get('client_id', type=int)
     
     query = Order.query
     if brand_filter:
         query = query.filter_by(brand=brand_filter)
+    if client_id:
+        query = query.filter_by(client_id=client_id)
     
     # Auto-sort by date (newest first)
     orders = query.order_by(Order.date.desc()).paginate(
@@ -294,6 +297,185 @@ def generate_invoice(id):
     response.headers['Content-Disposition'] = f'attachment; filename=invoice_{order.id}.pdf'
     
     return response
+
+# Enhanced order management routes
+@app.route('/clients', methods=['GET', 'POST'])
+@login_required
+def clients():
+    clients = Client.query.order_by(Client.name).all()
+    form = ClientForm()
+    
+    if request.method == 'POST' and form.validate_on_submit():
+        client = Client(
+            name=form.name.data,
+            phone_number=form.phone_number.data,
+            email=form.email.data,
+            address=form.address.data,
+            notes=form.notes.data
+        )
+        db.session.add(client)
+        db.session.commit()
+        flash('Client added successfully!', 'success')
+        return redirect(url_for('clients'))
+    
+    return render_template('clients.html', clients=clients, form=form)
+
+@app.route('/enhanced-order', methods=['GET', 'POST'])
+@login_required
+def enhanced_order():
+    form = OrderForm()
+    products = ProductType.query.all()
+    
+    if request.method == 'POST' and form.validate_on_submit():
+        # Generate order code if not provided
+        order_code = form.order_code.data or Order.generate_order_code()
+        
+        # Handle client selection or creation
+        client_id = form.client_id.data if form.client_id.data else None
+        client_name = form.client_name.data
+        
+        if not client_id and client_name:
+            # Create new client if name provided but no client selected
+            client = Client(
+                name=client_name,
+                phone_number=form.phone_number.data,
+                email=form.email.data,
+                address=form.address.data
+            )
+            db.session.add(client)
+            db.session.flush()  # Get the ID
+            client_id = client.id
+        
+        # Create order
+        order = Order(
+            order_code=order_code,
+            client_id=client_id,
+            client_name=client_name,
+            phone_number=form.phone_number.data,
+            date=form.date.data,
+            is_printed=form.is_printed.data,
+            paid_amount=form.paid_amount.data,
+            remaining_amount=form.remaining_amount.data,
+            brand=form.brand.data,
+            notes=form.notes.data
+        )
+        
+        db.session.add(order)
+        db.session.commit()
+        
+        flash('Order created successfully!', 'success')
+        return redirect(url_for('orders'))
+    
+    return render_template('enhanced_order_form.html', form=form, products=products)
+
+@app.route('/color-size-inventory', methods=['GET', 'POST'])
+@login_required
+def color_size_inventory():
+    form = ColorSizeInventoryForm()
+    return render_template('color_size_inventory.html', form=form)
+
+# API Endpoints for AJAX functionality
+@app.route('/api/client/<int:client_id>')
+@login_required
+def api_get_client(client_id):
+    client = Client.query.get_or_404(client_id)
+    return jsonify({
+        'id': client.id,
+        'name': client.name,
+        'phone_number': client.phone_number,
+        'email': client.email,
+        'address': client.address
+    })
+
+@app.route('/api/clients', methods=['POST'])
+@login_required
+def api_create_client():
+    data = request.get_json()
+    
+    try:
+        client = Client(
+            name=data['name'],
+            phone_number=data['phone_number'],
+            email=data.get('email', ''),
+            address=data.get('address', '')
+        )
+        db.session.add(client)
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'client': {
+                'id': client.id,
+                'name': client.name,
+                'phone_number': client.phone_number
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/inventory/<int:product_id>/<storage_type>')
+@login_required
+def api_get_inventory(product_id, storage_type):
+    product = ProductType.query.get_or_404(product_id)
+    
+    # Get inventory data
+    inventory_records = ColorSizeInventory.get_inventory_for_product(product_id, storage_type)
+    
+    # Organize inventory data
+    inventory = {}
+    for record in inventory_records:
+        if record.color not in inventory:
+            inventory[record.color] = {}
+        inventory[record.color][record.size or 'None'] = record.quantity
+    
+    return jsonify({
+        'success': True,
+        'product': {
+            'id': product.id,
+            'name': product.name,
+            'colors': product.get_colors_list(),
+            'sizes': product.get_sizes_list()
+        },
+        'inventory': inventory
+    })
+
+@app.route('/api/inventory/save', methods=['POST'])
+@login_required
+def api_save_inventory():
+    data = request.get_json()
+    
+    try:
+        product_id = data['product_id']
+        storage_type = data['storage_type']
+        inventory_data = data['inventory']
+        
+        # Clear existing inventory for this product/storage combination
+        ColorSizeInventory.query.filter_by(
+            product_type_id=product_id,
+            storage_type=storage_type
+        ).delete()
+        
+        # Add new inventory records
+        for color, sizes in inventory_data.items():
+            for size, quantity in sizes.items():
+                if quantity > 0:  # Only save non-zero quantities
+                    inventory = ColorSizeInventory(
+                        product_type_id=product_id,
+                        storage_type=storage_type,
+                        color=color,
+                        size=size if size != 'None' else None,
+                        quantity=quantity
+                    )
+                    db.session.add(inventory)
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
+
+
 
 @app.route('/products')
 @login_required
