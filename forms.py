@@ -12,7 +12,7 @@ class LoginForm(FlaskForm):
 
 class OrderForm(FlaskForm):
     order_code = StringField('Order Code', validators=[Length(max=50)])
-    client_id = SelectField('Select Client', coerce=int, validators=[])
+    client_id = SelectField('Select Client', coerce=int, validators=[], default=0)
     client_name = StringField('Or Enter New Client Name', validators=[Length(max=200)])
     phone_number = StringField('Phone Number', validators=[DataRequired(), Length(max=20)])
     email = StringField('Email', validators=[Email(), Length(max=120)])
@@ -27,9 +27,9 @@ class OrderForm(FlaskForm):
     
     def __init__(self, *args, **kwargs):
         super(OrderForm, self).__init__(*args, **kwargs)
-        # Load clients for dropdown
+        # Load clients for dropdown - handle empty string for coercion
         clients = Client.query.all()
-        self.client_id.choices = [('', 'Select existing client...')] + [(c.id, f"{c.name} - {c.phone_number}") for c in clients]
+        self.client_id.choices = [(0, 'Select existing client...')] + [(c.id, f"{c.name} - {c.phone_number}") for c in clients]
 
 class ClientForm(FlaskForm):
     name = StringField('Client Name', validators=[DataRequired(), Length(max=200)])

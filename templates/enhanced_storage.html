@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Storage Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h2>Enhanced Storage Management</h2>
+            
+            <!-- Product Selection -->
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Select Product for Color/Size Management</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <label class="form-label">Product Type</label>
+                            <select class="form-control" id="productSelect" onchange="loadProductInventory()">
+                                <option value="">Select Product...</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}" 
+                                        data-colors="{{ product.available_colors }}" 
+                                        data-sizes="{{ product.available_sizes }}"
+                                        data-brand="{{ product.brand_group }}">
+                                    {{ product.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Storage Type</label>
+                            <select class="form-control" id="storageSelect" onchange="loadProductInventory()">
+                                <option value="SHARED">URBRAND + SURVACCI (Shared)</option>
+                                <option value="AZIZ">AZIZ (Independent)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <button type="button" class="btn btn-success mt-4" onclick="saveInventory()" id="saveBtn" style="display:none;">
+                                <i class="fas fa-save"></i> Save All Changes
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Inventory Grid -->
+            <div id="inventorySection" style="display: none;">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 id="inventoryTitle">Color & Size Inventory</h5>
+                        <div>
+                            <button type="button" class="btn btn-outline-info me-2" onclick="bulkActions()">
+                                <i class="fas fa-tools"></i> Bulk Actions
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="addStock()">
+                                <i class="fas fa-plus"></i> Add Stock
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm" id="inventoryTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="width: 120px;">Color</th>
+                                        <th>XS</th>
+                                        <th>S</th>
+                                        <th>M</th>
+                                        <th>L</th>
+                                        <th>XL</th>
+                                        <th>XXL</th>
+                                        <th>3XL</th>
+                                        <th>4XL</th>
+                                        <th>5XL</th>
+                                        <th style="width: 80px;">Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="inventoryBody">
+                                    <!-- Inventory rows will be populated here -->
+                                </tbody>
+                                <tfoot>
+                                    <tr class="table-info">
+                                        <th>Total</th>
+                                        <th id="totalXS">0</th>
+                                        <th id="totalS">0</th>
+                                        <th id="totalM">0</th>
+                                        <th id="totalL">0</th>
+                                        <th id="totalXL">0</th>
+                                        <th id="totalXXL">0</th>
+                                        <th id="total3XL">0</th>
+                                        <th id="total4XL">0</th>
+                                        <th id="total5XL">0</th>
+                                        <th id="grandTotal">0</th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                        
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Instructions:</strong> Enter quantities for each color and size combination. Leave blank or 0 for unavailable combinations. Click "Save All Changes" when done.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Actions Modal -->
+<div class="modal fade" id="bulkActionsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Actions</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Action</label>
+                    <select class="form-control" id="bulkAction">
+                        <option value="add">Add to all</option>
+                        <option value="set">Set all to</option>
+                        <option value="multiply">Multiply all by</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Value</label>
+                    <input type="number" class="form-control" id="bulkValue" min="0">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Apply to:</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="allColors">
+                        <label class="form-check-label">All Colors</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="allSizes">
+                        <label class="form-check-label">All Sizes</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="applyBulkAction()">Apply</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '5XL'];
+let currentProductId = null;
+let currentStorageType = null;
+let currentColors = [];
+
+function loadProductInventory() {
+    const productSelect = document.getElementById('productSelect');
+    const storageSelect = document.getElementById('storageSelect');
+    
+    if (!productSelect.value) {
+        document.getElementById('inventorySection').style.display = 'none';
+        document.getElementById('saveBtn').style.display = 'none';
+        return;
+    }
+    
+    currentProductId = productSelect.value;
+    currentStorageType = storageSelect.value;
+    
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const productName = selectedOption.text;
+    const colors = selectedOption.dataset.colors.split(',').map(c => c.trim()).filter(c => c);
+    
+    currentColors = colors;
+    
+    document.getElementById('inventoryTitle').textContent = `${productName} - ${storageSelect.options[storageSelect.selectedIndex].text}`;
+    
+    // Load existing inventory data
+    fetch(`/api/inventory/${currentProductId}/${currentStorageType}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                populateInventoryGrid(data.inventory);
+            } else {
+                populateInventoryGrid({});
+            }
+            document.getElementById('inventorySection').style.display = 'block';
+            document.getElementById('saveBtn').style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error loading inventory:', error);
+            populateInventoryGrid({});
+            document.getElementById('inventorySection').style.display = 'block';
+            document.getElementById('saveBtn').style.display = 'block';
+        });
+}
+
+function populateInventoryGrid(inventory) {
+    const tbody = document.getElementById('inventoryBody');
+    tbody.innerHTML = '';
+    
+    currentColors.forEach(color => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td><strong>${color}</strong></td>
+            ${sizes.map(size => {
+                const qty = inventory[color] && inventory[color][size] ? inventory[color][size] : 0;
+                return `<td>
+                    <input type="number" class="form-control form-control-sm inventory-input" 
+                           data-color="${color}" data-size="${size}" 
+                           value="${qty}" min="0" onchange="updateTotals()" style="width: 70px;">
+                </td>`;
+            }).join('')}
+            <td class="color-total fw-bold">0</td>
+        `;
+        tbody.appendChild(row);
+    });
+    
+    updateTotals();
+}
+
+function updateTotals() {
+    const sizeTotals = {};
+    sizes.forEach(size => sizeTotals[size] = 0);
+    
+    document.querySelectorAll('tr').forEach(row => {
+        if (!row.querySelector('.inventory-input')) return;
+        
+        let colorTotal = 0;
+        row.querySelectorAll('.inventory-input').forEach(input => {
+            const value = parseInt(input.value) || 0;
+            const size = input.dataset.size;
+            
+            colorTotal += value;
+            sizeTotals[size] += value;
+        });
+        
+        const colorTotalCell = row.querySelector('.color-total');
+        if (colorTotalCell) {
+            colorTotalCell.textContent = colorTotal;
+        }
+    });
+    
+    let grandTotal = 0;
+    sizes.forEach(size => {
+        const total = sizeTotals[size];
+        document.getElementById(`total${size}`).textContent = total;
+        grandTotal += total;
+    });
+    
+    document.getElementById('grandTotal').textContent = grandTotal;
+}
+
+function saveInventory() {
+    if (!currentProductId || !currentStorageType) return;
+    
+    const inventoryData = {};
+    
+    document.querySelectorAll('.inventory-input').forEach(input => {
+        const color = input.dataset.color;
+        const size = input.dataset.size;
+        const quantity = parseInt(input.value) || 0;
+        
+        if (!inventoryData[color]) {
+            inventoryData[color] = {};
+        }
+        inventoryData[color][size] = quantity;
+    });
+    
+    fetch('/api/inventory/save', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            product_id: currentProductId,
+            storage_type: currentStorageType,
+            inventory: inventoryData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Inventory saved successfully!');
+        } else {
+            alert('Error saving inventory: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving inventory');
+    });
+}
+
+function bulkActions() {
+    new bootstrap.Modal(document.getElementById('bulkActionsModal')).show();
+}
+
+function applyBulkAction() {
+    const action = document.getElementById('bulkAction').value;
+    const value = parseFloat(document.getElementById('bulkValue').value) || 0;
+    const allColors = document.getElementById('allColors').checked;
+    const allSizes = document.getElementById('allSizes').checked;
+    
+    document.querySelectorAll('.inventory-input').forEach(input => {
+        if (allColors || allSizes) {
+            const currentValue = parseInt(input.value) || 0;
+            let newValue = currentValue;
+            
+            switch (action) {
+                case 'add':
+                    newValue = currentValue + value;
+                    break;
+                case 'set':
+                    newValue = value;
+                    break;
+                case 'multiply':
+                    newValue = Math.round(currentValue * value);
+                    break;
+            }
+            
+            input.value = Math.max(0, newValue);
+        }
+    });
+    
+    updateTotals();
+    bootstrap.Modal.getInstance(document.getElementById('bulkActionsModal')).hide();
+}
+
+function addStock() {
+    const quantity = prompt('Enter quantity to add to all items:');
+    if (quantity && !isNaN(quantity)) {
+        document.querySelectorAll('.inventory-input').forEach(input => {
+            const currentValue = parseInt(input.value) || 0;
+            input.value = currentValue + parseInt(quantity);
+        });
+        updateTotals();
+    }
+}
+</script>
+{% endblock %}
