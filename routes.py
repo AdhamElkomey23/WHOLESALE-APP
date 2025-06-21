@@ -332,31 +332,7 @@ def api_create_client():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/api/inventory/<int:product_id>/<storage_type>')
-@login_required
-def api_get_inventory(product_id, storage_type):
-    product = ProductType.query.get_or_404(product_id)
-    
-    # Get inventory data
-    inventory_records = ColorSizeInventory.get_inventory_for_product(product_id, storage_type)
-    
-    # Organize inventory data
-    inventory = {}
-    for record in inventory_records:
-        if record.color not in inventory:
-            inventory[record.color] = {}
-        inventory[record.color][record.size or 'None'] = record.quantity
-    
-    return jsonify({
-        'success': True,
-        'product': {
-            'id': product.id,
-            'name': product.name,
-            'colors': product.get_colors_list(),
-            'sizes': product.get_sizes_list()
-        },
-        'inventory': inventory
-    })
+
 
 @app.route('/api/inventory/save', methods=['POST'])
 @login_required
@@ -528,36 +504,13 @@ def export_csv():
 @app.route('/storage')
 @login_required
 def storage():
-    """Storage management page"""
-    from models import ProductType, Inventory
+    """Enhanced Storage Management with color/size tracking"""
+    from models import ProductType
     
-    # Get products filtered by brand group
-    shared_products = ProductType.query.filter_by(brand_group='SHARED').all()
-    aziz_products = ProductType.query.filter_by(brand_group='AZIZ').all()
+    # Get all products for enhanced storage
+    products = ProductType.query.all()
     
-    # Get inventory data for shared storage products
-    shared_inventory = {}
-    for product in shared_products:
-        shared_stock = Inventory.query.filter_by(
-            product_type_id=product.id,
-            storage_type='SHARED'
-        ).first()
-        shared_inventory[product.id] = shared_stock.quantity if shared_stock else 0
-    
-    # Get inventory data for AZIZ storage products
-    aziz_inventory = {}
-    for product in aziz_products:
-        aziz_stock = Inventory.query.filter_by(
-            product_type_id=product.id,
-            storage_type='AZIZ'
-        ).first()
-        aziz_inventory[product.id] = aziz_stock.quantity if aziz_stock else 0
-    
-    return render_template('storage.html',
-                         shared_products=shared_products,
-                         aziz_products=aziz_products,
-                         shared_inventory=shared_inventory,
-                         aziz_inventory=aziz_inventory)
+    return render_template('storage.html', products=products)
 
 @app.route('/storage/adjust', methods=['POST'])
 @login_required
@@ -617,6 +570,73 @@ def adjust_stock():
         flash(f'Error updating stock: {str(e)}', 'error')
     
     return redirect(url_for('storage'))
+
+@app.route('/api/inventory/<int:product_id>')
+@login_required
+def get_inventory(product_id):
+    """Get existing inventory data for a product"""
+    from models import ColorSizeInventory
+    
+    try:
+        inventory_records = ColorSizeInventory.query.filter_by(product_type_id=product_id).all()
+        inventory_data = {}
+        
+        for record in inventory_records:
+            key = f"{record.color}-{record.size}"
+            inventory_data[key] = record.quantity
+            
+        return jsonify({
+            'success': True,
+            'inventory': inventory_data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
+@app.route('/api/save-inventory', methods=['POST'])
+@login_required
+def save_inventory():
+    """Save inventory data for color/size combinations"""
+    from models import ColorSizeInventory
+    
+    try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        storage_type = data.get('storage_type')
+        inventory = data.get('inventory', {})
+        
+        # Delete existing inventory records for this product
+        ColorSizeInventory.query.filter_by(product_type_id=product_id).delete()
+        
+        # Save new inventory data
+        for key, quantity in inventory.items():
+            if quantity > 0:  # Only save non-zero quantities
+                color, size = key.split('-', 1)
+                
+                inventory_record = ColorSizeInventory(
+                    product_type_id=product_id,
+                    color=color,
+                    size=size,
+                    quantity=quantity,
+                    storage_type=storage_type
+                )
+                db.session.add(inventory_record)
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Inventory saved successfully'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
 
 @app.route('/expenses')
 @app.route('/expenses/<brand>')
@@ -1177,61 +1197,4 @@ def worker_report(id):
                          date_from=date_from,
                          date_to=date_to)
 
-# API endpoints for enhanced inventory management
-@app.route('/api/inventory/<int:product_id>/<storage_type>')
-@login_required
-def get_inventory(product_id, storage_type):
-    """Get color/size inventory for a product"""
-    try:
-        # Get all color/size inventory records for this product and storage type
-        inventory_records = ColorSizeInventory.query.filter_by(
-            product_type_id=product_id,
-            storage_type=storage_type
-        ).all()
-        
-        # Organize by color and size
-        inventory = {}
-        for record in inventory_records:
-            if record.color not in inventory:
-                inventory[record.color] = {}
-            inventory[record.color][record.size] = record.quantity
-            
-        return jsonify({'success': True, 'inventory': inventory})
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)})
 
-@app.route('/api/inventory/save', methods=['POST'])
-@login_required
-def save_inventory():
-    """Save color/size inventory data"""
-    try:
-        data = request.get_json()
-        product_id = data.get('product_id')
-        storage_type = data.get('storage_type')
-        inventory_data = data.get('inventory', {})
-        
-        # Delete existing records for this product/storage combination
-        ColorSizeInventory.query.filter_by(
-            product_type_id=product_id,
-            storage_type=storage_type
-        ).delete()
-        
-        # Add new records
-        for color, sizes in inventory_data.items():
-            for size, quantity in sizes.items():
-                if quantity > 0:  # Only save non-zero quantities
-                    record = ColorSizeInventory(
-                        product_type_id=product_id,
-                        storage_type=storage_type,
-                        color=color,
-                        size=size,
-                        quantity=quantity
-                    )
-                    db.session.add(record)
-        
-        db.session.commit()
-        return jsonify({'success': True})
-        
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({'success': False, 'error': str(e)})
