@@ -41,7 +41,6 @@ class ClientForm(FlaskForm):
 
 class ProductTypeForm(FlaskForm):
     name = StringField('Product Name', validators=[DataRequired(), Length(max=100)])
-    cost_price = FloatField('Cost Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     selling_price = FloatField('Selling Price (EGP)', validators=[DataRequired(), NumberRange(min=0)])
     brand_group = SelectField('Brand Group', choices=[('SHARED', 'URBRAND/SURVACCI (Shared Storage)'), ('AZIZ', 'AZIZ (Separate Storage)')], validators=[DataRequired()])
     available_colors = SelectMultipleField('Available Colors', choices=[

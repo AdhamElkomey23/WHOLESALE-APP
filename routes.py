@@ -434,7 +434,6 @@ def new_product():
             # Create new product
             product = ProductType(
                 name=name,
-                cost_price=cost_price,
                 selling_price=selling_price,
                 brand_group=brand_group,
                 available_colors=','.join(selected_colors),
@@ -472,7 +471,6 @@ def edit_product(id):
     
     if form.validate_on_submit():
         product.name = form.name.data
-        product.cost_price = form.cost_price.data
         product.selling_price = form.selling_price.data
         product.brand_group = form.brand_group.data
         product.available_colors = ','.join(form.available_colors.data) if form.available_colors.data else ''
