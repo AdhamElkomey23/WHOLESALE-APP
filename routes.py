@@ -1182,3 +1182,62 @@ def worker_report(id):
                          stats=stats,
                          date_from=date_from,
                          date_to=date_to)
+
+# API endpoints for enhanced inventory management
+@app.route('/api/inventory/<int:product_id>/<storage_type>')
+@login_required
+def get_inventory(product_id, storage_type):
+    """Get color/size inventory for a product"""
+    try:
+        # Get all color/size inventory records for this product and storage type
+        inventory_records = ColorSizeInventory.query.filter_by(
+            product_type_id=product_id,
+            storage_type=storage_type
+        ).all()
+        
+        # Organize by color and size
+        inventory = {}
+        for record in inventory_records:
+            if record.color not in inventory:
+                inventory[record.color] = {}
+            inventory[record.color][record.size] = record.quantity
+            
+        return jsonify({'success': True, 'inventory': inventory})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/api/inventory/save', methods=['POST'])
+@login_required
+def save_inventory():
+    """Save color/size inventory data"""
+    try:
+        data = request.get_json()
+        product_id = data.get('product_id')
+        storage_type = data.get('storage_type')
+        inventory_data = data.get('inventory', {})
+        
+        # Delete existing records for this product/storage combination
+        ColorSizeInventory.query.filter_by(
+            product_type_id=product_id,
+            storage_type=storage_type
+        ).delete()
+        
+        # Add new records
+        for color, sizes in inventory_data.items():
+            for size, quantity in sizes.items():
+                if quantity > 0:  # Only save non-zero quantities
+                    record = ColorSizeInventory(
+                        product_type_id=product_id,
+                        storage_type=storage_type,
+                        color=color,
+                        size=size,
+                        quantity=quantity
+                    )
+                    db.session.add(record)
+        
+        db.session.commit()
+        return jsonify({'success': True})
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'error': str(e)})
