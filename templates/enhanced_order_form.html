@@ -380,8 +380,8 @@ function updateBreakdownTotal(input) {
     quantityInput.value = grandTotal;
     updateItemTotal(quantityInput);
 }
-
-function updateItemTotal(input) {
+</script>
+{% endblock %}
     const container = input.closest('.order-item');
     const quantity = parseInt(input.value) || 0;
     const unitPrice = parseFloat(container.querySelector('.unit-price').value) || 0;
@@ -417,30 +417,12 @@ function calculateRemaining() {
     
     document.querySelector('[name="remaining_amount"]').value = remaining.toFixed(2);
 }
-            storageType = 'AZIZ';
-        }
-        
-        // Load inventory data for this product
-        fetch(`/api/inventory/${productId}/${storageType}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showColorSizeBreakdown(container, data);
-                } else {
-                    console.error('Failed to load inventory data');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading inventory:', error);
-            });
-        
-        // Show color/size breakdown
-        const breakdown = container.querySelector('.color-size-breakdown');
-        breakdown.style.display = 'block';
-        
-        updateItemTotal(select);
-    }
-}
+
+// Initialize form when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add first order item by default
+    addOrderItem();
+});
 
 function updateItemTotal(input) {
     const container = input.closest('.order-item');
