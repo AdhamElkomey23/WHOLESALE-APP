@@ -23,6 +23,7 @@ class OrderForm(FlaskForm):
     remaining_amount = FloatField('Remaining Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
     brand = SelectField('Brand', choices=[('URBRAND', 'URBRAND'), ('SURVACCI', 'SURVACCI')], validators=[DataRequired()])
     notes = TextAreaField('Order Notes', validators=[Length(max=500)])
+    # Dynamic fields for product quantities will be added via JavaScript
     submit = SubmitField('Save Order')
     
     def __init__(self, *args, **kwargs):

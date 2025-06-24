@@ -64,6 +64,7 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
+    client = db.relationship('Client', backref=db.backref('orders', lazy=True))
     order_items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
     
     # Legacy properties for backward compatibility

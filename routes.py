@@ -571,6 +571,28 @@ def adjust_stock():
     
     return redirect(url_for('storage'))
 
+@app.route('/api/client/<int:client_id>')
+@login_required
+def get_client_details(client_id):
+    """Get client details for auto-filling order form"""
+    try:
+        client = Client.query.get_or_404(client_id)
+        return jsonify({
+            'success': True,
+            'client': {
+                'id': client.id,
+                'name': client.name,
+                'phone_number': client.phone_number,
+                'email': client.email,
+                'address': client.address
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
 @app.route('/api/inventory/<int:product_id>')
 @login_required
 def get_inventory(product_id):
