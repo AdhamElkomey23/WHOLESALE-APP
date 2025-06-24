@@ -617,6 +617,46 @@ def get_inventory(product_id):
             'message': str(e)
         })
 
+@app.route('/api/inventory/<int:product_id>/<storage_type>')
+@login_required  
+@csrf.exempt
+def get_product_inventory_by_storage(product_id, storage_type):
+    """Get available inventory for a product by storage type for order form"""
+    from models import ColorSizeInventory, ProductType
+    
+    try:
+        # Get product info
+        product = ProductType.query.get_or_404(product_id)
+        
+        # Get inventory records for this product and storage type
+        inventory_records = ColorSizeInventory.query.filter_by(
+            product_type_id=product_id,
+            storage_type=storage_type
+        ).all()
+        
+        # Organize by color and size
+        inventory_data = {}
+        for record in inventory_records:
+            color = record.color
+            size = record.size or 'One Size'
+            
+            if color not in inventory_data:
+                inventory_data[color] = {}
+            inventory_data[color][size] = record.quantity
+            
+        return jsonify({
+            'success': True,
+            'product_name': product.name,
+            'available_colors': product.get_colors_list(),
+            'available_sizes': product.get_sizes_list(),
+            'inventory': inventory_data
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': str(e)
+        })
+
 @app.route('/api/save-inventory', methods=['POST'])
 @login_required
 @csrf.exempt

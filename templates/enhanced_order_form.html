@@ -191,9 +191,15 @@
         <div class="row mt-3">
             <div class="col-12">
                 <div class="color-size-breakdown" style="display: none;">
-                    <h6>Color & Size Breakdown</h6>
+                    <h6>Color & Size Breakdown <small class="text-muted">(Check available stock)</small></h6>
                     <div class="breakdown-content">
                         <!-- Color/Size breakdown will be populated here -->
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Only items with available stock are shown. Quantities are limited by current inventory.
+                        </small>
                     </div>
                 </div>
             </div>
@@ -243,10 +249,190 @@ function loadProductDetails(select) {
     
     if (option.value) {
         const price = option.dataset.price;
-        const colors = option.dataset.colors.split(',');
-        const sizes = option.dataset.sizes.split(',');
+        const productId = option.value;
+        const brandSelect = document.querySelector('[name="brand"]');
         
-        container.querySelector('.unit-price').value = price;
+        // Reset quantity and totals when product changes
+        container.querySelector('.quantity-input').value = '';
+        container.querySelector('.item-total').value = '';
+        
+        // Hide previous breakdown
+        const breakdown = container.querySelector('.color-size-breakdown');
+        breakdown.style.display = 'none';
+    } else {
+        // Clear fields when no product selected
+        container.querySelector('.unit-price').value = '';
+        container.querySelector('.quantity-input').value = '';
+        container.querySelector('.item-total').value = '';
+        container.querySelector('.color-size-breakdown').style.display = 'none';
+    }
+    
+    updateItemTotal(container.querySelector('.quantity-input'));
+}
+
+function showColorSizeBreakdown(container, inventoryData) {
+    const breakdown = container.querySelector('.color-size-breakdown');
+    const content = container.querySelector('.breakdown-content');
+    
+    // Clear previous content
+    content.innerHTML = '';
+    
+    if (!inventoryData.inventory || Object.keys(inventoryData.inventory).length === 0) {
+        content.innerHTML = '<div class="alert alert-warning">No stock available for this product</div>';
+        breakdown.style.display = 'block';
+        return;
+    }
+    
+    // Create breakdown table
+    let tableHTML = `
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Color</th>
+                        ${inventoryData.available_sizes.map(size => `<th>${size}</th>`).join('')}
+                        <th>Color Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    inventoryData.available_colors.forEach(color => {
+        tableHTML += `<tr><td><strong>${color}</strong></td>`;
+        
+        inventoryData.available_sizes.forEach(size => {
+            const stock = inventoryData.inventory[color] && inventoryData.inventory[color][size] || 0;
+            const inputId = `breakdown_${Date.now()}_${color}_${size}`.replace(/\s/g, '_');
+            
+            if (stock > 0) {
+                tableHTML += `
+                    <td>
+                        <input type="number" 
+                               class="form-control form-control-sm breakdown-input" 
+                               id="${inputId}"
+                               data-color="${color}" 
+                               data-size="${size}" 
+                               min="0" 
+                               max="${stock}" 
+                               value="0"
+                               onchange="updateBreakdownTotal(this)"
+                               style="width: 70px;">
+                        <small class="text-muted">Max: ${stock}</small>
+                    </td>
+                `;
+            } else {
+                tableHTML += '<td class="text-muted">-</td>';
+            }
+        });
+        
+        tableHTML += '<td><span class="color-total-display">0</span></td></tr>';
+    });
+    
+    tableHTML += `
+                </tbody>
+                <tfoot class="table-secondary">
+                    <tr>
+                        <th>Total</th>
+                        ${inventoryData.available_sizes.map(size => `<th class="size-total-display">0</th>`).join('')}
+                        <th class="grand-total-display">0</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    
+    content.innerHTML = tableHTML;
+    breakdown.style.display = 'block';
+}
+
+function updateBreakdownTotal(input) {
+    const container = input.closest('.order-item');
+    const table = input.closest('table');
+    
+    // Update color totals
+    table.querySelectorAll('tbody tr').forEach(row => {
+        let colorTotal = 0;
+        row.querySelectorAll('.breakdown-input').forEach(input => {
+            colorTotal += parseInt(input.value) || 0;
+        });
+        row.querySelector('.color-total-display').textContent = colorTotal;
+    });
+    
+    // Update size totals
+    const sizeColumns = table.querySelectorAll('thead th').length - 2; // Exclude color and total columns
+    for (let i = 1; i <= sizeColumns; i++) {
+        let sizeTotal = 0;
+        table.querySelectorAll(`tbody tr td:nth-child(${i + 1}) .breakdown-input`).forEach(input => {
+            sizeTotal += parseInt(input.value) || 0;
+        });
+        table.querySelector(`.size-total-display:nth-child(${i + 1})`).textContent = sizeTotal;
+    }
+    
+    // Update grand total
+    let grandTotal = 0;
+    table.querySelectorAll('.breakdown-input').forEach(input => {
+        grandTotal += parseInt(input.value) || 0;
+    });
+    table.querySelector('.grand-total-display').textContent = grandTotal;
+    
+    // Update main quantity input
+    const quantityInput = container.querySelector('.quantity-input');
+    quantityInput.value = grandTotal;
+    updateItemTotal(quantityInput);
+}
+
+function updateItemTotal(input) {
+    const container = input.closest('.order-item');
+    const quantity = parseInt(input.value) || 0;
+    const unitPrice = parseFloat(container.querySelector('.unit-price').value) || 0;
+    const total = quantity * unitPrice;
+    
+    container.querySelector('.item-total').value = total.toFixed(2);
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let totalPieces = 0;
+    let totalAmount = 0;
+    
+    document.querySelectorAll('.order-item').forEach(item => {
+        const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
+        const itemTotal = parseFloat(item.querySelector('.item-total').value) || 0;
+        
+        totalPieces += quantity;
+        totalAmount += itemTotal;
+    });
+    
+    document.getElementById('totalPieces').textContent = totalPieces;
+    document.getElementById('totalAmount').textContent = `EGP ${totalAmount.toFixed(2)}`;
+    
+    // Auto-calculate remaining amount
+    calculateRemaining();
+}
+
+function calculateRemaining() {
+    const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('EGP ', '')) || 0;
+    const paidAmount = parseFloat(document.querySelector('[name="paid_amount"]').value) || 0;
+    const remaining = Math.max(0, totalAmount - paidAmount);
+    
+    document.querySelector('[name="remaining_amount"]').value = remaining.toFixed(2);
+}
+            storageType = 'AZIZ';
+        }
+        
+        // Load inventory data for this product
+        fetch(`/api/inventory/${productId}/${storageType}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showColorSizeBreakdown(container, data);
+                } else {
+                    console.error('Failed to load inventory data');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading inventory:', error);
+            });
         
         // Show color/size breakdown
         const breakdown = container.querySelector('.color-size-breakdown');
