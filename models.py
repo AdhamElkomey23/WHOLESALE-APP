@@ -22,9 +22,6 @@ class Client(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relationships
-    orders = db.relationship('Order', backref='client_obj', lazy=True)
-    
     def __repr__(self):
         return f'<Client {self.name}>'
 
@@ -32,6 +29,7 @@ class ProductType(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     selling_price = db.Column(db.Float, default=0.0)
+    cost_price = db.Column(db.Float, default=0.0)
     brand_group = db.Column(db.String(20), nullable=False, default='SHARED')  # 'SHARED' or 'AZIZ'
     available_colors = db.Column(db.Text, default='')  # Comma-separated list of colors
     available_sizes = db.Column(db.Text, default='')  # Comma-separated list of sizes
@@ -64,7 +62,7 @@ class Order(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     # Relationships
-    client = db.relationship('Client', backref=db.backref('orders', lazy=True))
+    client = db.relationship('Client', backref='orders', lazy=True)
     order_items = db.relationship('OrderItem', backref='order', lazy=True, cascade='all, delete-orphan')
     
     # Legacy properties for backward compatibility
