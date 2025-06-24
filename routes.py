@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request, jsonify, make_response, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
-from app import app, db
+from app import app, db, csrf
 from models import User, Order, ProductType, Inventory, StockMovement, Worker, WorkerAttendance, Client, OrderItem, ColorSizeInventory
 from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm, WorkerForm, AttendanceForm, AttendanceFilterForm, ClientForm, ColorSizeInventoryForm
 from utils import generate_invoice_pdf, export_data_csv
@@ -619,9 +619,12 @@ def get_inventory(product_id):
 
 @app.route('/api/save-inventory', methods=['POST'])
 @login_required
+@csrf.exempt
 def save_inventory():
     """Save inventory data for color/size combinations"""
     from models import ColorSizeInventory
+    from flask_wtf.csrf import validate_csrf
+    from flask import request
     
     try:
         data = request.get_json()
