@@ -1,40 +1,44 @@
 {% extends "base.html" %}
 
-{% block title %}Enhanced Order Form{% endblock %}
+{% block title %}New Order{% endblock %}
 
 {% block content %}
 <div class="container-fluid">
     <div class="row">
         <div class="col-12">
-            <form method="POST" class="needs-validation" novalidate>
+            <h2>Create New Order</h2>
+            
+            <form method="POST" id="orderForm">
                 {{ form.hidden_tag() }}
                 
-                <!-- Order Header -->
+                <!-- Order Basic Info -->
                 <div class="card mb-4">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h4 class="mb-0">Create New Order</h4>
-                        <button type="button" class="btn btn-outline-secondary" onclick="generateOrderCode()">
-                            <i class="fas fa-random"></i> Generate Code
-                        </button>
+                    <div class="card-header">
+                        <h5>Order Information</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 {{ form.order_code.label(class="form-label") }}
-                                {{ form.order_code(class="form-control") }}
+                                <div class="input-group">
+                                    {{ form.order_code(class="form-control") }}
+                                    <button type="button" class="btn btn-outline-secondary" onclick="generateOrderCode()">
+                                        <i class="fas fa-refresh"></i> Generate
+                                    </button>
+                                </div>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 {{ form.date.label(class="form-label") }}
                                 {{ form.date(class="form-control") }}
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 {{ form.brand.label(class="form-label") }}
                                 {{ form.brand(class="form-control") }}
                             </div>
                         </div>
                     </div>
                 </div>
-
+                
                 <!-- Client Information -->
                 <div class="card mb-4">
                     <div class="card-header">
@@ -42,45 +46,45 @@
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 {{ form.client_id.label(class="form-label") }}
                                 {{ form.client_id(class="form-control", onchange="loadClientInfo()") }}
                             </div>
-                            <div class="col-md-4">
+                            <div class="col-md-6">
                                 {{ form.client_name.label(class="form-label") }}
                                 {{ form.client_name(class="form-control") }}
                             </div>
+                        </div>
+                        <div class="row mt-3">
                             <div class="col-md-4">
                                 {{ form.phone_number.label(class="form-label") }}
                                 {{ form.phone_number(class="form-control") }}
                             </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 {{ form.email.label(class="form-label") }}
                                 {{ form.email(class="form-control") }}
                             </div>
-                            <div class="col-md-6">
-                                {{ form.address.label(class="form-label") }}
-                                {{ form.address(class="form-control", rows="2") }}
-                            </div>
-                        </div>
-                        <div class="row mt-3">
-                            <div class="col-12">
-                                <button type="button" class="btn btn-outline-success btn-sm" onclick="saveAsNewClient()">
+                            <div class="col-md-4">
+                                <button type="button" class="btn btn-outline-success mt-4" onclick="saveAsNewClient()">
                                     <i class="fas fa-user-plus"></i> Save as New Client
                                 </button>
                             </div>
                         </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                {{ form.address.label(class="form-label") }}
+                                {{ form.address(class="form-control", rows="2") }}
+                            </div>
+                        </div>
                     </div>
                 </div>
-
+                
                 <!-- Order Items -->
                 <div class="card mb-4">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5>Order Items</h5>
-                        <button type="button" class="btn btn-primary" onclick="addOrderItem()">
-                            <i class="fas fa-plus"></i> Add Item
+                        <button type="button" class="btn btn-primary btn-sm" onclick="addOrderItem()">
+                            <i class="fas fa-plus"></i> Add Product
                         </button>
                     </div>
                     <div class="card-body">
@@ -248,28 +252,6 @@ function loadProductDetails(select) {
         const productId = option.value;
         const brandSelect = document.querySelector('[name="brand"]');
         
-        container.querySelector('.unit-price').value = price;
-        
-        // Determine storage type based on brand
-        let storageType = 'SHARED'; // Default for URBRAND/SURVACCI
-        if (brandSelect.value === 'AZIZ') {
-            storageType = 'AZIZ';
-        }
-        
-        // Load inventory data for this product
-        fetch(`/api/inventory/${productId}/${storageType}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    showColorSizeBreakdown(container, data);
-                } else {
-                    console.error('Failed to load inventory data');
-                }
-            })
-            .catch(error => {
-                console.error('Error loading inventory:', error);
-            });
-        
         // Reset quantity and totals when product changes
         container.querySelector('.quantity-input').value = '';
         container.querySelector('.item-total').value = '';
@@ -424,6 +406,49 @@ function calculateTotals() {
     document.getElementById('totalPieces').textContent = totalPieces;
     document.getElementById('totalAmount').textContent = `EGP ${totalAmount.toFixed(2)}`;
     
+    // Auto-calculate remaining amount
+    calculateRemaining();
+}
+
+function calculateRemaining() {
+    const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('EGP ', '')) || 0;
+    const paidAmount = parseFloat(document.querySelector('[name="paid_amount"]').value) || 0;
+    const remaining = Math.max(0, totalAmount - paidAmount);
+    
+    document.querySelector('[name="remaining_amount"]').value = remaining.toFixed(2);
+}
+
+// Initialize form when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add first order item by default
+    addOrderItem();
+});
+
+function updateItemTotal(input) {
+    const container = input.closest('.order-item');
+    const quantity = parseInt(container.querySelector('.quantity-input').value) || 0;
+    const unitPrice = parseFloat(container.querySelector('.unit-price').value) || 0;
+    const total = quantity * unitPrice;
+    
+    container.querySelector('.item-total').value = total.toFixed(2);
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let totalPieces = 0;
+    let totalAmount = 0;
+    
+    document.querySelectorAll('.order-item').forEach(item => {
+        const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
+        const itemTotal = parseFloat(item.querySelector('.item-total').value) || 0;
+        
+        totalPieces += quantity;
+        totalAmount += itemTotal;
+    });
+    
+    document.getElementById('totalPieces').textContent = totalPieces;
+    document.getElementById('totalAmount').textContent = `EGP ${totalAmount.toFixed(2)}`;
+    
     calculateRemaining();
 }
 
@@ -472,11 +497,9 @@ function saveAsNewClient() {
     });
 }
 
-// Initialize form when page loads
+// Initialize with one order item
 document.addEventListener('DOMContentLoaded', function() {
-    // Add first order item by default
     addOrderItem();
-    // Auto-generate order code on page load
     generateOrderCode();
 });
 </script>
