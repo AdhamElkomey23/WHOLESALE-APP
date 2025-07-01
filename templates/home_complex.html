@@ -1,0 +1,612 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Wholesale Management{% endblock %}
+
+{% block content %}
+<!-- Full Screen Welcome Animation -->
+<div id="welcomeScreen" class="welcome-fullscreen">
+    <div class="welcome-content">
+        <div class="laptop-screen">
+            <div class="screen-glow"></div>
+            <div class="welcome-text-container">
+                <div class="welcome-icon mb-4">
+                    <i class="fas fa-laptop fa-6x text-white animate__animated animate__bounceIn"></i>
+                </div>
+                <h1 class="welcome-title animate__animated animate__fadeInUp animate__delay-1s">
+                    Hello {{ current_user.username.title() }}
+                </h1>
+                <h3 class="welcome-subtitle animate__animated animate__fadeInUp animate__delay-2s">
+                    Welcome back!
+                </h3>
+                <div class="typing-effect animate__animated animate__fadeIn animate__delay-3s">
+                    <span id="typingText"></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="container mt-4">
+    <!-- Welcome Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h1 class="display-4 mb-2">Welcome to Wholesale Manager</h1>
+            <p class="lead text-muted">Complete overview of your clothing wholesale business across all brands</p>
+        </div>
+    </div>
+
+    <!-- Brand Performance Overview -->
+    <div class="row mb-5">
+        <div class="col">
+            <h2 class="mb-4"><i class="fas fa-chart-bar me-2"></i>Brand Performance Overview</h2>
+        </div>
+    </div>
+
+    <!-- Brand Cards -->
+    <div class="row mb-5">
+        {% for brand, data in brands_data.items() %}
+        <div class="col-lg-4 mb-4">
+            <div class="card h-100 border-{{ data.status_color }}">
+                <div class="card-header bg-{{ data.status_color }} bg-opacity-10 border-{{ data.status_color }}">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">
+                            {% if brand == 'URBRAND' %}
+                                <i class="fas fa-tag me-2"></i>{{ brand }}
+                            {% elif brand == 'SURVACCI' %}
+                                <i class="fas fa-crown me-2"></i>{{ brand }}
+                            {% else %}
+                                <i class="fas fa-star me-2"></i>{{ brand }}
+                            {% endif %}
+                        </h5>
+                        <span class="badge bg-{{ data.status_color }} fs-6">
+                            {% if data.status == 'winning' %}
+                                <i class="fas fa-arrow-up me-1"></i>Winning
+                            {% elif data.status == 'neutral' %}
+                                <i class="fas fa-minus me-1"></i>Neutral
+                            {% else %}
+                                <i class="fas fa-arrow-down me-1"></i>Losing
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="border-end">
+                                <h4 class="text-primary mb-1">{{ data.total_orders }}</h4>
+                                <small class="text-muted">Total Orders</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4 class="text-info mb-1">{{ "{:,.0f}".format(data.total_revenue) }}</h4>
+                            <small class="text-muted">Revenue (EGP)</small>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-6 mb-3">
+                            <div class="border-end">
+                                <h4 class="text-warning mb-1">{{ "{:,.0f}".format(data.total_expenses) }}</h4>
+                                <small class="text-muted">Expenses (EGP)</small>
+                            </div>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <h4 class="text-{{ data.status_color }} mb-1">{{ "{:,.0f}".format(data.total_profit) }}</h4>
+                            <small class="text-muted">Net Profit (EGP)</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('dashboard', brand=brand) }}" class="btn btn-primary">
+                            <i class="fas fa-chart-line me-2"></i>View Dashboard
+                        </a>
+                        <div class="row g-2">
+                            <div class="col-6">
+                                <a href="{{ url_for('orders', brand=brand) }}" class="btn btn-outline-secondary w-100">
+                                    <i class="fas fa-shopping-cart me-1"></i>Orders
+                                </a>
+                            </div>
+                            <div class="col-6">
+                                <a href="{{ url_for('expenses', brand=brand) }}" class="btn btn-outline-info w-100">
+                                    <i class="fas fa-receipt me-1"></i>Expenses
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Quick Access Section -->
+    <div class="row mb-4">
+        <div class="col">
+            <h3 class="mb-4"><i class="fas fa-bolt me-2"></i>Quick Access</h3>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Orders Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-shopping-cart fa-3x text-primary mb-3"></i>
+                    <h5>Orders</h5>
+                    <p class="text-muted mb-3">Manage customer orders and track sales</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('orders') }}" class="btn btn-primary">View Orders</a>
+                        <a href="{{ url_for('new_order') }}" class="btn btn-outline-primary">New Order</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-tags fa-3x text-success mb-3"></i>
+                    <h5>Products</h5>
+                    <p class="text-muted mb-3">Manage product types and pricing</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('products') }}" class="btn btn-success">View Products</a>
+                        <a href="{{ url_for('new_product') }}" class="btn btn-outline-success">New Product</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Storage Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-warehouse fa-3x text-warning mb-3"></i>
+                    <h5>Storage</h5>
+                    <p class="text-muted mb-3">Monitor and adjust inventory levels</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('storage') }}" class="btn btn-warning">Manage Storage</a>
+                        <a href="{{ url_for('storage') }}" class="btn btn-outline-warning">Adjust Stock</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Export Section -->
+        <div class="col-lg-3 col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="fas fa-download fa-3x text-info mb-3"></i>
+                    <h5>Export</h5>
+                    <p class="text-muted mb-3">Download reports and financial data</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('export') }}" class="btn btn-info">Export Data</a>
+                        <a href="{{ url_for('export_csv') }}" class="btn btn-outline-info">Download CSV</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Legend -->
+    <div class="row mt-4">
+        <div class="col">
+            <div class="card bg-light">
+                <div class="card-body">
+                    <h6 class="card-title"><i class="fas fa-info-circle me-2"></i>Performance Indicators</h6>
+                    <div class="row text-center">
+                        <div class="col-md-4">
+                            <span class="badge bg-success me-2">●</span>
+                            <strong>Winning:</strong> Net profit > 1,000 EGP
+                        </div>
+                        <div class="col-md-4">
+                            <span class="badge bg-warning me-2">●</span>
+                            <strong>Neutral:</strong> Net profit 0-1,000 EGP
+                        </div>
+                        <div class="col-md-4">
+                            <span class="badge bg-danger me-2">●</span>
+                            <strong>Losing:</strong> Net profit < 0 EGP
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Styles for Full Screen Welcome Animation -->
+<style>
+.welcome-fullscreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: linear-gradient(135deg, #0c1115 0%, #1a1a2e 50%, #16213e 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 1;
+    transition: opacity 1s ease-out;
+    overflow: hidden;
+}
+
+.welcome-fullscreen.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.welcome-content {
+    text-align: center;
+    position: relative;
+}
+
+.laptop-screen {
+    position: relative;
+    background: linear-gradient(145deg, #1e293b, #334155);
+    border-radius: 20px;
+    padding: 60px;
+    box-shadow: 
+        0 0 100px rgba(59, 130, 246, 0.3),
+        0 0 200px rgba(59, 130, 246, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: screenPowerOn 2s ease-out;
+    max-width: 90vw;
+    max-height: 80vh;
+}
+
+.screen-glow {
+    position: absolute;
+    top: -50px;
+    left: -50px;
+    right: -50px;
+    bottom: -50px;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, transparent 70%);
+    border-radius: 50px;
+    animation: glow 3s ease-in-out infinite alternate;
+}
+
+.welcome-text-container {
+    position: relative;
+    z-index: 1;
+}
+
+.welcome-title {
+    font-size: 3.5rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 0 30px rgba(59, 130, 246, 0.8);
+    margin-bottom: 20px;
+}
+
+.welcome-subtitle {
+    font-size: 1.8rem;
+    color: #94a3b8;
+    margin-bottom: 30px;
+}
+
+.typing-effect {
+    font-size: 1.2rem;
+    color: #3b82f6;
+    min-height: 30px;
+}
+
+@keyframes screenPowerOn {
+    0% {
+        opacity: 0;
+        transform: scale(0.8);
+        box-shadow: 0 0 0 rgba(59, 130, 246, 0);
+    }
+    50% {
+        opacity: 0.5;
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 
+            0 0 100px rgba(59, 130, 246, 0.3),
+            0 0 200px rgba(59, 130, 246, 0.2),
+            inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+}
+
+@keyframes glow {
+    from { opacity: 0.5; transform: scale(1); }
+    to { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes bounceIn {
+    from, 20%, 40%, 60%, 80%, to {
+        animation-timing-function: cubic-bezier(0.215, 0.610, 0.355, 1.000);
+    }
+    0% { opacity: 0; transform: scale3d(.3, .3, .3); }
+    20% { transform: scale3d(1.1, 1.1, 1.1); }
+    40% { transform: scale3d(.9, .9, .9); }
+    60% { opacity: 1; transform: scale3d(1.03, 1.03, 1.03); }
+    80% { transform: scale3d(.97, .97, .97); }
+    to { opacity: 1; transform: scale3d(1, 1, 1); }
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translate3d(0, 100%, 0); }
+    to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+.animate__animated {
+    animation-duration: 1s;
+    animation-fill-mode: both;
+}
+
+.animate__bounceIn { animation-name: bounceIn; animation-duration: 1.5s; }
+.animate__fadeInUp { animation-name: fadeInUp; }
+.animate__fadeIn { animation-name: fadeIn; }
+.animate__delay-1s { animation-delay: 1s; }
+.animate__delay-2s { animation-delay: 2s; }
+.animate__delay-3s { animation-delay: 3s; }
+
+/* Mobile Responsive Welcome Animation */
+@media (max-width: 768px) {
+    .laptop-screen {
+        padding: 30px 20px;
+        border-radius: 15px;
+        max-width: 95vw;
+        margin: 0 10px;
+    }
+    
+    .screen-glow {
+        top: -30px;
+        left: -30px;
+        right: -30px;
+        bottom: -30px;
+        border-radius: 35px;
+    }
+    
+    .welcome-title {
+        font-size: 2.2rem;
+        margin-bottom: 15px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.3rem;
+        margin-bottom: 20px;
+    }
+    
+    .typing-effect {
+        font-size: 1rem;
+        min-height: 25px;
+    }
+    
+    .welcome-icon i {
+        font-size: 4rem !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .laptop-screen {
+        padding: 20px 15px;
+        border-radius: 12px;
+    }
+    
+    .welcome-title {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    .typing-effect {
+        font-size: 0.9rem;
+        min-height: 20px;
+    }
+    
+    .welcome-icon i {
+        font-size: 3rem !important;
+    }
+}
+
+/* Simple improvements */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+}
+
+/* Mobile Responsive Improvements */
+@media (max-width: 768px) {
+    /* Welcome Screen Mobile */
+    .welcome-fullscreen {
+        overflow-y: auto;
+        padding: 1rem;
+    }
+    
+    .laptop-screen {
+        padding: 2rem 1.5rem;
+        margin: 1rem 0;
+    }
+    
+    .welcome-title {
+        font-size: 2rem;
+    }
+    
+    .welcome-subtitle {
+        font-size: 1.2rem;
+    }
+    
+    .typing-effect {
+        font-size: 1rem;
+    }
+    
+    /* Home Page Mobile */
+    .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .lead {
+        font-size: 1rem;
+    }
+    
+    /* Brand Cards Mobile */
+    .card {
+        margin-bottom: 1rem;
+    }
+    
+    .card-header h5 {
+        font-size: 1rem;
+    }
+    
+    .card-body .row .col-6 h4 {
+        font-size: 1.2rem;
+    }
+    
+    .card-body .row .col-6 small {
+        font-size: 0.8rem;
+    }
+    
+    /* Action Buttons Mobile */
+    .card-footer .row .col-4 .btn {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.75rem;
+    }
+    
+    .card-footer .row .col-4 .btn i {
+        font-size: 1rem;
+    }
+    
+    .card-footer .row .col-4 .btn small {
+        font-size: 0.7rem;
+    }
+    
+    /* Quick Access Mobile */
+    .col-md-3 {
+        margin-bottom: 1rem;
+    }
+    
+    .text-center h4 {
+        font-size: 1rem;
+    }
+    
+    .text-center p {
+        font-size: 0.9rem;
+    }
+    
+    /* Navigation improvements for mobile */
+    .left-sidebar {
+        transform: translateX(-100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .left-sidebar.mobile-open {
+        transform: translateX(0);
+    }
+}
+
+@media (max-width: 576px) {
+    /* Extra small screens */
+    .welcome-title {
+        font-size: 1.5rem;
+    }
+    
+    .display-4 {
+        font-size: 1.8rem;
+    }
+    
+    .card-footer .row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .card-footer .row .col-4 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Check if this is a fresh login (comes from login page)
+    const urlParams = new URLSearchParams(window.location.search);
+    const fromLogin = urlParams.get('from') === 'login' || 
+                     sessionStorage.getItem('justLoggedIn') ||
+                     localStorage.getItem('showWelcome') ||
+                     document.referrer.includes('/login') ||
+                     {{ 'true' if session.get('show_welcome') else 'false' }};
+    
+    if (fromLogin) {
+        // Clear all flags
+        sessionStorage.removeItem('justLoggedIn');
+        localStorage.removeItem('showWelcome');
+        
+        // Show full-screen welcome animation
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        if (welcomeScreen) {
+            welcomeScreen.style.display = 'flex';
+            welcomeScreen.style.position = 'fixed';
+            welcomeScreen.style.zIndex = '99999';
+            
+            // Force show on mobile by adding specific styles
+            if (window.innerWidth <= 768) {
+                welcomeScreen.style.top = '0';
+                welcomeScreen.style.left = '0';
+                welcomeScreen.style.width = '100vw';
+                welcomeScreen.style.height = '100vh';
+                document.body.style.overflow = 'hidden';
+            }
+            
+            // Start typing animation after 4 seconds
+            setTimeout(function() {
+                typeWriter("System ready. Loading your dashboard...", 50);
+            }, 4000);
+            
+            // Hide welcome screen after 8 seconds
+            setTimeout(function() {
+                welcomeScreen.classList.add('fade-out');
+                setTimeout(function() {
+                    welcomeScreen.style.display = 'none';
+                    document.body.style.overflow = '';
+                }, 1000);
+            }, 8000);
+        }
+    } else {
+        // Hide welcome screen if not from login
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        if (welcomeScreen) {
+            welcomeScreen.style.display = 'none';
+        }
+    }
+});
+
+function typeWriter(text, speed) {
+    const typingElement = document.getElementById('typingText');
+    let i = 0;
+    
+    function type() {
+        if (i < text.length) {
+            typingElement.innerHTML += text.charAt(i);
+            i++;
+            setTimeout(type, speed);
+        }
+    }
+    
+    type();
+}
+</script>
+{% endblock %}

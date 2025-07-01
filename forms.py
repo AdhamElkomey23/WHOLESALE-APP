@@ -202,3 +202,12 @@ class AttendanceFilterForm(FlaskForm):
         from models import Worker
         workers = Worker.query.filter_by(is_active=True).all()
         self.worker_id.choices = [('0', 'All Workers')] + [(str(w.id), w.name) for w in workers]
+
+class MoneyTransferForm(FlaskForm):
+    sender_name = StringField('Sender Name', validators=[DataRequired(), Length(max=200)])
+    sender_phone = StringField('Sender Phone (Optional)', validators=[Length(max=20)])
+    amount = FloatField('Amount (EGP)', validators=[DataRequired(), NumberRange(min=0)])
+    reason = StringField('Transfer Reason', validators=[DataRequired(), Length(max=500)])
+    date = DateField('Transfer Date', validators=[DataRequired()], default=datetime.today)
+    notes = TextAreaField('Additional Notes', validators=[Length(max=1000)])
+    submit = SubmitField('Save Transfer')

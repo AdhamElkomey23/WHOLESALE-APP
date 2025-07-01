@@ -2,8 +2,8 @@ from flask import render_template, redirect, url_for, flash, request, jsonify, m
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.security import check_password_hash, generate_password_hash
 from app import app, db, csrf
-from models import User, Order, ProductType, Inventory, StockMovement, Worker, WorkerAttendance, Client, OrderItem, ColorSizeInventory
-from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm, WorkerForm, AttendanceForm, AttendanceFilterForm, ClientForm, ColorSizeInventoryForm
+from models import User, Order, ProductType, Inventory, StockMovement, Worker, WorkerAttendance, Client, OrderItem, ColorSizeInventory, MoneyTransfer
+from forms import LoginForm, OrderForm, ProductTypeForm, UserProfileForm, WorkerForm, AttendanceForm, AttendanceFilterForm, ClientForm, ColorSizeInventoryForm, MoneyTransferForm
 from utils import generate_invoice_pdf, export_data_csv
 from datetime import datetime, timedelta
 from sqlalchemy import func, extract
@@ -51,7 +51,32 @@ def index():
             'status_color': status_color
         }
     
-    return render_template('home.html', brands_data=brands_data)
+    # Get summary data for simplified home page
+    total_orders = Order.query.count()
+    
+    # Calculate total revenue and pending payments manually since they are properties
+    all_orders = Order.query.all()
+    total_revenue = sum(order.total_amount for order in all_orders)
+    pending_payments = sum(order.remaining_amount for order in all_orders)
+    
+    total_clients = Client.query.count()
+    
+    # Recent orders (last 5)
+    recent_orders = Order.query.order_by(Order.created_at.desc()).limit(5).all()
+    
+    # Recent transfers (last 5)
+    recent_transfers = MoneyTransfer.query.order_by(MoneyTransfer.created_at.desc()).limit(5).all()
+    
+    context = {
+        'total_orders': total_orders,
+        'total_revenue': total_revenue,
+        'total_clients': total_clients,
+        'pending_payments': pending_payments,
+        'recent_orders': recent_orders,
+        'recent_transfers': recent_transfers
+    }
+    
+    return render_template('home.html', **context)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -487,6 +512,79 @@ def delete_product(id):
 @login_required
 def export():
     return render_template('export.html')
+
+@app.route('/transfers')
+@login_required
+def transfers():
+    """Money transfers tracking page"""
+    from models import MoneyTransfer
+    from forms import MoneyTransferForm
+    from datetime import date, datetime
+    from sqlalchemy import func
+    
+    form = MoneyTransferForm()
+    
+    if form.validate_on_submit():
+        transfer = MoneyTransfer(
+            sender_name=form.sender_name.data,
+            sender_phone=form.sender_phone.data,
+            amount=form.amount.data,
+            reason=form.reason.data,
+            date=form.date.data,
+            notes=form.notes.data
+        )
+        
+        try:
+            db.session.add(transfer)
+            db.session.commit()
+            flash('Money transfer recorded successfully!', 'success')
+            return redirect(url_for('transfers'))
+        except Exception as e:
+            db.session.rollback()
+            flash('Error recording transfer. Please try again.', 'danger')
+    
+    # Get all transfers
+    transfers = MoneyTransfer.query.order_by(MoneyTransfer.date.desc()).all()
+    
+    # Calculate summary statistics
+    today = date.today()
+    today_total = db.session.query(func.sum(MoneyTransfer.amount)).filter(
+        MoneyTransfer.date == today
+    ).scalar() or 0
+    
+    month_total = db.session.query(func.sum(MoneyTransfer.amount)).filter(
+        func.extract('month', MoneyTransfer.date) == today.month,
+        func.extract('year', MoneyTransfer.date) == today.year
+    ).scalar() or 0
+    
+    total_count = MoneyTransfer.query.count()
+    all_time_total = db.session.query(func.sum(MoneyTransfer.amount)).scalar() or 0
+    
+    return render_template('transfers.html', 
+                         form=form,
+                         transfers=transfers,
+                         today_total=today_total,
+                         month_total=month_total,
+                         total_count=total_count,
+                         all_time_total=all_time_total)
+
+@app.route('/transfers/<int:transfer_id>/delete', methods=['POST'])
+@login_required
+def delete_transfer(transfer_id):
+    """Delete a money transfer record"""
+    from models import MoneyTransfer
+    
+    transfer = MoneyTransfer.query.get_or_404(transfer_id)
+    
+    try:
+        db.session.delete(transfer)
+        db.session.commit()
+        flash('Transfer deleted successfully!', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting transfer. Please try again.', 'danger')
+    
+    return redirect(url_for('transfers'))
 
 @app.route('/export/csv')
 @login_required

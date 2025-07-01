@@ -74,6 +74,10 @@
                 <span>Storage</span>
             </a>
 
+            <a href="{{ url_for('transfers') }}" class="nav-item {% if request.endpoint == 'transfers' %}active{% endif %}">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Money Transfers</span>
+            </a>
             <a href="{{ url_for('export') }}" class="nav-item {% if request.endpoint == 'export' %}active{% endif %}">
                 <i class="fas fa-download"></i>
                 <span>Export</span>
