@@ -20,7 +20,7 @@ csrf = CSRFProtect()
 
 # create the app
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key-change-in-production")
+app.secret_key = os.environ.get("SESSION_SECRET", "f50f922cf1e19b1c5747d9802ead23ffaf8f1077eb684733a75cc55b26aa4e23")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1) # needed for url_for to generate with https
 
 # configure the database

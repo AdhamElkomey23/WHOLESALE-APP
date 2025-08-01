@@ -1,7 +1,7 @@
 modules = ["web", "python-3.11", "nodejs-20"]
 
 [nix]
-channel = "stable-24_05"
+channel = "stable-25_05"
 packages = ["freetype", "glibcLocales", "openssl", "postgresql"]
 
 [deployment]
@@ -9,7 +9,7 @@ deploymentTarget = "autoscale"
 run = ["gunicorn", "--bind", "0.0.0.0:5000", "main:app"]
 
 [workflows]
-runButton = "flask_server"
+runButton = "Project"
 
 [[workflows.workflow]]
 name = "Project"
