@@ -410,4 +410,82 @@
     background-color: rgba(13, 110, 253, 0.1);
 }
 </style>
+
+<script>
+function editProduct(productId) {
+    // Fetch product data and populate the modal form
+    fetch(`/api/products/${productId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const product = data.product;
+                
+                // Populate the form fields
+                document.getElementById('productName').value = product.name;
+                document.getElementById('costPrice').value = product.cost_price || 0;
+                document.getElementById('sellingPrice').value = product.selling_price;
+                document.getElementById('brandGroup').value = product.brand_group;
+                
+                // Set colors
+                const colors = product.available_colors ? product.available_colors.split(',') : [];
+                document.querySelectorAll('input[name="available_colors"]').forEach(checkbox => {
+                    checkbox.checked = colors.includes(checkbox.value);
+                });
+                
+                // Set sizes
+                const sizes = product.available_sizes ? product.available_sizes.split(',') : [];
+                document.querySelectorAll('input[name="available_sizes"]').forEach(checkbox => {
+                    checkbox.checked = sizes.includes(checkbox.value);
+                });
+                
+                // Change form action to edit
+                document.getElementById('productForm').action = `/products/${productId}/edit`;
+                document.getElementById('productModalLabel').textContent = 'Edit Product';
+                document.querySelector('.modal-footer button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Update Product';
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('productModal'));
+                modal.show();
+            } else {
+                alert('Error loading product data: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading product data');
+        });
+}
+
+function deleteProduct(productId) {
+    if (confirm('Are you sure you want to delete this product? This action cannot be undone.')) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/products/${productId}/delete`;
+        
+        // Add CSRF token
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = 'csrf_token';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+// Reset modal when adding new product
+document.getElementById('productModal').addEventListener('show.bs.modal', function (event) {
+    const button = event.relatedTarget;
+    if (!button || !button.getAttribute('onclick')) {
+        // This is the "Add New Product" button
+        document.getElementById('productForm').action = '/products/new';
+        document.getElementById('productModalLabel').textContent = 'Add New Product';
+        document.querySelector('.modal-footer button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i>Save Product';
+        document.getElementById('productForm').reset();
+    }
+});
+</script>
 {% endblock %}

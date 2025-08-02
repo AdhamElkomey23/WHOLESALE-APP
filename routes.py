@@ -595,6 +595,25 @@ def delete_product(id):
     
     return redirect(url_for('products'))
 
+@app.route('/api/products/<int:id>')
+@login_required
+def get_product_api(id):
+    """API endpoint to get product data for editing"""
+    product = ProductType.query.get_or_404(id)
+    
+    return jsonify({
+        'success': True,
+        'product': {
+            'id': product.id,
+            'name': product.name,
+            'cost_price': product.cost_price,
+            'selling_price': product.selling_price,
+            'brand_group': product.brand_group,
+            'available_colors': product.available_colors,
+            'available_sizes': product.available_sizes
+        }
+    })
+
 @app.route('/export')
 @login_required
 def export():
