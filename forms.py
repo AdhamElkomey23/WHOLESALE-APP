@@ -23,8 +23,21 @@ class OrderForm(FlaskForm):
     remaining_amount = FloatField('Remaining Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
     brand = SelectField('Brand', choices=[('URBRAND', 'URBRAND'), ('SURVACCI', 'SURVACCI'), ('AZIZ', 'AZIZ')], validators=[DataRequired()])
     notes = TextAreaField('Order Notes', validators=[Length(max=500)])
-    # Legacy field for backward compatibility
+    # Legacy fields for backward compatibility
     product_type_id = SelectField('Product Type', coerce=int, validators=[], default=0)
+    total_pieces = IntegerField('Total Pieces', validators=[NumberRange(min=0)], default=0)
+    pieces_per_color = IntegerField('Pieces Per Color', validators=[NumberRange(min=0)], default=0)
+    quantity = IntegerField('Quantity', validators=[NumberRange(min=0)], default=0)
+    unit_price = FloatField('Unit Price (EGP)', validators=[NumberRange(min=0)], default=0.0)
+    selected_colors = SelectMultipleField('Selected Colors', choices=[
+        ('Black', 'Black'), ('White', 'White'), ('Green', 'Green'), ('Petrol', 'Petrol'), 
+        ('Burgundy', 'Burgundy'), ('Brown', 'Brown'), ('Baby Pink', 'Baby Pink')
+    ])
+    selected_sizes = SelectMultipleField('Selected Sizes', choices=[
+        ('XS', 'Extra Small (XS)'), ('S', 'Small (S)'), ('M', 'Medium (M)'), 
+        ('L', 'Large (L)'), ('XL', 'Extra Large (XL)'), ('XXL', '2XL'), 
+        ('XXXL', '3XL'), ('XXXXL', '4XL'), ('XXXXXL', '5XL')
+    ])
     # Dynamic fields for product quantities will be added via JavaScript
     submit = SubmitField('Save Order')
     
