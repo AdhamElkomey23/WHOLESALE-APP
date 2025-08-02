@@ -101,6 +101,31 @@ class Order(db.Model):
     def revenue(self):
         """Calculate revenue for this order"""
         return self.total_amount
+    
+    @property
+    def number_of_colors(self):
+        """Calculate number of different colors in this order"""
+        colors = set()
+        for item in self.order_items:
+            if item.is_custom_product:
+                if item.custom_color_size_matrix:
+                    try:
+                        matrix = json.loads(item.custom_color_size_matrix)
+                        colors.update(matrix.keys())
+                    except:
+                        pass
+                elif item.custom_product_color:
+                    colors.add(item.custom_product_color)
+            else:
+                breakdown = item.get_color_size_breakdown()
+                colors.update(breakdown.keys())
+        return len(colors)
+    
+    @property
+    def pieces_per_color(self):
+        """Calculate average pieces per color"""
+        num_colors = self.number_of_colors
+        return round(self.total_pieces / num_colors) if num_colors > 0 else 0
 
 class OrderItem(db.Model):
     """Individual product items within an order"""

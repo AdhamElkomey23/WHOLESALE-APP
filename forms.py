@@ -21,8 +21,10 @@ class OrderForm(FlaskForm):
     is_printed = BooleanField('Printed')
     paid_amount = FloatField('Paid Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
     remaining_amount = FloatField('Remaining Amount (EGP)', validators=[NumberRange(min=0)], default=0.0)
-    brand = SelectField('Brand', choices=[('URBRAND', 'URBRAND'), ('SURVACCI', 'SURVACCI')], validators=[DataRequired()])
+    brand = SelectField('Brand', choices=[('URBRAND', 'URBRAND'), ('SURVACCI', 'SURVACCI'), ('AZIZ', 'AZIZ')], validators=[DataRequired()])
     notes = TextAreaField('Order Notes', validators=[Length(max=500)])
+    # Legacy field for backward compatibility
+    product_type_id = SelectField('Product Type', coerce=int, validators=[], default=0)
     # Dynamic fields for product quantities will be added via JavaScript
     submit = SubmitField('Save Order')
     
@@ -31,6 +33,9 @@ class OrderForm(FlaskForm):
         # Load clients for dropdown - handle empty string for coercion
         clients = Client.query.all()
         self.client_id.choices = [(0, 'Select existing client...')] + [(c.id, f"{c.name} - {c.phone_number}") for c in clients]
+        # Load products for backward compatibility
+        products = ProductType.query.all()
+        self.product_type_id.choices = [(0, 'Select product...')] + [(p.id, p.name) for p in products]
 
 class ClientForm(FlaskForm):
     name = StringField('Client Name', validators=[DataRequired(), Length(max=200)])
@@ -56,8 +61,8 @@ class ProductTypeForm(FlaskForm):
     submit = SubmitField('Save Product')
     
     def validate_selling_price(self, field):
-        if self.cost_price.data and field.data < self.cost_price.data:
-            raise ValidationError('Selling price should be greater than or equal to cost price')
+        # Remove cost_price validation since it's not in this form
+        pass
 
 class ColorSizeInventoryForm(FlaskForm):
     product_type_id = SelectField('Product Type', coerce=int, validators=[DataRequired()])
