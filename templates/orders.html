@@ -182,7 +182,7 @@
                             <div class="col-4">
                                 <div class="text-center">
                                     <div class="small text-muted">Total Amount</div>
-                                    <div class="fw-bold text-dark">{{ "%.2f"|format(order.total_amount()) }} EGP</div>
+                                    <div class="fw-bold text-dark">{{ "%.2f"|format(order.total_amount) }} EGP</div>
                                 </div>
                             </div>
                             <div class="col-4">
@@ -203,7 +203,7 @@
 
                         <!-- Payment Status Bar -->
                         <div class="mt-2">
-                            {% set payment_percentage = (order.paid_amount / order.total_amount() * 100) if order.total_amount() > 0 else 0 %}
+                            {% set payment_percentage = (order.paid_amount / order.total_amount * 100) if order.total_amount > 0 else 0 %}
                             <div class="progress" style="height: 6px;">
                                 <div class="progress-bar {% if payment_percentage == 100 %}bg-success{% elif payment_percentage > 50 %}bg-info{% else %}bg-warning{% endif %}" 
                                      role="progressbar" style="width: {{ payment_percentage }}%" 
