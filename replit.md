@@ -155,6 +155,7 @@ This is a comprehensive wholesale clothing management system built with Flask. T
 ## Changelog
 - August 2, 2025. Migrated from Replit Agent to Replit environment with PostgreSQL database
 - August 2, 2025. Added custom product support for orders not in inventory
+- August 2, 2025. Enhanced custom product form with color and size dropdowns
 - June 24, 2025. Initial setup
 
 ## User Preferences
