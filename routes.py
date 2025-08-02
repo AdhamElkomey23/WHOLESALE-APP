@@ -293,21 +293,23 @@ def enhanced_order():
     form = OrderForm()
     products = ProductType.query.all()
     
-    if request.method == 'POST' and form.validate_on_submit():
+    if request.method == 'POST':
+        # Handle form submission manually to process order items
         # Generate order code if not provided
-        order_code = form.order_code.data or Order.generate_order_code()
+        order_code = request.form.get('order_code') or Order.generate_order_code()
         
         # Handle client selection or creation
-        client_id = form.client_id.data if form.client_id.data and form.client_id.data != 0 else None
-        client_name = form.client_name.data
+        client_id = request.form.get('client_id')
+        client_id = int(client_id) if client_id and client_id != '0' else None
+        client_name = request.form.get('client_name')
         
         if not client_id and client_name:
             # Create new client if name provided but no client selected
             client = Client(
                 name=client_name,
-                phone_number=form.phone_number.data,
-                email=form.email.data,
-                address=form.address.data
+                phone_number=request.form.get('phone_number'),
+                email=request.form.get('email', ''),
+                address=request.form.get('address', '')
             )
             db.session.add(client)
             db.session.flush()  # Get the ID
@@ -318,20 +320,83 @@ def enhanced_order():
             order_code=order_code,
             client_id=client_id,
             client_name=client_name,
-            phone_number=form.phone_number.data,
-            date=form.date.data,
-            is_printed=form.is_printed.data,
-            paid_amount=form.paid_amount.data,
-            remaining_amount=form.remaining_amount.data,
-            brand=form.brand.data,
-            notes=form.notes.data
+            phone_number=request.form.get('phone_number'),
+            date=datetime.strptime(request.form.get('date'), '%Y-%m-%d').date(),
+            is_printed=bool(request.form.get('is_printed')),
+            paid_amount=float(request.form.get('paid_amount', 0)),
+            remaining_amount=float(request.form.get('remaining_amount', 0)),
+            brand=request.form.get('brand'),
+            notes=request.form.get('notes', '')
         )
         
         db.session.add(order)
-        db.session.commit()
+        db.session.flush()  # Get order ID
         
-        flash('Order created successfully!', 'success')
-        return redirect(url_for('orders'))
+        # Process order items from the order_items JSON data
+        order_items_data = request.form.get('order_items_data')
+        if order_items_data:
+            try:
+                items = json.loads(order_items_data)
+                total_pieces = 0
+                
+                for item_data in items:
+                    if item_data.get('is_custom'):
+                        # Custom product
+                        order_item = OrderItem(
+                            order_id=order.id,
+                            product_type_id=None,
+                            quantity=int(item_data['quantity']),
+                            unit_price=float(item_data['unit_price']),
+                            is_custom_product=True,
+                            custom_product_name=item_data['product_name'],
+                            custom_product_description=item_data.get('description', ''),
+                            custom_product_color=item_data.get('color', ''),
+                            custom_product_size=item_data.get('size', '')
+                        )
+                    else:
+                        # Regular product
+                        order_item = OrderItem(
+                            order_id=order.id,
+                            product_type_id=int(item_data['product_type_id']),
+                            quantity=int(item_data['quantity']),
+                            unit_price=float(item_data['unit_price']),
+                            color_size_breakdown=item_data.get('color_size_breakdown', '{}')
+                        )
+                        
+                        # Update inventory for regular products
+                        if item_data.get('color_size_breakdown'):
+                            breakdown = json.loads(item_data['color_size_breakdown'])
+                            storage_type = 'AZIZ' if order.brand == 'AZIZ' else 'SHARED'
+                            
+                            for color, sizes in breakdown.items():
+                                for size, qty in sizes.items():
+                                    if qty > 0:
+                                        ColorSizeInventory.update_inventory(
+                                            int(item_data['product_type_id']),
+                                            storage_type,
+                                            color,
+                                            size,
+                                            -qty  # Negative to reduce stock
+                                        )
+                    
+                    db.session.add(order_item)
+                    total_pieces += int(item_data['quantity'])
+                
+                # Update order total pieces
+                order.total_pieces = total_pieces
+                
+            except (json.JSONDecodeError, KeyError, ValueError) as e:
+                flash(f'Error processing order items: {str(e)}', 'danger')
+                db.session.rollback()
+                return render_template('enhanced_order_form.html', form=form, products=products)
+        
+        try:
+            db.session.commit()
+            flash('Order created successfully!', 'success')
+            return redirect(url_for('orders'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error creating order: {str(e)}', 'danger')
     
     return render_template('enhanced_order_form.html', form=form, products=products)
 

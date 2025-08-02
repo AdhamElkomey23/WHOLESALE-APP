@@ -106,10 +106,17 @@ class OrderItem(db.Model):
     """Individual product items within an order"""
     id = db.Column(db.Integer, primary_key=True)
     order_id = db.Column(db.Integer, db.ForeignKey('order.id'), nullable=False)
-    product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=False)
+    product_type_id = db.Column(db.Integer, db.ForeignKey('product_type.id'), nullable=True)  # Made nullable for custom products
     quantity = db.Column(db.Integer, nullable=False)
     unit_price = db.Column(db.Float, nullable=False)
     color_size_breakdown = db.Column(db.Text, default='{}')  # JSON string storing color/size breakdown
+    
+    # Custom product fields (when product_type_id is null)
+    is_custom_product = db.Column(db.Boolean, default=False)
+    custom_product_name = db.Column(db.String(200), nullable=True)
+    custom_product_description = db.Column(db.Text, nullable=True)
+    custom_product_color = db.Column(db.String(50), nullable=True)
+    custom_product_size = db.Column(db.String(20), nullable=True)
     
     # Relationships
     product_type = db.relationship('ProductType', backref='order_items')
@@ -122,6 +129,9 @@ class OrderItem(db.Model):
     @property
     def total_cost(self):
         """Calculate total cost for this item"""
+        if self.is_custom_product:
+            # For custom products, assume cost is 50% of selling price (or you can add a custom_cost_price field)
+            return self.quantity * (self.unit_price * 0.5)
         return self.quantity * self.product_type.cost_price
     
     @property
@@ -139,6 +149,28 @@ class OrderItem(db.Model):
     def set_color_size_breakdown(self, breakdown_dict):
         """Set color/size breakdown from dictionary"""
         self.color_size_breakdown = json.dumps(breakdown_dict)
+    
+    @property
+    def product_name(self):
+        """Get product name (either from ProductType or custom name)"""
+        if self.is_custom_product:
+            return self.custom_product_name
+        return self.product_type.name if self.product_type else "Unknown Product"
+    
+    @property
+    def product_description(self):
+        """Get full product description including color/size"""
+        if self.is_custom_product:
+            desc = self.custom_product_name
+            if self.custom_product_color:
+                desc += f" - {self.custom_product_color}"
+            if self.custom_product_size:
+                desc += f" ({self.custom_product_size})"
+            if self.custom_product_description:
+                desc += f" - {self.custom_product_description}"
+            return desc
+        else:
+            return self.product_type.name if self.product_type else "Unknown Product"
 
 class ColorSizeInventory(db.Model):
     """Detailed inventory tracking by color and size"""

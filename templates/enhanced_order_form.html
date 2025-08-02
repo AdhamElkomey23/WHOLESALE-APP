@@ -141,8 +141,11 @@
                 
                 <div class="d-flex justify-content-end gap-3">
                     <a href="{{ url_for('orders') }}" class="btn btn-secondary">Cancel</a>
-                    {{ form.submit(class="btn btn-primary") }}
+                    <button type="submit" class="btn btn-primary" onclick="prepareOrderData()">Save Order</button>
                 </div>
+                
+                <!-- Hidden field to store order items data -->
+                <input type="hidden" name="order_items_data" id="orderItemsData">
             </form>
         </div>
     </div>
@@ -158,29 +161,80 @@
             </button>
         </div>
         
-        <div class="row">
-            <div class="col-md-4">
-                <label class="form-label">Product</label>
-                <select class="form-control product-select" onchange="loadProductDetails(this)" required>
-                    <option value="">Select Product...</option>
-                    {% for product in products %}
-                    <option value="{{ product.id }}" data-price="{{ product.selling_price }}" data-colors="{{ product.available_colors }}" data-sizes="{{ product.available_sizes }}">
-                        {{ product.name }} - EGP {{ product.selling_price }}
-                    </option>
-                    {% endfor %}
-                </select>
+        <!-- Product Type Toggle -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" onchange="toggleProductType(this)">
+                    <label class="form-check-label">
+                        <strong>Custom Product</strong> <small class="text-muted">(Not in inventory)</small>
+                    </label>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Quantity</label>
-                <input type="number" class="form-control quantity-input" min="1" onchange="updateItemTotal(this)" required>
+        </div>
+        
+        <!-- Regular Product Section -->
+        <div class="regular-product-section">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Product</label>
+                    <select class="form-control product-select" onchange="loadProductDetails(this)">
+                        <option value="">Select Product...</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" data-price="{{ product.selling_price }}" data-colors="{{ product.available_colors }}" data-sizes="{{ product.available_sizes }}">
+                            {{ product.name }} - EGP {{ product.selling_price }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control quantity-input" min="1" onchange="updateItemTotal(this)">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Unit Price</label>
+                    <input type="number" class="form-control unit-price" step="0.01" readonly>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Total Price</label>
+                    <input type="number" class="form-control item-total" step="0.01" readonly>
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Unit Price</label>
-                <input type="number" class="form-control unit-price" step="0.01" readonly>
+        </div>
+        
+        <!-- Custom Product Section -->
+        <div class="custom-product-section" style="display: none;">
+            <div class="row">
+                <div class="col-md-3">
+                    <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control custom-product-name" placeholder="Enter custom product name">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Color</label>
+                    <input type="text" class="form-control custom-product-color" placeholder="e.g., Black">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Size</label>
+                    <input type="text" class="form-control custom-product-size" placeholder="e.g., M">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control custom-quantity-input" min="1" onchange="updateCustomItemTotal(this)">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Unit Price</label>
+                    <input type="number" class="form-control custom-unit-price" step="0.01" onchange="updateCustomItemTotal(this)">
+                </div>
             </div>
-            <div class="col-md-2">
-                <label class="form-label">Total Price</label>
-                <input type="number" class="form-control item-total" step="0.01" readonly>
+            <div class="row mt-2">
+                <div class="col-md-8">
+                    <label class="form-label">Description <small class="text-muted">(Optional)</small></label>
+                    <input type="text" class="form-control custom-product-description" placeholder="Additional product details">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Total Price</label>
+                    <input type="number" class="form-control custom-item-total" step="0.01" readonly>
+                </div>
             </div>
         </div>
         
@@ -232,6 +286,57 @@ function addOrderItem() {
     const clone = template.content.cloneNode(true);
     document.getElementById('orderItems').appendChild(clone);
     orderItemCount++;
+}
+
+function toggleProductType(checkbox) {
+    const orderItem = checkbox.closest('.order-item');
+    const regularSection = orderItem.querySelector('.regular-product-section');
+    const customSection = orderItem.querySelector('.custom-product-section');
+    
+    if (checkbox.checked) {
+        // Show custom product section
+        regularSection.style.display = 'none';
+        customSection.style.display = 'block';
+        
+        // Clear regular product fields
+        const productSelect = regularSection.querySelector('.product-select');
+        const quantityInput = regularSection.querySelector('.quantity-input');
+        const unitPrice = regularSection.querySelector('.unit-price');
+        const itemTotal = regularSection.querySelector('.item-total');
+        
+        productSelect.value = '';
+        quantityInput.value = '';
+        unitPrice.value = '';
+        itemTotal.value = '';
+        
+        // Hide color/size breakdown
+        const breakdown = orderItem.querySelector('.color-size-breakdown');
+        if (breakdown) {
+            breakdown.style.display = 'none';
+        }
+    } else {
+        // Show regular product section
+        regularSection.style.display = 'block';
+        customSection.style.display = 'none';
+        
+        // Clear custom product fields
+        const customFields = customSection.querySelectorAll('input');
+        customFields.forEach(field => field.value = '');
+    }
+    
+    calculateTotals();
+}
+
+function updateCustomItemTotal(input) {
+    const orderItem = input.closest('.order-item');
+    const quantity = parseFloat(orderItem.querySelector('.custom-quantity-input').value) || 0;
+    const unitPrice = parseFloat(orderItem.querySelector('.custom-unit-price').value) || 0;
+    const totalField = orderItem.querySelector('.custom-item-total');
+    
+    const total = quantity * unitPrice;
+    totalField.value = total.toFixed(2);
+    
+    calculateTotals();
 }
 
 function removeOrderItem(button) {
@@ -413,17 +518,34 @@ function calculateTotals() {
     let totalPieces = 0;
     let totalAmount = 0;
     
-    document.querySelectorAll('.order-item').forEach(item => {
-        const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
-        const itemTotal = parseFloat(item.querySelector('.item-total').value) || 0;
+    // Get all order items
+    const orderItems = document.querySelectorAll('.order-item');
+    
+    orderItems.forEach(item => {
+        const customToggle = item.querySelector('.form-check-input');
         
-        totalPieces += quantity;
-        totalAmount += itemTotal;
+        if (customToggle && customToggle.checked) {
+            // Custom product
+            const quantity = parseInt(item.querySelector('.custom-quantity-input').value) || 0;
+            const itemTotal = parseFloat(item.querySelector('.custom-item-total').value) || 0;
+            
+            totalPieces += quantity;
+            totalAmount += itemTotal;
+        } else {
+            // Regular product
+            const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
+            const itemTotal = parseFloat(item.querySelector('.item-total').value) || 0;
+            
+            totalPieces += quantity;
+            totalAmount += itemTotal;
+        }
     });
     
+    // Update display
     document.getElementById('totalPieces').textContent = totalPieces;
     document.getElementById('totalAmount').textContent = `EGP ${totalAmount.toFixed(2)}`;
     
+    // Update remaining amount
     calculateRemaining();
 }
 
@@ -470,6 +592,70 @@ function saveAsNewClient() {
             alert('Error saving client: ' + data.error);
         }
     });
+}
+
+function prepareOrderData() {
+    const orderItems = [];
+    const orderItemElements = document.querySelectorAll('.order-item');
+    
+    orderItemElements.forEach(item => {
+        const customToggle = item.querySelector('.form-check-input');
+        
+        if (customToggle && customToggle.checked) {
+            // Custom product
+            const customName = item.querySelector('.custom-product-name').value;
+            const customColor = item.querySelector('.custom-product-color').value;
+            const customSize = item.querySelector('.custom-product-size').value;
+            const customDescription = item.querySelector('.custom-product-description').value;
+            const quantity = item.querySelector('.custom-quantity-input').value;
+            const unitPrice = item.querySelector('.custom-unit-price').value;
+            
+            if (customName && quantity && unitPrice) {
+                orderItems.push({
+                    is_custom: true,
+                    product_name: customName,
+                    color: customColor,
+                    size: customSize,
+                    description: customDescription,
+                    quantity: quantity,
+                    unit_price: unitPrice
+                });
+            }
+        } else {
+            // Regular product
+            const productSelect = item.querySelector('.product-select');
+            const quantity = item.querySelector('.quantity-input').value;
+            const unitPrice = item.querySelector('.unit-price').value;
+            
+            if (productSelect.value && quantity && unitPrice) {
+                // Collect color/size breakdown if available
+                let colorSizeBreakdown = {};
+                const breakdownInputs = item.querySelectorAll('.breakdown-input');
+                breakdownInputs.forEach(input => {
+                    if (parseInt(input.value) > 0) {
+                        const color = input.dataset.color;
+                        const size = input.dataset.size;
+                        
+                        if (!colorSizeBreakdown[color]) {
+                            colorSizeBreakdown[color] = {};
+                        }
+                        colorSizeBreakdown[color][size] = parseInt(input.value);
+                    }
+                });
+                
+                orderItems.push({
+                    is_custom: false,
+                    product_type_id: productSelect.value,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    color_size_breakdown: JSON.stringify(colorSizeBreakdown)
+                });
+            }
+        }
+    });
+    
+    // Store the order items data in the hidden field
+    document.getElementById('orderItemsData').value = JSON.stringify(orderItems);
 }
 
 // Initialize form when page loads
