@@ -204,66 +204,76 @@
         
         <!-- Custom Product Section -->
         <div class="custom-product-section" style="display: none;">
-            <div class="row">
-                <div class="col-md-3">
-                    <label class="form-label">Product Name <span class="text-danger">*</span></label>
-                    <input type="text" class="form-control custom-product-name" placeholder="Enter custom product name">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Custom Product Details</h6>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Color</label>
-                    <select class="form-control custom-product-color">
-                        <option value="">Select Color</option>
-                        <option value="Black">Black</option>
-                        <option value="White">White</option>
-                        <option value="Green">Green</option>
-                        <option value="Petrol">Petrol</option>
-                        <option value="Burgundy">Burgundy</option>
-                        <option value="Brown">Brown</option>
-                        <option value="Baby Pink">Baby Pink</option>
-                        <option value="Navy Blue">Navy Blue</option>
-                        <option value="Gray">Gray</option>
-                        <option value="Red">Red</option>
-                        <option value="Yellow">Yellow</option>
-                        <option value="Orange">Orange</option>
-                        <option value="Purple">Purple</option>
-                        <option value="Beige">Beige</option>
-                        <option value="Khaki">Khaki</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Size</label>
-                    <select class="form-control custom-product-size">
-                        <option value="">Select Size</option>
-                        <option value="XS">Extra Small (XS)</option>
-                        <option value="S">Small (S)</option>
-                        <option value="M">Medium (M)</option>
-                        <option value="L">Large (L)</option>
-                        <option value="XL">Extra Large (XL)</option>
-                        <option value="XXL">2XL</option>
-                        <option value="XXXL">3XL</option>
-                        <option value="XXXXL">4XL</option>
-                        <option value="XXXXXL">5XL</option>
-                        <option value="Free Size">Free Size</option>
-                        <option value="One Size">One Size</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Quantity</label>
-                    <input type="number" class="form-control custom-quantity-input" min="1" onchange="updateCustomItemTotal(this)">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Unit Price</label>
-                    <input type="number" class="form-control custom-unit-price" step="0.01" onchange="updateCustomItemTotal(this)">
-                </div>
-            </div>
-            <div class="row mt-2">
-                <div class="col-md-8">
-                    <label class="form-label">Description <small class="text-muted">(Optional)</small></label>
-                    <input type="text" class="form-control custom-product-description" placeholder="Additional product details">
-                </div>
-                <div class="col-md-2">
-                    <label class="form-label">Total Price</label>
-                    <input type="number" class="form-control custom-item-total" step="0.01" readonly>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control custom-product-name" placeholder="Enter custom product name">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Unit Price per Piece</label>
+                            <input type="number" class="form-control custom-unit-price" step="0.01" min="0" placeholder="0.00" onchange="updateCustomTotals()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Total Quantity</label>
+                            <input type="number" class="form-control custom-total-qty" readonly value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control custom-product-description" rows="2" placeholder="Product details"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Color/Size Matrix -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <label class="form-label mb-0">Color & Size Breakdown</label>
+                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="addCustomColorRow()">
+                                <i class="fas fa-plus"></i> Add Color
+                            </button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-bordered custom-matrix-table">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th style="min-width: 120px;">Color</th>
+                                        <th style="width: 70px;">XS</th>
+                                        <th style="width: 70px;">S</th>
+                                        <th style="width: 70px;">M</th>
+                                        <th style="width: 70px;">L</th>
+                                        <th style="width: 70px;">XL</th>
+                                        <th style="width: 70px;">XXL</th>
+                                        <th style="width: 70px;">XXXL</th>
+                                        <th style="width: 80px;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="custom-matrix-body">
+                                    <!-- Matrix rows will be added here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <small><i class="fas fa-info-circle"></i> Enter quantities for each color and size combination. Total will be calculated automatically.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-end">
+                                <strong>Total Price: </strong>
+                                <span class="custom-item-total-display">0.00</span> EGP
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -632,23 +642,22 @@ function prepareOrderData() {
         const customToggle = item.querySelector('.form-check-input');
         
         if (customToggle && customToggle.checked) {
-            // Custom product
+            // Custom product with matrix
             const customName = item.querySelector('.custom-product-name').value;
-            const customColor = item.querySelector('.custom-product-color').value;
-            const customSize = item.querySelector('.custom-product-size').value;
             const customDescription = item.querySelector('.custom-product-description').value;
-            const quantity = item.querySelector('.custom-quantity-input').value;
+            const quantity = item.querySelector('.custom-total-qty').value;
             const unitPrice = item.querySelector('.custom-unit-price').value;
             
-            if (customName && quantity && unitPrice) {
+            if (customName && quantity && unitPrice && parseInt(quantity) > 0) {
+                const matrix = getCustomProductMatrix();
+                
                 orderItems.push({
                     is_custom: true,
                     product_name: customName,
-                    color: customColor,
-                    size: customSize,
                     description: customDescription,
                     quantity: quantity,
-                    unit_price: unitPrice
+                    unit_price: unitPrice,
+                    color_size_matrix: JSON.stringify(matrix)
                 });
             }
         } else {
@@ -686,6 +695,102 @@ function prepareOrderData() {
     
     // Store the order items data in the hidden field
     document.getElementById('orderItemsData').value = JSON.stringify(orderItems);
+}
+
+// Custom Product Matrix Functions
+function addCustomColorRow() {
+    const tbody = document.getElementById('custom-matrix-body');
+    const rowCount = tbody.children.length;
+    
+    const colors = ['Black', 'White', 'Green', 'Petrol', 'Burgundy', 'Brown', 'Baby Pink', 'Navy Blue', 'Gray', 'Red', 'Yellow', 'Orange', 'Purple', 'Beige', 'Khaki'];
+    
+    const row = document.createElement('tr');
+    row.innerHTML = `
+        <td>
+            <select class="form-control form-control-sm color-select" onchange="updateCustomTotals()">
+                <option value="">Select Color</option>
+                ${colors.map(color => `<option value="${color}">${color}</option>`).join('')}
+            </select>
+        </td>
+        <td><input type="number" class="form-control form-control-sm size-qty" min="0" value="0" data-size="XS" onchange="updateCustomTotals()"></td>
+        <td><input type="number" class="form-control form-control-sm size-qty" min="0" value="0" data-size="S" onchange="updateCustomTotals()"></td>
+        <td><input type="number" class="form-control form-control-sm size-qty" min="0" value="0" data-size="M" onchange="updateCustomTotals()"></td>
+        <td><input type="number" class="form-control form-control-sm size-qty" min="0" value="0" data-size="L" onchange="updateCustomTotals()"></td>
+        <td><input type="number" class="form-control form-control-sm size-qty" min="0" value="0" data-size="XL" onchange="updateCustomTotals()"></td>
+        <td><input type="number" class="form-control form-control-sm size-qty" min="0" value="0" data-size="XXL" onchange="updateCustomTotals()"></td>
+        <td><input type="number" class="form-control form-control-sm size-qty" min="0" value="0" data-size="XXXL" onchange="updateCustomTotals()"></td>
+        <td>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCustomColorRow(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
+    `;
+    
+    tbody.appendChild(row);
+    updateCustomTotals();
+}
+
+function removeCustomColorRow(button) {
+    const row = button.closest('tr');
+    row.remove();
+    updateCustomTotals();
+}
+
+function updateCustomTotals() {
+    const customSection = document.querySelector('.custom-product-section');
+    if (!customSection || customSection.style.display === 'none') return;
+    
+    const sizeQtyInputs = customSection.querySelectorAll('.size-qty');
+    const unitPriceInput = customSection.querySelector('.custom-unit-price');
+    const totalQtyInput = customSection.querySelector('.custom-total-qty');
+    const totalPriceDisplay = customSection.querySelector('.custom-item-total-display');
+    
+    let totalQuantity = 0;
+    sizeQtyInputs.forEach(input => {
+        const qty = parseInt(input.value) || 0;
+        totalQuantity += qty;
+    });
+    
+    const unitPrice = parseFloat(unitPriceInput.value) || 0;
+    const totalPrice = totalQuantity * unitPrice;
+    
+    totalQtyInput.value = totalQuantity;
+    totalPriceDisplay.textContent = totalPrice.toFixed(2);
+    
+    // Update the order total
+    updateOrderTotal();
+}
+
+function getCustomProductMatrix() {
+    const customSection = document.querySelector('.custom-product-section');
+    if (!customSection || customSection.style.display === 'none') return {};
+    
+    const rows = customSection.querySelectorAll('#custom-matrix-body tr');
+    const matrix = {};
+    
+    rows.forEach(row => {
+        const colorSelect = row.querySelector('.color-select');
+        const color = colorSelect.value;
+        
+        if (color) {
+            const sizeInputs = row.querySelectorAll('.size-qty');
+            const colorData = {};
+            
+            sizeInputs.forEach(input => {
+                const size = input.dataset.size;
+                const qty = parseInt(input.value) || 0;
+                if (qty > 0) {
+                    colorData[size] = qty;
+                }
+            });
+            
+            if (Object.keys(colorData).length > 0) {
+                matrix[color] = colorData;
+            }
+        }
+    });
+    
+    return matrix;
 }
 
 // Initialize form when page loads

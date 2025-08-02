@@ -117,6 +117,7 @@ class OrderItem(db.Model):
     custom_product_description = db.Column(db.Text, nullable=True)
     custom_product_color = db.Column(db.String(50), nullable=True)
     custom_product_size = db.Column(db.String(20), nullable=True)
+    custom_color_size_matrix = db.Column(db.Text, nullable=True)  # JSON string for custom color/size breakdown
     
     # Relationships
     product_type = db.relationship('ProductType', backref='order_items')
@@ -142,7 +143,11 @@ class OrderItem(db.Model):
     def get_color_size_breakdown(self):
         """Get color/size breakdown as dictionary"""
         try:
-            return json.loads(self.color_size_breakdown)
+            if self.is_custom_product and self.custom_color_size_matrix:
+                return json.loads(self.custom_color_size_matrix)
+            elif self.color_size_breakdown:
+                return json.loads(self.color_size_breakdown)
+            return {}
         except:
             return {}
     
@@ -162,10 +167,29 @@ class OrderItem(db.Model):
         """Get full product description including color/size"""
         if self.is_custom_product:
             desc = self.custom_product_name
-            if self.custom_product_color:
-                desc += f" - {self.custom_product_color}"
-            if self.custom_product_size:
-                desc += f" ({self.custom_product_size})"
+            
+            # If we have a color-size matrix, show breakdown
+            if self.custom_color_size_matrix:
+                try:
+                    matrix = json.loads(self.custom_color_size_matrix)
+                    if matrix:
+                        breakdown_parts = []
+                        for color, sizes in matrix.items():
+                            size_parts = [f"{size}: {qty}" for size, qty in sizes.items() if qty > 0]
+                            if size_parts:
+                                breakdown_parts.append(f"{color} ({', '.join(size_parts)})")
+                        
+                        if breakdown_parts:
+                            desc += f" - {' | '.join(breakdown_parts)}"
+                except:
+                    pass
+            else:
+                # Fallback to single color/size if no matrix
+                if self.custom_product_color:
+                    desc += f" - {self.custom_product_color}"
+                if self.custom_product_size:
+                    desc += f" ({self.custom_product_size})"
+            
             if self.custom_product_description:
                 desc += f" - {self.custom_product_description}"
             return desc

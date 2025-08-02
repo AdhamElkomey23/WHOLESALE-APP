@@ -341,7 +341,7 @@ def enhanced_order():
                 
                 for item_data in items:
                     if item_data.get('is_custom'):
-                        # Custom product
+                        # Custom product with color-size matrix
                         order_item = OrderItem(
                             order_id=order.id,
                             product_type_id=None,
@@ -350,8 +350,7 @@ def enhanced_order():
                             is_custom_product=True,
                             custom_product_name=item_data['product_name'],
                             custom_product_description=item_data.get('description', ''),
-                            custom_product_color=item_data.get('color', ''),
-                            custom_product_size=item_data.get('size', '')
+                            custom_color_size_matrix=item_data.get('color_size_matrix', '{}')
                         )
                     else:
                         # Regular product
