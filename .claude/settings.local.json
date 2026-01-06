@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install:*)",
+      "Bash(python main.py:*)",
+      "Bash(del \"D:\\\\Elkostart\\\\WHOLESALE-APP-main\\\\WHOLESALE-APP-main\\\\instance\\\\wholesale.db\")",
+      "Bash(set:*)",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_B8Uo9sClpENI@ep-super-feather-a46kcbcv-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require\" python:*)",
+      "Bash(git init:*)",
+      "Bash(git add:*)",
+      "Bash(git rm:*)",
+      "Bash(git commit:*)"
+    ]
+  }
+}
