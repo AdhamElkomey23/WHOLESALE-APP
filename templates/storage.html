@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Storage Management - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-warehouse me-2"></i>Enhanced Storage Management
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Select Product for Color/Size Management</h6>
+                            <div class="mb-3">
+                                <label for="productSelect" class="form-label fw-semibold">Product Type</label>
+                                <select class="form-select form-select-lg" id="productSelect" onchange="loadProductInventory()">
+                                    <option value="">Select Product...</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" 
+                                            data-colors="{{ product.available_colors }}" 
+                                            data-sizes="{{ product.available_sizes }}"
+                                            data-brand="{{ product.brand_group }}">
+                                        {{ product.name }} ({{ product.brand_group }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-muted mb-2">Storage Type</h6>
+                            <div class="mb-3">
+                                <label for="storageType" class="form-label fw-semibold">Storage Type</label>
+                                <select class="form-select form-select-lg" id="storageType" disabled>
+                                    <option value="SHARED">URBRAND + SURVACCI (Shared)</option>
+                                    <option value="AZIZ">AZIZ (Independent)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Inventory Grid -->
+                    <div id="inventoryGrid" style="display: none;">
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <h5 class="text-primary mb-0">Inventory Management Grid</h5>
+                                    <button type="button" class="btn btn-success" onclick="saveInventory()">
+                                        <i class="fas fa-save me-2"></i>Save All Changes
+                                    </button>
+                                </div>
+                                <hr>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table class="table table-bordered" id="inventoryTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Color / Size</th>
+                                        <!-- Size headers will be populated by JS -->
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Color rows will be populated by JS -->
+                                </tbody>
+                                <tfoot class="table-secondary">
+                                    <tr>
+                                        <th>Size Totals</th>
+                                        <!-- Size totals will be populated by JS -->
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body text-center">
+                                        <h6 class="text-muted">Total Inventory</h6>
+                                        <h3 class="text-primary mb-0" id="grandTotal">0</h3>
+                                        <small class="text-muted">pieces</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="text-muted mb-2">Quick Actions</h6>
+                                        <div class="btn-group w-100" role="group">
+                                            <button type="button" class="btn btn-outline-primary" onclick="fillAllSizes()">
+                                                <i class="fas fa-fill-drip me-1"></i>Fill All
+                                            </button>
+                                            <button type="button" class="btn btn-outline-warning" onclick="clearAllQuantities()">
+                                                <i class="fas fa-eraser me-1"></i>Clear All
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- No Product Selected Message -->
+                    <div id="noProductMessage" class="text-center py-5">
+                        <i class="fas fa-box-open fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Select a product to manage its color and size inventory</h5>
+                        <p class="text-muted">Choose a product from the dropdown above to start managing inventory quantities by color and size combinations.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentProductId = null;
+let inventoryData = {};
+
+function loadProductInventory() {
+    const productSelect = document.getElementById('productSelect');
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    
+    if (!selectedOption.value) {
+        document.getElementById('inventoryGrid').style.display = 'none';
+        document.getElementById('noProductMessage').style.display = 'block';
+        document.getElementById('storageType').disabled = true;
+        return;
+    }
+    
+    currentProductId = selectedOption.value;
+    const colors = selectedOption.getAttribute('data-colors').split(',');
+    const sizes = selectedOption.getAttribute('data-sizes').split(',');
+    const brandGroup = selectedOption.getAttribute('data-brand');
+    
+    // Set storage type based on brand group
+    const storageSelect = document.getElementById('storageType');
+    if (brandGroup === 'SHARED') {
+        storageSelect.value = 'SHARED';
+        storageSelect.disabled = true;
+    } else if (brandGroup === 'AZIZ') {
+        storageSelect.value = 'AZIZ';
+        storageSelect.disabled = true;
+    } else {
+        storageSelect.disabled = false;
+    }
+    
+    buildInventoryGrid(colors, sizes);
+    loadExistingInventory();
+    
+    document.getElementById('inventoryGrid').style.display = 'block';
+    document.getElementById('noProductMessage').style.display = 'none';
+}
+
+function buildInventoryGrid(colors, sizes) {
+    const table = document.getElementById('inventoryTable');
+    const thead = table.querySelector('thead tr');
+    const tbody = table.querySelector('tbody');
+    const tfoot = table.querySelector('tfoot tr');
+    
+    // Clear existing content
+    thead.innerHTML = '<th>Color \\ Size</th>';
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '<th>Size Totals</th>';
+    
+    // Add size headers
+    sizes.forEach(size => {
+        const th = document.createElement('th');
+        th.textContent = size.trim();
+        th.className = 'text-center';
+        thead.appendChild(th);
+        
+        const tfootTh = document.createElement('th');
+        tfootTh.id = `total-${size.trim()}`;
+        tfootTh.className = 'text-center text-primary fw-bold';
+        tfootTh.textContent = '0';
+        tfoot.appendChild(tfootTh);
+    });
+    
+    // Add color total column
+    const colorTotalTh = document.createElement('th');
+    colorTotalTh.textContent = 'Color Total';
+    colorTotalTh.className = 'text-center bg-secondary text-white';
+    thead.appendChild(colorTotalTh);
+    
+    const tfootColorTotal = document.createElement('th');
+    tfootColorTotal.id = 'grand-total-cell';
+    tfootColorTotal.className = 'text-center bg-primary text-white fw-bold';
+    tfootColorTotal.textContent = '0';
+    tfoot.appendChild(tfootColorTotal);
+    
+    // Add color rows
+    colors.forEach(color => {
+        const row = document.createElement('tr');
+        
+        // Color name cell
+        const colorCell = document.createElement('td');
+        colorCell.className = 'fw-semibold';
+        colorCell.innerHTML = `<span class="color-indicator" style="background-color: ${getColorHex(color.trim())}"></span> ${color.trim()}`;
+        row.appendChild(colorCell);
+        
+        // Size quantity cells
+        sizes.forEach(size => {
+            const cell = document.createElement('td');
+            cell.className = 'text-center';
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control form-control-sm text-center';
+            input.min = '0';
+            input.value = '0';
+            input.id = `qty-${color.trim()}-${size.trim()}`;
+            input.onchange = updateTotals;
+            cell.appendChild(input);
+            row.appendChild(cell);
+        });
+        
+        // Color total cell
+        const totalCell = document.createElement('td');
+        totalCell.className = 'text-center fw-bold text-primary';
+        totalCell.id = `color-total-${color.trim()}`;
+        totalCell.textContent = '0';
+        row.appendChild(totalCell);
+        
+        tbody.appendChild(row);
+    });
+}
+
+function getColorHex(color) {
+    const colorMap = {
+        'Black': '#000000',
+        'White': '#ffffff',
+        'Green': '#28a745',
+        'Petrol': '#17a2b8',
+        'Burgundy': '#6f1e1e',
+        'Brown': '#8b4513',
+        'Baby Pink': '#ffb6c1'
+    };
+    return colorMap[color] || '#6c757d';
+}
+
+function updateTotals() {
+    const productSelect = document.getElementById('productSelect');
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    
+    if (!selectedOption.value) return;
+    
+    const colors = selectedOption.getAttribute('data-colors').split(',');
+    const sizes = selectedOption.getAttribute('data-sizes').split(',');
+    
+    let grandTotal = 0;
+    
+    // Calculate color totals
+    colors.forEach(color => {
+        let colorTotal = 0;
+        sizes.forEach(size => {
+            const input = document.getElementById(`qty-${color.trim()}-${size.trim()}`);
+            if (input) {
+                colorTotal += parseInt(input.value) || 0;
+            }
+        });
+        const colorTotalCell = document.getElementById(`color-total-${color.trim()}`);
+        if (colorTotalCell) {
+            colorTotalCell.textContent = colorTotal;
+        }
+        grandTotal += colorTotal;
+    });
+    
+    // Calculate size totals
+    sizes.forEach(size => {
+        let sizeTotal = 0;
+        colors.forEach(color => {
+            const input = document.getElementById(`qty-${color.trim()}-${size.trim()}`);
+            if (input) {
+                sizeTotal += parseInt(input.value) || 0;
+            }
+        });
+        const sizeTotalCell = document.getElementById(`total-${size.trim()}`);
+        if (sizeTotalCell) {
+            sizeTotalCell.textContent = sizeTotal;
+        }
+    });
+    
+    // Update grand total
+    document.getElementById('grandTotal').textContent = grandTotal;
+    document.getElementById('grand-total-cell').textContent = grandTotal;
+}
+
+function fillAllSizes() {
+    const quantity = prompt('Enter quantity to fill all cells:');
+    if (quantity && !isNaN(quantity) && quantity >= 0) {
+        const inputs = document.querySelectorAll('#inventoryTable input[type="number"]');
+        inputs.forEach(input => {
+            input.value = quantity;
+        });
+        updateTotals();
+    }
+}
+
+function clearAllQuantities() {
+    if (confirm('Are you sure you want to clear all quantities?')) {
+        const inputs = document.querySelectorAll('#inventoryTable input[type="number"]');
+        inputs.forEach(input => {
+            input.value = '0';
+        });
+        updateTotals();
+    }
+}
+
+function loadExistingInventory() {
+    // Load existing inventory data from server
+    fetch(`/api/inventory/${currentProductId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Populate grid with existing data
+                Object.keys(data.inventory).forEach(key => {
+                    const [color, size] = key.split('-');
+                    const input = document.getElementById(`qty-${color}-${size}`);
+                    if (input) {
+                        input.value = data.inventory[key] || 0;
+                    }
+                });
+                updateTotals();
+            }
+        })
+        .catch(error => {
+            console.log('No existing inventory data found');
+        });
+}
+
+function saveInventory() {
+    if (!currentProductId) return;
+    
+    const productSelect = document.getElementById('productSelect');
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const colors = selectedOption.getAttribute('data-colors').split(',');
+    const sizes = selectedOption.getAttribute('data-sizes').split(',');
+    const storageType = document.getElementById('storageType').value;
+    
+    const inventoryData = {};
+    
+    colors.forEach(color => {
+        sizes.forEach(size => {
+            const input = document.getElementById(`qty-${color.trim()}-${size.trim()}`);
+            if (input) {
+                const key = `${color.trim()}-${size.trim()}`;
+                inventoryData[key] = parseInt(input.value) || 0;
+            }
+        });
+    });
+    
+    // Save to server
+    fetch('/api/save-inventory', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            product_id: currentProductId,
+            storage_type: storageType,
+            inventory: inventoryData
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Show success message
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-success alert-dismissible fade show';
+            alert.innerHTML = `
+                <i class="fas fa-check-circle me-2"></i>Inventory saved successfully!
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            document.querySelector('.card-body').insertBefore(alert, document.querySelector('.card-body').firstChild);
+            
+            // Auto-remove alert after 3 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 3000);
+        } else {
+            alert('Error saving inventory: ' + data.message);
+        }
+    })
+    .catch(error => {
+        alert('Error saving inventory: ' + error.message);
+    });
+}
+</script>
+
+<style>
+.color-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 6px;
+    border: 1px solid #ddd;
+}
+
+#inventoryTable input {
+    width: 80px;
+    font-size: 14px;
+}
+
+#inventoryTable td, #inventoryTable th {
+    vertical-align: middle;
+    padding: 8px;
+}
+
+.table-responsive {
+    max-height: 600px;
+}
+</style>
+{% endblock %}

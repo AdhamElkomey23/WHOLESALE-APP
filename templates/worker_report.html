@@ -1,0 +1,325 @@
+{% extends "base.html" %}
+
+{% block title %}{{ worker.name }} Report - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center">
+                    <div class="avatar-circle me-3">
+                        {{ worker.name[0].upper() }}
+                    </div>
+                    <div>
+                        <h1 class="display-6 mb-1">{{ worker.name }}</h1>
+                        <p class="text-muted mb-0">{{ worker.position }} • Hired {{ worker.hire_date.strftime('%d %b %Y') }}</p>
+                    </div>
+                </div>
+                <div class="btn-group">
+                    <a href="{{ url_for('edit_worker', id=worker.id) }}" class="btn btn-outline-primary">
+                        <i class="fas fa-edit me-2"></i>Edit Worker
+                    </a>
+                    <a href="{{ url_for('workers') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-users me-2"></i>All Workers
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3 align-items-end">
+                        <div class="col-md-3">
+                            <label class="form-label">From Date</label>
+                            <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">To Date</label>
+                            <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+                        </div>
+                        <div class="col-md-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter me-1"></i>Update Report
+                            </button>
+                        </div>
+                        <div class="col-md-3 text-end">
+                            <span class="text-muted">{{ date_from.strftime('%d %b %Y') }} - {{ date_to.strftime('%d %b %Y') }}</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-2 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ stats.total_days }}</h3>
+                    <p class="text-muted mb-0">Days Worked</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-warning">{{ "{:.1f}".format(stats.total_overtime) }}</h3>
+                    <p class="text-muted mb-0">Overtime Hours</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-success">{{ "{:,.0f}".format(stats.total_salary) }}</h3>
+                    <p class="text-muted mb-0">Total Earned (EGP)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-danger">{{ "{:,.0f}".format(stats.total_deductions) }}</h3>
+                    <p class="text-muted mb-0">Deductions (EGP)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h3 class="text-info">{{ "{:,.0f}".format(stats.total_bonuses) }}</h3>
+                    <p class="text-muted mb-0">Bonuses (EGP)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-2 col-6">
+            <div class="card text-center border-primary">
+                <div class="card-body">
+                    <h3 class="text-primary">{{ "{:,.0f}".format(stats.net_salary) }}</h3>
+                    <p class="text-muted mb-0"><strong>Net Salary</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Worker Information -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user me-2"></i>Worker Information</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Name:</strong><br>
+                            {{ worker.name }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Position:</strong><br>
+                            {{ worker.position }}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Phone:</strong><br>
+                            {{ worker.phone_number or 'Not provided' }}
+                        </div>
+                        <div class="col-6">
+                            <strong>Hire Date:</strong><br>
+                            {{ worker.hire_date.strftime('%d %b %Y') }}
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="row">
+                        <div class="col-6">
+                            <strong>Daily Salary:</strong><br>
+                            {{ "{:,.0f}".format(worker.daily_salary) }} EGP
+                        </div>
+                        <div class="col-6">
+                            <strong>Overtime Rate:</strong><br>
+                            {{ "{:,.0f}".format(worker.overtime_rate) }} EGP/hour
+                        </div>
+                    </div>
+                    {% if worker.notes %}
+                    <hr>
+                    <strong>Notes:</strong><br>
+                    <p class="text-muted mb-0">{{ worker.notes }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-chart-pie me-2"></i>Attendance Summary</h5>
+                </div>
+                <div class="card-body">
+                    {% set total_possible_days = (date_to - date_from).days + 1 %}
+                    {% set attendance_rate = (stats.total_days / total_possible_days * 100) if total_possible_days > 0 else 0 %}
+                    
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Attendance Rate</span>
+                            <span>{{ "{:.1f}".format(attendance_rate) }}%</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar bg-success" style="width: {{ attendance_rate }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h4 class="text-success">{{ stats.total_days }}</h4>
+                            <small class="text-muted">Present</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-danger">{{ total_possible_days - stats.total_days }}</h4>
+                            <small class="text-muted">Absent</small>
+                        </div>
+                        <div class="col-4">
+                            <h4 class="text-primary">{{ total_possible_days }}</h4>
+                            <small class="text-muted">Total Days</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Attendance Records -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0"><i class="fas fa-calendar-alt me-2"></i>Daily Attendance Records</h5>
+                    <span class="badge bg-primary">{{ attendances|length }} Records</span>
+                </div>
+                <div class="card-body">
+                    {% if attendances %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Check In</th>
+                                    <th>Check Out</th>
+                                    <th>Regular Hrs</th>
+                                    <th>Overtime</th>
+                                    <th>Deductions</th>
+                                    <th>Bonus</th>
+                                    <th>Daily Pay</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attendance in attendances %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ attendance.date.strftime('%d %b') }}</strong>
+                                        <br><small class="text-muted">{{ attendance.date.strftime('%a') }}</small>
+                                    </td>
+                                    <td>
+                                        {% if attendance.present %}
+                                        <span class="badge bg-success">Present</span>
+                                        {% else %}
+                                        <span class="badge bg-danger">Absent</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {{ attendance.check_in_time.strftime('%H:%M') if attendance.check_in_time else '-' }}
+                                    </td>
+                                    <td>
+                                        {{ attendance.check_out_time.strftime('%H:%M') if attendance.check_out_time else '-' }}
+                                    </td>
+                                    <td>
+                                        {% if attendance.present %}
+                                        {{ "{:.1f}".format(attendance.calculate_regular_hours()) }}h
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.overtime_hours > 0 %}
+                                        <span class="text-warning">{{ "{:.1f}".format(attendance.overtime_hours) }}h</span>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.deductions > 0 %}
+                                        <span class="text-danger">-{{ "{:,.0f}".format(attendance.deductions) }}</span>
+                                        {% if attendance.deduction_reason %}
+                                        <br><small class="text-muted">{{ attendance.deduction_reason[:20] }}{% if attendance.deduction_reason|length > 20 %}...{% endif %}</small>
+                                        {% endif %}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if attendance.bonus > 0 %}
+                                        <span class="text-success">+{{ "{:,.0f}".format(attendance.bonus) }}</span>
+                                        {% if attendance.bonus_reason %}
+                                        <br><small class="text-muted">{{ attendance.bonus_reason[:20] }}{% if attendance.bonus_reason|length > 20 %}...{% endif %}</small>
+                                        {% endif %}
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <strong class="text-primary">{{ "{:,.0f}".format(attendance.calculate_daily_pay()) }}</strong>
+                                    </td>
+                                    <td>
+                                        {% if attendance.notes %}
+                                        <span class="text-muted" title="{{ attendance.notes }}">
+                                            {{ attendance.notes[:30] }}{% if attendance.notes|length > 30 %}...{% endif %}
+                                        </span>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <h4 class="text-muted">No Attendance Records</h4>
+                        <p class="text-muted">No attendance records found for the selected period.</p>
+                        <a href="{{ url_for('new_attendance') }}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>Record Attendance
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.avatar-circle {
+    width: 60px;
+    height: 60px;
+    background: var(--accent-primary);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.5rem;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,864 @@
+{% extends "base.html" %}
+
+{% block title %}Enhanced Order Form{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <form method="POST" class="needs-validation" novalidate>
+                {{ form.hidden_tag() }}
+                
+                <!-- Order Header -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h4 class="mb-0">Create New Order</h4>
+                        <button type="button" class="btn btn-outline-secondary" onclick="generateOrderCode()">
+                            <i class="fas fa-random"></i> Generate Code
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                {{ form.order_code.label(class="form-label") }}
+                                {{ form.order_code(class="form-control") }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.date.label(class="form-label") }}
+                                {{ form.date(class="form-control") }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.brand.label(class="form-label") }}
+                                {{ form.brand(class="form-control") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Client Information -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Client Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                {{ form.client_id.label(class="form-label") }}
+                                {{ form.client_id(class="form-control", onchange="loadClientInfo()") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.client_name.label(class="form-label") }}
+                                {{ form.client_name(class="form-control") }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ form.phone_number.label(class="form-label") }}
+                                {{ form.phone_number(class="form-control") }}
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(class="form-control") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.address.label(class="form-label") }}
+                                {{ form.address(class="form-control", rows="2") }}
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                <button type="button" class="btn btn-outline-success btn-sm" onclick="saveAsNewClient()">
+                                    <i class="fas fa-user-plus"></i> Save as New Client
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Order Items</h5>
+                        <button type="button" class="btn btn-primary" onclick="addOrderItem()">
+                            <i class="fas fa-plus"></i> Add Item
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div id="orderItems">
+                            <!-- Order items will be added here dynamically -->
+                        </div>
+                        
+                        <div class="row mt-4">
+                            <div class="col-md-8"></div>
+                            <div class="col-md-4">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total Pieces:</strong>
+                                            <span id="totalPieces">0</span>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <strong>Total Amount:</strong>
+                                            <span id="totalAmount">EGP 0.00</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment & Additional Info -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Payment & Additional Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                {{ form.paid_amount.label(class="form-label") }}
+                                {{ form.paid_amount(class="form-control", onchange="calculateRemaining()") }}
+                            </div>
+                            <div class="col-md-3">
+                                {{ form.remaining_amount.label(class="form-label") }}
+                                {{ form.remaining_amount(class="form-control", readonly=True) }}
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-check mt-4">
+                                    {{ form.is_printed(class="form-check-input") }}
+                                    {{ form.is_printed.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-12">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-3">
+                    <a href="{{ url_for('orders') }}" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" onclick="prepareOrderData()">Save Order</button>
+                </div>
+                
+                <!-- Hidden field to store order items data -->
+                <input type="hidden" name="order_items_data" id="orderItemsData">
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Order Item Template -->
+<template id="orderItemTemplate">
+    <div class="order-item border rounded p-3 mb-3">
+        <div class="d-flex justify-content-between align-items-start mb-3">
+            <h6>Product Item</h6>
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeOrderItem(this)">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        
+        <!-- Product Type Toggle -->
+        <div class="row mb-3">
+            <div class="col-12">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" onchange="toggleProductType(this)">
+                    <label class="form-check-label">
+                        <strong>Custom Product</strong> <small class="text-muted">(Not in inventory)</small>
+                    </label>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Regular Product Section -->
+        <div class="regular-product-section">
+            <div class="row">
+                <div class="col-md-4">
+                    <label class="form-label">Product</label>
+                    <select class="form-control product-select" onchange="loadProductDetails(this)">
+                        <option value="">Select Product...</option>
+                        {% for product in products %}
+                        <option value="{{ product.id }}" data-price="{{ product.selling_price }}" data-colors="{{ product.available_colors }}" data-sizes="{{ product.available_sizes }}">
+                            {{ product.name }} - EGP {{ product.selling_price }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Quantity</label>
+                    <input type="number" class="form-control quantity-input" min="1" onchange="updateItemTotal(this)">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Unit Price</label>
+                    <input type="number" class="form-control unit-price" step="0.01" readonly>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label">Total Price</label>
+                    <input type="number" class="form-control item-total" step="0.01" readonly>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Custom Product Section -->
+        <div class="custom-product-section" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Custom Product Details</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Product Name <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control custom-product-name" placeholder="Enter custom product name">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Unit Price per Piece</label>
+                            <input type="number" class="form-control custom-unit-price" step="0.01" min="0" placeholder="0.00" onchange="updateCustomTotals()">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Total Quantity</label>
+                            <input type="number" class="form-control custom-total-qty" readonly value="0">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="form-label">Description</label>
+                            <textarea class="form-control custom-product-description" rows="2" placeholder="Product details"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Color/Size Breakdown -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <label class="form-label mb-0 fw-bold">Color & Size Breakdown</label>
+                            <button type="button" class="btn btn-primary btn-sm" onclick="addCustomColorSection()">
+                                <i class="fas fa-plus"></i> Add Color
+                            </button>
+                        </div>
+                        <div id="custom-colors-container">
+                            <!-- Color sections will be added here -->
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-info mb-0">
+                                <small><i class="fas fa-info-circle"></i> Add colors and choose specific sizes with quantities for each color. Flexible sizing per color.</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="text-end">
+                                <div class="card bg-light">
+                                    <div class="card-body py-2">
+                                        <strong>Total Price: </strong>
+                                        <span class="custom-item-total-display text-primary fs-5">0.00</span> EGP
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="color-size-breakdown" style="display: none;">
+                    <h6>Color & Size Breakdown <small class="text-muted">(Check available stock)</small></h6>
+                    <div class="breakdown-content">
+                        <!-- Color/Size breakdown will be populated here -->
+                    </div>
+                    <div class="mt-2">
+                        <small class="text-info">
+                            <i class="fas fa-info-circle"></i> 
+                            Only items with available stock are shown. Quantities are limited by current inventory.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let orderItemCount = 0;
+
+function generateOrderCode() {
+    const code = 'ORD' + Date.now().toString().slice(-8).toUpperCase();
+    document.querySelector('[name="order_code"]').value = code;
+}
+
+function loadClientInfo() {
+    const clientSelect = document.querySelector('[name="client_id"]');
+    if (clientSelect.value) {
+        fetch(`/api/client/${clientSelect.value}`)
+            .then(response => response.json())
+            .then(data => {
+                document.querySelector('[name="client_name"]').value = data.name;
+                document.querySelector('[name="phone_number"]').value = data.phone_number;
+                document.querySelector('[name="email"]').value = data.email || '';
+                document.querySelector('[name="address"]').value = data.address || '';
+            });
+    }
+}
+
+function addOrderItem() {
+    const template = document.getElementById('orderItemTemplate');
+    const clone = template.content.cloneNode(true);
+    document.getElementById('orderItems').appendChild(clone);
+    orderItemCount++;
+}
+
+function toggleProductType(checkbox) {
+    const orderItem = checkbox.closest('.order-item');
+    const regularSection = orderItem.querySelector('.regular-product-section');
+    const customSection = orderItem.querySelector('.custom-product-section');
+    
+    if (checkbox.checked) {
+        // Show custom product section
+        regularSection.style.display = 'none';
+        customSection.style.display = 'block';
+        
+        // Clear regular product fields
+        const productSelect = regularSection.querySelector('.product-select');
+        const quantityInput = regularSection.querySelector('.quantity-input');
+        const unitPrice = regularSection.querySelector('.unit-price');
+        const itemTotal = regularSection.querySelector('.item-total');
+        
+        productSelect.value = '';
+        quantityInput.value = '';
+        unitPrice.value = '';
+        itemTotal.value = '';
+        
+        // Hide color/size breakdown
+        const breakdown = orderItem.querySelector('.color-size-breakdown');
+        if (breakdown) {
+            breakdown.style.display = 'none';
+        }
+    } else {
+        // Show regular product section
+        regularSection.style.display = 'block';
+        customSection.style.display = 'none';
+        
+        // Clear custom product fields
+        const customFields = customSection.querySelectorAll('input');
+        customFields.forEach(field => field.value = '');
+    }
+    
+    calculateTotals();
+}
+
+function updateCustomItemTotal(input) {
+    const orderItem = input.closest('.order-item');
+    const quantity = parseFloat(orderItem.querySelector('.custom-quantity-input').value) || 0;
+    const unitPrice = parseFloat(orderItem.querySelector('.custom-unit-price').value) || 0;
+    const totalField = orderItem.querySelector('.custom-item-total');
+    
+    const total = quantity * unitPrice;
+    totalField.value = total.toFixed(2);
+    
+    calculateTotals();
+}
+
+function removeOrderItem(button) {
+    button.closest('.order-item').remove();
+    calculateTotals();
+}
+
+function loadProductDetails(select) {
+    const option = select.selectedOptions[0];
+    const container = select.closest('.order-item');
+    
+    if (option.value) {
+        const price = option.dataset.price;
+        const productId = option.value;
+        const brandSelect = document.querySelector('[name="brand"]');
+        
+        container.querySelector('.unit-price').value = price;
+        
+        // Determine storage type based on brand
+        let storageType = 'SHARED'; // Default for URBRAND/SURVACCI
+        if (brandSelect.value === 'AZIZ') {
+            storageType = 'AZIZ';
+        }
+        
+        // Load inventory data for this product
+        fetch(`/api/inventory/${productId}/${storageType}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showColorSizeBreakdown(container, data);
+                } else {
+                    console.error('Failed to load inventory data');
+                }
+            })
+            .catch(error => {
+                console.error('Error loading inventory:', error);
+            });
+        
+        // Reset quantity and totals when product changes
+        container.querySelector('.quantity-input').value = '';
+        container.querySelector('.item-total').value = '';
+        
+        // Hide previous breakdown
+        const breakdown = container.querySelector('.color-size-breakdown');
+        breakdown.style.display = 'none';
+    } else {
+        // Clear fields when no product selected
+        container.querySelector('.unit-price').value = '';
+        container.querySelector('.quantity-input').value = '';
+        container.querySelector('.item-total').value = '';
+        container.querySelector('.color-size-breakdown').style.display = 'none';
+    }
+    
+    updateItemTotal(container.querySelector('.quantity-input'));
+}
+
+function showColorSizeBreakdown(container, inventoryData) {
+    const breakdown = container.querySelector('.color-size-breakdown');
+    const content = container.querySelector('.breakdown-content');
+    
+    // Clear previous content
+    content.innerHTML = '';
+    
+    if (!inventoryData.inventory || Object.keys(inventoryData.inventory).length === 0) {
+        content.innerHTML = '<div class="alert alert-warning">No stock available for this product</div>';
+        breakdown.style.display = 'block';
+        return;
+    }
+    
+    // Create breakdown table
+    let tableHTML = `
+        <div class="table-responsive">
+            <table class="table table-sm table-bordered">
+                <thead class="table-light">
+                    <tr>
+                        <th>Color</th>
+                        ${inventoryData.available_sizes.map(size => `<th>${size}</th>`).join('')}
+                        <th>Color Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    inventoryData.available_colors.forEach(color => {
+        tableHTML += `<tr><td><strong>${color}</strong></td>`;
+        
+        inventoryData.available_sizes.forEach(size => {
+            const stock = inventoryData.inventory[color] && inventoryData.inventory[color][size] || 0;
+            const inputId = `breakdown_${Date.now()}_${color}_${size}`.replace(/\s/g, '_');
+            
+            if (stock > 0) {
+                tableHTML += `
+                    <td>
+                        <input type="number" 
+                               class="form-control form-control-sm breakdown-input" 
+                               id="${inputId}"
+                               data-color="${color}" 
+                               data-size="${size}" 
+                               min="0" 
+                               max="${stock}" 
+                               value="0"
+                               onchange="updateBreakdownTotal(this)"
+                               style="width: 70px;">
+                        <small class="text-muted">Max: ${stock}</small>
+                    </td>
+                `;
+            } else {
+                tableHTML += '<td class="text-muted">-</td>';
+            }
+        });
+        
+        tableHTML += '<td><span class="color-total-display">0</span></td></tr>';
+    });
+    
+    tableHTML += `
+                </tbody>
+                <tfoot class="table-secondary">
+                    <tr>
+                        <th>Total</th>
+                        ${inventoryData.available_sizes.map(size => `<th class="size-total-display">0</th>`).join('')}
+                        <th class="grand-total-display">0</th>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    `;
+    
+    content.innerHTML = tableHTML;
+    breakdown.style.display = 'block';
+}
+
+function updateBreakdownTotal(input) {
+    const container = input.closest('.order-item');
+    const table = input.closest('table');
+    
+    // Update color totals
+    table.querySelectorAll('tbody tr').forEach(row => {
+        let colorTotal = 0;
+        row.querySelectorAll('.breakdown-input').forEach(input => {
+            colorTotal += parseInt(input.value) || 0;
+        });
+        row.querySelector('.color-total-display').textContent = colorTotal;
+    });
+    
+    // Update size totals
+    const sizeColumns = table.querySelectorAll('thead th').length - 2; // Exclude color and total columns
+    for (let i = 1; i <= sizeColumns; i++) {
+        let sizeTotal = 0;
+        table.querySelectorAll(`tbody tr td:nth-child(${i + 1}) .breakdown-input`).forEach(input => {
+            sizeTotal += parseInt(input.value) || 0;
+        });
+        table.querySelector(`.size-total-display:nth-child(${i + 1})`).textContent = sizeTotal;
+    }
+    
+    // Update grand total
+    let grandTotal = 0;
+    table.querySelectorAll('.breakdown-input').forEach(input => {
+        grandTotal += parseInt(input.value) || 0;
+    });
+    table.querySelector('.grand-total-display').textContent = grandTotal;
+    
+    // Update main quantity input
+    const quantityInput = container.querySelector('.quantity-input');
+    quantityInput.value = grandTotal;
+    updateItemTotal(quantityInput);
+}
+
+function updateItemTotal(input) {
+    const container = input.closest('.order-item');
+    const quantity = parseInt(input.value) || 0;
+    const unitPrice = parseFloat(container.querySelector('.unit-price').value) || 0;
+    const total = quantity * unitPrice;
+    
+    container.querySelector('.item-total').value = total.toFixed(2);
+    calculateTotals();
+}
+
+function calculateTotals() {
+    let totalPieces = 0;
+    let totalAmount = 0;
+    
+    // Get all order items
+    const orderItems = document.querySelectorAll('.order-item');
+    
+    orderItems.forEach(item => {
+        const customToggle = item.querySelector('.form-check-input');
+        
+        if (customToggle && customToggle.checked) {
+            // Custom product
+            const quantity = parseInt(item.querySelector('.custom-quantity-input').value) || 0;
+            const itemTotal = parseFloat(item.querySelector('.custom-item-total').value) || 0;
+            
+            totalPieces += quantity;
+            totalAmount += itemTotal;
+        } else {
+            // Regular product
+            const quantity = parseInt(item.querySelector('.quantity-input').value) || 0;
+            const itemTotal = parseFloat(item.querySelector('.item-total').value) || 0;
+            
+            totalPieces += quantity;
+            totalAmount += itemTotal;
+        }
+    });
+    
+    // Update display
+    document.getElementById('totalPieces').textContent = totalPieces;
+    document.getElementById('totalAmount').textContent = `EGP ${totalAmount.toFixed(2)}`;
+    
+    // Update remaining amount
+    calculateRemaining();
+}
+
+function calculateRemaining() {
+    const totalAmount = parseFloat(document.getElementById('totalAmount').textContent.replace('EGP ', '')) || 0;
+    const paidAmount = parseFloat(document.querySelector('[name="paid_amount"]').value) || 0;
+    const remaining = Math.max(0, totalAmount - paidAmount);
+    
+    document.querySelector('[name="remaining_amount"]').value = remaining.toFixed(2);
+}
+
+function saveAsNewClient() {
+    const clientData = {
+        name: document.querySelector('[name="client_name"]').value,
+        phone_number: document.querySelector('[name="phone_number"]').value,
+        email: document.querySelector('[name="email"]').value,
+        address: document.querySelector('[name="address"]').value
+    };
+    
+    if (!clientData.name || !clientData.phone_number) {
+        alert('Please enter client name and phone number');
+        return;
+    }
+    
+    fetch('/api/clients', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': document.querySelector('[name="csrf_token"]').value
+        },
+        body: JSON.stringify(clientData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update client dropdown
+            const clientSelect = document.querySelector('[name="client_id"]');
+            const option = new Option(`${data.client.name} - ${data.client.phone_number}`, data.client.id);
+            clientSelect.add(option);
+            clientSelect.value = data.client.id;
+            
+            alert('Client saved successfully!');
+        } else {
+            alert('Error saving client: ' + data.error);
+        }
+    });
+}
+
+function prepareOrderData() {
+    const orderItems = [];
+    const orderItemElements = document.querySelectorAll('.order-item');
+    
+    orderItemElements.forEach(item => {
+        const customToggle = item.querySelector('.form-check-input');
+        
+        if (customToggle && customToggle.checked) {
+            // Custom product with matrix
+            const customName = item.querySelector('.custom-product-name').value;
+            const customDescription = item.querySelector('.custom-product-description').value;
+            const quantity = item.querySelector('.custom-total-qty').value;
+            const unitPrice = item.querySelector('.custom-unit-price').value;
+            
+            if (customName && quantity && unitPrice && parseInt(quantity) > 0) {
+                const matrix = getCustomProductMatrix();
+                
+                orderItems.push({
+                    is_custom: true,
+                    product_name: customName,
+                    description: customDescription,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    color_size_matrix: JSON.stringify(matrix)
+                });
+            }
+        } else {
+            // Regular product
+            const productSelect = item.querySelector('.product-select');
+            const quantity = item.querySelector('.quantity-input').value;
+            const unitPrice = item.querySelector('.unit-price').value;
+            
+            if (productSelect.value && quantity && unitPrice) {
+                // Collect color/size breakdown if available
+                let colorSizeBreakdown = {};
+                const breakdownInputs = item.querySelectorAll('.breakdown-input');
+                breakdownInputs.forEach(input => {
+                    if (parseInt(input.value) > 0) {
+                        const color = input.dataset.color;
+                        const size = input.dataset.size;
+                        
+                        if (!colorSizeBreakdown[color]) {
+                            colorSizeBreakdown[color] = {};
+                        }
+                        colorSizeBreakdown[color][size] = parseInt(input.value);
+                    }
+                });
+                
+                orderItems.push({
+                    is_custom: false,
+                    product_type_id: productSelect.value,
+                    quantity: quantity,
+                    unit_price: unitPrice,
+                    color_size_breakdown: JSON.stringify(colorSizeBreakdown)
+                });
+            }
+        }
+    });
+    
+    // Store the order items data in the hidden field
+    document.getElementById('orderItemsData').value = JSON.stringify(orderItems);
+}
+
+// Custom Product Color/Size Functions
+let customColorCount = 0;
+
+function addCustomColorSection() {
+    customColorCount++;
+    const container = document.getElementById('custom-colors-container');
+    const colors = ['Black', 'White', 'Green', 'Petrol', 'Burgundy', 'Brown', 'Baby Pink', 'Navy Blue', 'Gray', 'Red', 'Yellow', 'Orange', 'Purple', 'Beige', 'Khaki'];
+    const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+    
+    const colorSection = document.createElement('div');
+    colorSection.className = 'card mb-3 custom-color-section';
+    colorSection.setAttribute('data-color-id', customColorCount);
+    
+    colorSection.innerHTML = `
+        <div class="card-header py-2">
+            <div class="row align-items-center">
+                <div class="col-md-4">
+                    <select class="form-control form-control-sm color-select" onchange="updateCustomTotals()">
+                        <option value="">Select Color</option>
+                        ${colors.map(color => `<option value="${color}">${color}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <small class="text-muted">Choose color and add sizes below</small>
+                </div>
+                <div class="col-md-2 text-end">
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeCustomColorSection(this)">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body py-2">
+            <div class="row">
+                <div class="col-md-9">
+                    <div class="size-inputs-container">
+                        <!-- Size inputs will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-secondary mt-2" onclick="addSizeInput(this)">
+                        <i class="fas fa-plus"></i> Add Size
+                    </button>
+                </div>
+                <div class="col-md-3">
+                    <div class="text-end">
+                        <small class="text-muted d-block">Color Total:</small>
+                        <strong class="color-total">0</strong> pieces
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.appendChild(colorSection);
+    
+    // Add one size input by default
+    addSizeInput(colorSection.querySelector('.btn-outline-secondary'));
+}
+
+function addSizeInput(button) {
+    const container = button.parentNode.querySelector('.size-inputs-container');
+    const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'XXXL'];
+    
+    const sizeInputGroup = document.createElement('div');
+    sizeInputGroup.className = 'row mb-2 size-input-group';
+    
+    sizeInputGroup.innerHTML = `
+        <div class="col-4">
+            <select class="form-control form-control-sm size-select" onchange="updateCustomTotals()">
+                <option value="">Select Size</option>
+                ${sizes.map(size => `<option value="${size}">${size}</option>`).join('')}
+            </select>
+        </div>
+        <div class="col-6">
+            <input type="number" class="form-control form-control-sm size-qty" min="0" value="0" placeholder="Quantity" onchange="updateCustomTotals()">
+        </div>
+        <div class="col-2">
+            <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeSizeInput(this)">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    `;
+    
+    container.appendChild(sizeInputGroup);
+    updateCustomTotals();
+}
+
+function removeSizeInput(button) {
+    const sizeGroup = button.closest('.size-input-group');
+    sizeGroup.remove();
+    updateCustomTotals();
+}
+
+function removeCustomColorSection(button) {
+    const colorSection = button.closest('.custom-color-section');
+    colorSection.remove();
+    updateCustomTotals();
+}
+
+function updateCustomTotals() {
+    const customSection = document.querySelector('.custom-product-section');
+    if (!customSection || customSection.style.display === 'none') return;
+    
+    const unitPriceInput = customSection.querySelector('.custom-unit-price');
+    const totalQtyInput = customSection.querySelector('.custom-total-qty');
+    const totalPriceDisplay = customSection.querySelector('.custom-item-total-display');
+    
+    let totalQuantity = 0;
+    
+    // Update totals for each color section
+    const colorSections = customSection.querySelectorAll('.custom-color-section');
+    colorSections.forEach(section => {
+        const sizeInputs = section.querySelectorAll('.size-qty');
+        let colorTotal = 0;
+        
+        sizeInputs.forEach(input => {
+            const qty = parseInt(input.value) || 0;
+            colorTotal += qty;
+        });
+        
+        const colorTotalDisplay = section.querySelector('.color-total');
+        colorTotalDisplay.textContent = colorTotal;
+        totalQuantity += colorTotal;
+    });
+    
+    const unitPrice = parseFloat(unitPriceInput.value) || 0;
+    const totalPrice = totalQuantity * unitPrice;
+    
+    totalQtyInput.value = totalQuantity;
+    totalPriceDisplay.textContent = totalPrice.toFixed(2);
+    
+    // Update the order total
+    updateOrderTotal();
+}
+
+function getCustomProductMatrix() {
+    const customSection = document.querySelector('.custom-product-section');
+    if (!customSection || customSection.style.display === 'none') return {};
+    
+    const colorSections = customSection.querySelectorAll('.custom-color-section');
+    const matrix = {};
+    
+    colorSections.forEach(section => {
+        const colorSelect = section.querySelector('.color-select');
+        const color = colorSelect.value;
+        
+        if (color) {
+            const sizeGroups = section.querySelectorAll('.size-input-group');
+            const colorData = {};
+            
+            sizeGroups.forEach(group => {
+                const sizeSelect = group.querySelector('.size-select');
+                const qtyInput = group.querySelector('.size-qty');
+                const size = sizeSelect.value;
+                const qty = parseInt(qtyInput.value) || 0;
+                
+                if (size && qty > 0) {
+                    colorData[size] = qty;
+                }
+            });
+            
+            if (Object.keys(colorData).length > 0) {
+                matrix[color] = colorData;
+            }
+        }
+    });
+    
+    return matrix;
+}
+
+// Initialize form when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Add first order item by default
+    addOrderItem();
+    // Auto-generate order code on page load
+    generateOrderCode();
+});
+</script>
+{% endblock %}

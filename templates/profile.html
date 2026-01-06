@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block title %}Profile Settings - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-user-cog me-2"></i>Profile Settings
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 text-center">
+                            <div class="profile-avatar mb-3">
+                                <i class="fas fa-user-circle fa-5x text-secondary"></i>
+                            </div>
+                            <h5>{{ current_user.username.title() }}</h5>
+                            <p class="text-muted">{{ current_user.email }}</p>
+                        </div>
+                        <div class="col-md-8">
+                            <form method="POST">
+                                {{ form.hidden_tag() }}
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.username.id }}" class="form-label">Username</label>
+                                        {{ form.username(class="form-control") }}
+                                        {% if form.username.errors %}
+                                            <div class="text-danger small">
+                                                {% for error in form.username.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.email.id }}" class="form-label">Email</label>
+                                        {{ form.email(class="form-control") }}
+                                        {% if form.email.errors %}
+                                            <div class="text-danger small">
+                                                {% for error in form.email.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="{{ form.current_password.id }}" class="form-label">Current Password</label>
+                                    {{ form.current_password(class="form-control") }}
+                                    {% if form.current_password.errors %}
+                                        <div class="text-danger small">
+                                            {% for error in form.current_password.errors %}
+                                                <div>{{ error }}</div>
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+
+                                <hr>
+
+                                <h6 class="text-muted mb-3">Change Password (Optional)</h6>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label for="{{ form.new_password.id }}" class="form-label">New Password</label>
+                                        {{ form.new_password(class="form-control", placeholder="Leave blank to keep current password") }}
+                                        {% if form.new_password.errors %}
+                                            <div class="text-danger small">
+                                                {% for error in form.new_password.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                        <div class="form-text">Minimum 6 characters</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label for="{{ form.confirm_password.id }}" class="form-label">Confirm New Password</label>
+                                        {{ form.confirm_password(class="form-control", placeholder="Confirm new password") }}
+                                        {% if form.confirm_password.errors %}
+                                            <div class="text-danger small">
+                                                {% for error in form.confirm_password.errors %}
+                                                    <div>{{ error }}</div>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                                    <a href="{{ url_for('index') }}" class="btn btn-secondary me-md-2">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </a>
+                                    {{ form.submit(class="btn btn-primary") }}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Information Card -->
+            <div class="card shadow mt-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i>Account Information
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Account Created:</strong> {{ current_user.created_at.strftime('%B %d, %Y') }}</p>
+                            <p><strong>Last Updated:</strong> Today</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>User ID:</strong> #{{ current_user.id }}</p>
+                            <p><strong>Account Status:</strong> <span class="badge bg-success">Active</span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

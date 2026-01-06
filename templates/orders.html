@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Orders - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header with New Order Button -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-dark fw-bold mb-0">Order Management</h1>
+            <p class="text-muted mb-0">Track and manage customer orders across all brands</p>
+        </div>
+        <a href="{{ url_for('new_order') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-plus me-2"></i>Create New Order
+        </a>
+    </div>
+
+    <!-- Filters and Stats Row -->
+    <div class="row mb-4">
+        <!-- Brand Filter Card -->
+        <div class="col-lg-8">
+            <div class="card shadow-sm">
+                <div class="card-body py-3">
+                    <form method="GET" class="row align-items-center">
+                        <div class="col-auto">
+                            <label class="form-label fw-semibold mb-0">Filter by Brand:</label>
+                        </div>
+                        <div class="col-auto">
+                            <select name="brand" class="form-select" onchange="this.form.submit()">
+                                <option value="">All Brands</option>
+                                <option value="URBRAND" {% if brand_filter == 'URBRAND' %}selected{% endif %}>URBRAND</option>
+                                <option value="SURVACCI" {% if brand_filter == 'SURVACCI' %}selected{% endif %}>SURVACCI</option>
+                                <option value="AZIZ" {% if brand_filter == 'AZIZ' %}selected{% endif %}>AZIZ</option>
+                            </select>
+                        </div>
+                        <div class="col-auto">
+                            <span class="text-muted">{{ orders.total }} orders found</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Card -->
+        <div class="col-lg-4">
+            <div class="card shadow-sm bg-light">
+                <div class="card-body py-3 text-center">
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="small text-muted">Total Orders</div>
+                            <div class="fw-bold text-primary">{{ orders.total }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">This Month</div>
+                            <div class="fw-bold text-success">{{ orders.items|length }}</div>
+                        </div>
+                        <div class="col-4">
+                            <div class="small text-muted">Pending</div>
+                            <div class="fw-bold text-warning">{{ orders.items|selectattr('remaining_amount', 'gt', 0)|list|length }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Orders Grid -->
+    {% if orders.items %}
+    <div class="row g-4">
+        {% for order in orders.items %}
+        <div class="col-xl-6 col-lg-12">
+            <div class="card h-100 shadow-sm border-0 order-card">
+                <div class="card-header bg-white border-bottom-0 pb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="d-flex align-items-center mb-1">
+                                <h5 class="card-title mb-0 fw-bold text-dark me-3">Order #{{ order.id }}</h5>
+                                <span class="badge {% if order.brand == 'URBRAND' %}bg-primary{% elif order.brand == 'SURVACCI' %}bg-info{% else %}bg-warning text-dark{% endif %} fs-7">
+                                    {{ order.brand }}
+                                </span>
+                            </div>
+                            <div class="small text-muted">
+                                <i class="fas fa-calendar me-1"></i>{{ order.date.strftime('%B %d, %Y') }}
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('edit_order', id=order.id) }}">
+                                    <i class="fas fa-edit me-2"></i>Edit Order
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('generate_invoice', id=order.id) }}">
+                                    <i class="fas fa-file-pdf me-2"></i>Generate Invoice
+                                </a></li>
+                                {% if current_user.is_admin() %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('delete_order', id=order.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this order?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
+                                            <i class="fas fa-trash me-2"></i>Delete Order
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body pt-2">
+                    <!-- Customer Information -->
+                    <div class="mb-3">
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-user me-2 text-muted"></i>
+                            <span class="fw-semibold text-dark">{{ order.client_name }}</span>
+                        </div>
+                        <div class="d-flex align-items-center text-muted small">
+                            <i class="fas fa-phone me-2"></i>
+                            <span>{{ order.phone_number }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Product Information -->
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-semibold text-dark">{{ order.product_type_obj.name if order.product_type_obj else 'Product Not Found' }}</span>
+                            {% if order.is_printed %}
+                                <span class="badge bg-success fs-7">Printed</span>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Order Details Grid -->
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded text-center">
+                                    <div class="small text-muted">Total Pieces</div>
+                                    <div class="fw-bold text-primary">{{ order.total_pieces }}</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="p-2 bg-light rounded text-center">
+                                    <div class="small text-muted">Per Color</div>
+                                    <div class="fw-bold text-secondary">{{ order.pieces_per_color }}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Colors and Sizes -->
+                        <div class="mb-2">
+                            <div class="small text-muted fw-semibold mb-1">Colors</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% if order.selected_colors %}
+                                    {% for color in order.selected_colors.split(',') %}
+                                        <span class="badge color-badge-small" style="background-color: {% if color.strip() == 'Black' %}#000000{% elif color.strip() == 'White' %}#ffffff; color: #000000; border: 1px solid #ddd{% elif color.strip() == 'Green' %}#28a745{% elif color.strip() == 'Petrol' %}#17a2b8{% elif color.strip() == 'Burgundy' %}#6f1e1e{% elif color.strip() == 'Brown' %}#8b4513{% elif color.strip() == 'Baby Pink' %}#ffb6c1; color: #000000{% else %}#6c757d{% endif %}">
+                                            {{ color.strip() }}
+                                        </span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted small">No colors specified</span>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="small text-muted fw-semibold mb-1">Sizes</div>
+                            <div class="d-flex flex-wrap gap-1">
+                                {% if order.selected_sizes %}
+                                    {% for size in order.selected_sizes.split(',') %}
+                                        <span class="badge bg-secondary size-badge-small">{{ size.strip() }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="text-muted small">No sizes specified</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Financial Information -->
+                    <div class="border-top pt-3">
+                        <div class="row g-2">
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <div class="small text-muted">Total Amount</div>
+                                    <div class="fw-bold text-dark">{{ "%.2f"|format(order.total_amount) }} EGP</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <div class="small text-muted">Paid</div>
+                                    <div class="fw-bold text-success">{{ "%.2f"|format(order.paid_amount) }} EGP</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="text-center">
+                                    <div class="small text-muted">Remaining</div>
+                                    <div class="fw-bold {% if order.remaining_amount > 0 %}text-warning{% else %}text-success{% endif %}">
+                                        {{ "%.2f"|format(order.remaining_amount) }} EGP
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Status Bar -->
+                        <div class="mt-2">
+                            {% set payment_percentage = (order.paid_amount / order.total_amount * 100) if order.total_amount > 0 else 0 %}
+                            <div class="progress" style="height: 6px;">
+                                <div class="progress-bar {% if payment_percentage == 100 %}bg-success{% elif payment_percentage > 50 %}bg-info{% else %}bg-warning{% endif %}" 
+                                     role="progressbar" style="width: {{ payment_percentage }}%" 
+                                     aria-valuenow="{{ payment_percentage }}" aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                            <div class="small text-muted text-center mt-1">
+                                {% if payment_percentage == 100 %}
+                                    Fully Paid
+                                {% elif payment_percentage > 0 %}
+                                    {{ "%.1f"|format(payment_percentage) }}% Paid
+                                {% else %}
+                                    Not Paid
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if orders.pages > 1 %}
+    <nav aria-label="Orders pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+            {% if orders.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('orders', page=orders.prev_num, brand=brand_filter) }}">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                </li>
+            {% endif %}
+            
+            {% for page_num in orders.iter_pages() %}
+                {% if page_num %}
+                    {% if page_num != orders.page %}
+                        <li class="page-item">
+                            <a class="page-link" href="{{ url_for('orders', page=page_num, brand=brand_filter) }}">{{ page_num }}</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ page_num }}</span>
+                        </li>
+                    {% endif %}
+                {% else %}
+                    <li class="page-item disabled">
+                        <span class="page-link">...</span>
+                    </li>
+                {% endif %}
+            {% endfor %}
+            
+            {% if orders.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('orders', page=orders.next_num, brand=brand_filter) }}">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+
+    {% else %}
+    <!-- Empty State -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-shopping-cart fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">No orders found</h4>
+                    {% if brand_filter %}
+                        <p class="text-muted mb-4">No orders found for {{ brand_filter }}. Try selecting a different brand or viewing all orders.</p>
+                        <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-list me-2"></i>View All Orders
+                        </a>
+                    {% else %}
+                        <p class="text-muted mb-4">Start managing your wholesale business by creating your first order.</p>
+                    {% endif %}
+                    <a href="{{ url_for('new_order') }}" class="btn btn-primary">
+                        <i class="fas fa-plus me-2"></i>Create First Order
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Custom CSS -->
+<style>
+.order-card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.order-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.color-badge-small {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.75rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin: 0.1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.size-badge-small {
+    padding: 0.2rem 0.4rem;
+    border-radius: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin: 0.1rem;
+}
+
+.fs-7 {
+    font-size: 0.875rem;
+}
+
+.progress {
+    border-radius: 10px;
+    background-color: #e9ecef;
+}
+
+.progress-bar {
+    border-radius: 10px;
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.pagination .page-link {
+    border-radius: 0.5rem;
+    margin: 0 0.25rem;
+    border: 1px solid var(--bs-border-color);
+    color: var(--bs-body-color);
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border-color: var(--accent-primary);
+    color: white;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    box-shadow: 0 4px 15px rgba(162, 93, 40, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(162, 93, 40, 0.4);
+}
+</style>
+{% endblock %}

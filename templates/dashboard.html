@@ -1,0 +1,205 @@
+{% extends "base.html" %}
+
+{% block title %}{{ brand }} Dashboard - Wholesale Management{% endblock %}
+
+{% block page_title %}{{ brand }} Dashboard{% endblock %}
+
+{% block content %}
+<!-- Brand Toggle & Time Filters -->
+<div class="dashboard-controls mb-4">
+    <!-- Brand Toggle -->
+    <div class="brand-toggle-container">
+        <div class="brand-toggle">
+            <a href="{{ url_for('dashboard', brand='URBRAND') }}" 
+               class="btn {% if brand == 'URBRAND' %}active{% else %}btn-secondary{% endif %}">
+                URBRAND
+            </a>
+            <a href="{{ url_for('dashboard', brand='SURVACCI') }}" 
+               class="btn {% if brand == 'SURVACCI' %}active{% else %}btn-secondary{% endif %}">
+                SURVACCI
+            </a>
+            <a href="{{ url_for('dashboard', brand='AZIZ') }}" 
+               class="btn {% if brand == 'AZIZ' %}active{% else %}btn-warning{% endif %}">
+                AZIZ
+            </a>
+        </div>
+    </div>
+    
+    <!-- Time Filters -->
+    <div class="time-filters-container">
+        <div class="time-filters">
+            <button class="time-filter-btn active" onclick="setTimeFilter('7d')">7 Days</button>
+            <button class="time-filter-btn" onclick="setTimeFilter('30d')">30 Days</button>
+            <button class="time-filter-btn" onclick="setTimeFilter('90d')">90 Days</button>
+            <button class="time-filter-btn" onclick="setTimeFilter('1y')">1 Year</button>
+        </div>
+    </div>
+</div>
+
+<!-- Analytics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card revenue fade-in-up">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ "{:,.0f}".format(total_revenue) }}</h3>
+                    <p>Total Revenue (EGP)</p>
+                </div>
+                <div class="stats-icon">
+                    <i class="fas fa-money-bill-wave"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card cost fade-in-up" style="animation-delay: 0.1s;">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ "{:,.0f}".format(total_cost) }}</h3>
+                    <p>Total Cost (EGP)</p>
+                </div>
+                <div class="stats-icon">
+                    <i class="fas fa-coins"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card profit fade-in-up" style="animation-delay: 0.2s;">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ "{:,.0f}".format(total_profit) }}</h3>
+                    <p>Total Profit (EGP)</p>
+                </div>
+                <div class="stats-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="stats-card orders fade-in-up" style="animation-delay: 0.3s;">
+            <div class="stats-content">
+                <div class="stats-info">
+                    <h3>{{ orders_count }}</h3>
+                    <p>Total Orders</p>
+                </div>
+                <div class="stats-icon">
+                    <i class="fas fa-shopping-cart"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <!-- Sales Over Time Chart -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-line me-2"></i>Sales Over Time</h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="salesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products Pie Chart -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-chart-pie me-2"></i>Top Products</h5>
+            </div>
+            <div class="card-body">
+                {% if top_products %}
+                    <div class="chart-container">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                    
+                    <!-- Product Legend -->
+                    <div class="product-legend mt-3">
+                        {% set colors = ['#A25D28', '#D9A05B', '#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#8B5CF6', '#06B6D4', '#84CC16', '#F97316'] %}
+                        {% for product, quantity in top_products %}
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="d-flex align-items-center">
+                                    <div class="legend-color me-2" style="background-color: {{ colors[loop.index0 % colors|length] }};"></div>
+                                    <span class="text-sm">{{ product }}</span>
+                                </div>
+                                <span class="badge bg-secondary">{{ quantity }}</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-box-open fa-3x mb-3 opacity-50"></i>
+                        <p class="mb-0">No products sold yet</p>
+                        <small>Start creating orders to see analytics</small>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <a href="{{ url_for('new_order') }}" class="quick-action-card">
+        <i class="fas fa-plus"></i>
+        <h5>New Order</h5>
+        <p>Create a new customer order</p>
+    </a>
+    
+    <a href="{{ url_for('orders') }}" class="quick-action-card">
+        <i class="fas fa-list"></i>
+        <h5>View Orders</h5>
+        <p>Manage all customer orders</p>
+    </a>
+    
+    <a href="{{ url_for('products') }}" class="quick-action-card">
+        <i class="fas fa-tags"></i>
+        <h5>Products</h5>
+        <p>Manage product types & pricing</p>
+    </a>
+    
+    <a href="{{ url_for('export') }}" class="quick-action-card">
+        <i class="fas fa-download"></i>
+        <h5>Export Data</h5>
+        <p>Download reports & analytics</p>
+    </a>
+</div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+    // Initialize charts
+    initSalesChart('{{ brand }}');
+    
+    {% if top_products %}
+    initTopProductsChart({{ top_products | tojson }});
+    {% endif %}
+    
+    // Time filter functionality
+    function setTimeFilter(period) {
+        // Remove active class from all buttons
+        document.querySelectorAll('.time-filter-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        
+        // Add active class to clicked button
+        event.target.classList.add('active');
+        
+        // Here you would typically reload the chart data
+        // For now, we'll just refresh with current data
+        refreshChart();
+    }
+</script>
+{% endblock %}

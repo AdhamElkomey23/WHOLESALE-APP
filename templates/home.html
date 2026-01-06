@@ -1,0 +1,198 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Simple Welcome Header -->
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-2">Welcome back, {{ current_user.username.title() }}!</h2>
+            <p class="text-muted">Quick overview of your wholesale business</p>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Orders</h5>
+                            <h3>{{ total_orders or 0 }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-shopping-cart fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Revenue</h5>
+                            <h3>EGP {{ "{:,.0f}".format(total_revenue or 0) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-money-bill fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Total Clients</h5>
+                            <h3>{{ total_clients or 0 }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h5 class="card-title">Pending Payments</h5>
+                            <h3>EGP {{ "{:,.0f}".format(pending_payments or 0) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-clock fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row mb-4">
+        <div class="col">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Quick Actions</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('enhanced_order') }}" class="btn btn-primary btn-lg w-100">
+                                <i class="fas fa-plus mb-2"></i><br>
+                                New Order
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('clients') }}" class="btn btn-info btn-lg w-100">
+                                <i class="fas fa-user-plus mb-2"></i><br>
+                                Add Client
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('transfers') }}" class="btn btn-success btn-lg w-100">
+                                <i class="fas fa-exchange-alt mb-2"></i><br>
+                                Money Transfers
+                            </a>
+                        </div>
+                        <div class="col-md-3 mb-3">
+                            <a href="{{ url_for('storage') }}" class="btn btn-secondary btn-lg w-100">
+                                <i class="fas fa-boxes mb-2"></i><br>
+                                Check Stock
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Recent Orders</h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_orders %}
+                        {% for order in recent_orders %}
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <div>
+                                <strong>{{ order.order_code }}</strong><br>
+                                <small class="text-muted">{{ order.client_name }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-{{ order.brand.lower() }}">{{ order.brand }}</span><br>
+                                <small>EGP {{ "{:,.0f}".format(order.total_amount) }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No recent orders</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="mb-0">Recent Transfers</h6>
+                </div>
+                <div class="card-body">
+                    {% if recent_transfers %}
+                        {% for transfer in recent_transfers %}
+                        <div class="d-flex justify-content-between border-bottom py-2">
+                            <div>
+                                <strong>{{ transfer.sender_name }}</strong><br>
+                                <small class="text-muted">{{ transfer.reason }}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="text-success">+EGP {{ "{:,.0f}".format(transfer.amount) }}</span><br>
+                                <small>{{ transfer.date.strftime('%m/%d') }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">No recent transfers</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+.btn-lg {
+    padding: 1rem;
+    height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.bg-urbrand { background-color: #6f42c1; }
+.bg-survacci { background-color: #20c997; }
+.bg-aziz { background-color: #fd7e14; }
+</style>
+{% endblock %}

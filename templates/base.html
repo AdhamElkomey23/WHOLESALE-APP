@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>{% block title %}Wholesale Management{% endblock %}</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2.0">
+</head>
+<body>
+    {% if current_user.is_authenticated %}
+    <!-- Left Sidebar Navigation -->
+    <div class="left-sidebar" id="leftSidebar">
+        <!-- Logo Section -->
+        <div class="sidebar-brand">
+            <i class="fas fa-store"></i>
+            <span class="brand-text">Wholesale Manager</span>
+            <button class="sidebar-toggle d-none d-lg-block" onclick="toggleDesktopSidebar()">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        </div>
+        
+        <!-- Navigation Menu -->
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('index') }}" class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a href="{{ url_for('dashboard', brand='URBRAND') }}" class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('expenses') }}" class="nav-item {% if request.endpoint == 'expenses' %}active{% endif %}">
+                <i class="fas fa-receipt"></i>
+                <span>Expenses</span>
+            </a>
+            <a href="{{ url_for('workers') }}" class="nav-item {% if request.endpoint in ['workers', 'new_worker', 'edit_worker', 'attendance', 'new_attendance', 'edit_attendance'] %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Workers</span>
+            </a>
+            <a href="{{ url_for('orders') }}" class="nav-item {% if request.endpoint in ['orders', 'new_order', 'edit_order'] %}active{% endif %}">
+                <i class="fas fa-shopping-cart"></i>
+                <span>Orders</span>
+            </a>
+            <a href="{{ url_for('enhanced_order') }}" class="nav-item {% if request.endpoint == 'enhanced_order' %}active{% endif %}">
+                <i class="fas fa-plus-circle"></i>
+                <span>New Order</span>
+            </a>
+            <a href="{{ url_for('clients') }}" class="nav-item {% if request.endpoint == 'clients' %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                <span>Clients</span>
+            </a>
+            <a href="{{ url_for('products') }}" class="nav-item {% if request.endpoint in ['products', 'new_product', 'edit_product'] %}active{% endif %}">
+                <i class="fas fa-tags"></i>
+                <span>Products</span>
+            </a>
+            <a href="{{ url_for('storage') }}" class="nav-item {% if request.endpoint == 'storage' %}active{% endif %}">
+                <i class="fas fa-warehouse"></i>
+                <span>Storage</span>
+            </a>
+
+            {% if current_user.is_admin() %}
+            <a href="{{ url_for('transfers') }}" class="nav-item {% if request.endpoint == 'transfers' %}active{% endif %}">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Money Transfers</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('export') }}" class="nav-item {% if request.endpoint == 'export' %}active{% endif %}">
+                <i class="fas fa-download"></i>
+                <span>Export</span>
+            </a>
+            <a href="{{ url_for('profile') }}" class="nav-item {% if request.endpoint == 'profile' %}active{% endif %}">
+                <i class="fas fa-user-cog"></i>
+                <span>Profile</span>
+            </a>
+            {% if current_user.is_admin() %}
+            <a href="{{ url_for('user_management') }}" class="nav-item {% if request.endpoint == 'user_management' %}active{% endif %}">
+                <i class="fas fa-users-cog"></i>
+                <span>User Management</span>
+            </a>
+            {% endif %}
+        </nav>
+        
+        <!-- User Section -->
+        <div class="sidebar-user">
+            <div class="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-info">
+                <div class="user-name">{{ current_user.username }}</div>
+                <div class="user-role">{{ 'Admin' if current_user.is_admin() else 'User' }}</div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout-link">
+                <i class="fas fa-sign-out-alt"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Mobile Header -->
+    <div class="mobile-header d-lg-none">
+        <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+            <i class="fas fa-bars"></i>
+        </button>
+        <span class="mobile-title">{% block page_title %}Dashboard{% endblock %}</span>
+    </div>
+
+    <!-- Mobile Overlay -->
+    <div class="mobile-overlay d-lg-none" onclick="toggleMobileMenu()"></div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <main class="main-content {% if current_user.is_authenticated %}with-sidebar{% endif %}">
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script>
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Mobile menu toggle functionality
+        function toggleMobileMenu() {
+            const sidebar = document.querySelector('.left-sidebar');
+            const overlay = document.querySelector('.mobile-overlay');
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('show');
+        }
+
+        // Desktop sidebar toggle functionality
+        function toggleDesktopSidebar() {
+            const sidebar = document.querySelector('.left-sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            sidebar.classList.toggle('collapsed');
+            mainContent.classList.toggle('sidebar-collapsed');
+            
+            // Store the preference in localStorage
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        }
+
+        // Restore sidebar state on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                const sidebar = document.querySelector('.left-sidebar');
+                const mainContent = document.querySelector('.main-content');
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('sidebar-collapsed');
+            }
+        });
+    </script>
+    
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+
+{% block title %}Workers Management - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header with Actions -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 text-dark fw-bold mb-0">Workers Management</h1>
+            <p class="text-muted mb-0">Manage workers, departments, and piece-rate payment systems</p>
+        </div>
+        <div class="btn-group">
+            <button type="button" class="btn btn-primary btn-lg" data-bs-toggle="modal" data-bs-target="#workerModal">
+                <i class="fas fa-plus me-2"></i>Add Worker
+            </button>
+            <a href="{{ url_for('attendance') }}" class="btn btn-outline-primary btn-lg">
+                <i class="fas fa-clock me-2"></i>Attendance
+            </a>
+        </div>
+    </div>
+
+    <!-- Department and Brand Filter Tabs -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body py-3">
+            <div class="row">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Filter by Department</label>
+                    <ul class="nav nav-pills" id="departmentTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" href="#" data-filter="all">All Departments</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" href="#" data-filter="Print">Print</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" href="#" data-filter="Sewing">Sewing</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" href="#" data-filter="General">General</a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Filter by Brand</label>
+                    <ul class="nav nav-pills" id="brandTabs" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link active" href="#" data-brand="all">All Brands</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" href="#" data-brand="URBRAND">URBRAND</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" href="#" data-brand="SURVACCI">SURVACCI</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" href="#" data-brand="AZIZ">AZIZ</a>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <a class="nav-link" href="#" data-brand="SHARED">SHARED</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workers Statistics -->
+    <div class="row mb-4">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-primary text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title h5">Total Workers</div>
+                            <div class="h4 mb-0">{{ workers|length }}</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-users fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-success text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title h5">Print Department</div>
+                            <div class="h4 mb-0">{{ workers|selectattr('department', 'equalto', 'Print')|list|length }}</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-print fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-warning text-dark h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title h5">Piece-Rate Workers</div>
+                            <div class="h4 mb-0">{{ workers|selectattr('piece_rate_enabled', 'equalto', true)|list|length }}</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-chart-line fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="card bg-info text-white h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <div class="card-title h5">Active Workers</div>
+                            <div class="h4 mb-0">{{ workers|selectattr('is_active', 'equalto', true)|list|length }}</div>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-user-check fa-2x opacity-75"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Workers Grid -->
+    {% if workers %}
+    <div class="row g-4" id="workersGrid">
+        {% for worker in workers %}
+        <div class="col-xl-4 col-lg-6 col-md-6 worker-card" 
+             data-department="{{ worker.department }}" 
+             data-brand="{{ worker.assigned_brand }}"
+             data-active="{{ worker.is_active|lower }}">
+            <div class="card h-100 shadow-sm border-0 worker-item">
+                <div class="card-header bg-white border-bottom-0 pb-2">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h5 class="card-title mb-1 fw-bold text-dark">{{ worker.name }}</h5>
+                            <div class="d-flex gap-2 flex-wrap">
+                                <span class="badge bg-primary fs-7">{{ worker.department }}</span>
+                                <span class="badge {% if worker.assigned_brand == 'URBRAND' %}bg-primary{% elif worker.assigned_brand == 'SURVACCI' %}bg-info{% elif worker.assigned_brand == 'AZIZ' %}bg-warning text-dark{% else %}bg-secondary{% endif %} fs-7">
+                                    {{ worker.assigned_brand }}
+                                </span>
+                                {% if worker.piece_rate_enabled %}
+                                    <span class="badge bg-success fs-7">Piece-Rate</span>
+                                {% endif %}
+                                {% if not worker.is_active %}
+                                    <span class="badge bg-danger fs-7">Inactive</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="dropdown">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{{ url_for('edit_worker', id=worker.id) }}">
+                                    <i class="fas fa-edit me-2"></i>Edit Worker
+                                </a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('worker_report', id=worker.id) }}">
+                                    <i class="fas fa-chart-bar me-2"></i>View Report
+                                </a></li>
+                                {% if current_user.is_admin() %}
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form method="POST" action="{{ url_for('delete_worker', id=worker.id) }}" style="display: inline;" onsubmit="return confirm('Are you sure you want to deactivate this worker?')">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="dropdown-item text-danger border-0 bg-transparent">
+                                            <i class="fas fa-user-times me-2"></i>Deactivate
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body pt-2">
+                    <!-- Worker Information -->
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h5 fw-bold text-primary">{{ "%.0f"|format(worker.daily_salary) }} EGP</div>
+                                <div class="text-muted small">Daily Salary</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <div class="h5 fw-bold text-success">{{ "%.0f"|format(worker.overtime_rate) }} EGP</div>
+                                <div class="text-muted small">Overtime Rate/hr</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Piece-Rate Information -->
+                    {% if worker.piece_rate_enabled %}
+                    <div class="mb-3">
+                        <div class="small text-muted fw-semibold mb-2">Piece-Rate Tiers</div>
+                        <div class="bg-light p-2 rounded">
+                            <div class="small">
+                                <div class="d-flex justify-content-between">
+                                    <span>1-{{ worker.tier1_threshold }} pieces:</span>
+                                    <span class="fw-semibold">{{ worker.tier1_rate }} EGP/piece</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>{{ worker.tier1_threshold + 1 }}-{{ worker.tier2_threshold }} pieces:</span>
+                                    <span class="fw-semibold">{{ worker.tier2_rate }} EGP/piece</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>{{ worker.tier2_threshold + 1 }}-{{ worker.tier3_threshold }} pieces:</span>
+                                    <span class="fw-semibold">{{ worker.tier3_rate }} EGP/piece</span>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>{{ worker.tier3_threshold + 1 }}+ pieces:</span>
+                                    <span class="fw-semibold">{{ worker.tier4_rate }} EGP/piece</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Contact and Other Info -->
+                    <div class="mb-3">
+                        {% if worker.phone_number %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-phone me-2 text-muted"></i>
+                            <span class="small">{{ worker.phone_number }}</span>
+                        </div>
+                        {% endif %}
+                        <div class="d-flex align-items-center mb-2">
+                            <i class="fas fa-briefcase me-2 text-muted"></i>
+                            <span class="small">{{ worker.position }}</span>
+                        </div>
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-calendar me-2 text-muted"></i>
+                            <span class="small">Hired: {{ worker.hire_date.strftime('%b %d, %Y') }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Performance This Month -->
+                    <div class="mb-3">
+                        <div class="small text-muted fw-semibold mb-1">This Month Performance</div>
+                        <div class="d-flex justify-content-between">
+                            <span class="small">Days Worked:</span>
+                            <span class="small fw-semibold">{{ worker.days_worked_this_month() }}</span>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    {% if worker.notes %}
+                    <div class="mb-3">
+                        <div class="small text-muted fw-semibold mb-1">Notes</div>
+                        <div class="bg-light p-2 rounded small">
+                            {{ worker.notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Footer -->
+                    <div class="border-top pt-2">
+                        <div class="d-flex justify-content-between align-items-center text-muted small">
+                            <span>Created by {{ worker.user.username if worker.user else 'Unknown' }}</span>
+                            <span>{{ worker.created_at.strftime('%m/%d/%y') }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <!-- Empty State -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-users fa-4x text-muted mb-4"></i>
+                    <h4 class="text-muted mb-3">No workers found</h4>
+                    <p class="text-muted mb-4">Start building your team by adding workers to manage your wholesale business.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#workerModal">
+                        <i class="fas fa-plus me-2"></i>Add First Worker
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Worker Modal -->
+<div class="modal fade" id="workerModal" tabindex="-1" aria-labelledby="workerModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="workerModalLabel">
+                    <i class="fas fa-plus me-2"></i>Add New Worker
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form method="POST" action="{{ url_for('new_worker') }}" id="workerForm">
+                {% if form %}
+                    {{ form.hidden_tag() }}
+                {% endif %}
+                <div class="modal-body">
+                    <div class="row">
+                        <!-- Basic Information -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-primary mb-3">Basic Information</h6>
+                            
+                            <div class="mb-3">
+                                <label for="workerName" class="form-label fw-semibold">Worker Name</label>
+                                <input type="text" class="form-control form-control-lg" id="workerName" name="name" required placeholder="Enter worker full name">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="workerPhone" class="form-label fw-semibold">Phone Number</label>
+                                <input type="text" class="form-control form-control-lg" id="workerPhone" name="phone_number" placeholder="Enter phone number">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="workerPosition" class="form-label fw-semibold">Position</label>
+                                <input type="text" class="form-control form-control-lg" id="workerPosition" name="position" value="Worker" placeholder="Enter position title">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="workerHireDate" class="form-label fw-semibold">Hire Date</label>
+                                <input type="date" class="form-control form-control-lg" id="workerHireDate" name="hire_date" required>
+                            </div>
+                        </div>
+
+                        <!-- Department and Brand Assignment -->
+                        <div class="col-md-6">
+                            <h6 class="fw-bold text-info mb-3">Department & Brand Assignment</h6>
+                            
+                            <div class="mb-3">
+                                <label for="workerDepartment" class="form-label fw-semibold">Department</label>
+                                <select class="form-select form-select-lg" id="workerDepartment" name="department" required>
+                                    <option value="">Choose department...</option>
+                                    <option value="General">General</option>
+                                    <option value="Print" selected>Print (T-Shirt Printing)</option>
+                                    <option value="Sewing">Sewing</option>
+                                    <option value="Cutting">Cutting</option>
+                                    <option value="Packaging">Packaging</option>
+                                    <option value="Quality Control">Quality Control</option>
+                                    <option value="Finishing">Finishing</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="workerBrand" class="form-label fw-semibold">Assigned Brand</label>
+                                <select class="form-select form-select-lg" id="workerBrand" name="assigned_brand" required>
+                                    <option value="">Choose brand assignment...</option>
+                                    <option value="SHARED" selected>SHARED (Works for all brands)</option>
+                                    <option value="URBRAND">URBRAND Only</option>
+                                    <option value="SURVACCI">SURVACCI Only</option>
+                                    <option value="AZIZ">AZIZ Only</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="workerDailySalary" class="form-label fw-semibold">Daily Salary</label>
+                                <div class="input-group input-group-lg">
+                                    <input type="number" step="0.01" class="form-control" id="workerDailySalary" name="daily_salary" required placeholder="0.00">
+                                    <span class="input-group-text">EGP</span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="workerOvertimeRate" class="form-label fw-semibold">Overtime Rate (per hour)</label>
+                                <div class="input-group input-group-lg">
+                                    <input type="number" step="0.01" class="form-control" id="workerOvertimeRate" name="overtime_rate" placeholder="0.00">
+                                    <span class="input-group-text">EGP/hr</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Piece-Rate Payment System -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <h6 class="fw-bold text-success mb-3">Multi-Tier Piece-Rate Payment System</h6>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="pieceRateEnabled" name="piece_rate_enabled" onchange="togglePieceRateFields()">
+                                    <label class="form-check-label fw-semibold" for="pieceRateEnabled">
+                                        Enable Piece-Rate Payment System
+                                    </label>
+                                </div>
+                                <div class="form-text">Enable to pay workers based on completed pieces with tiered rates</div>
+                            </div>
+
+                            <div id="pieceRateFields" style="display: none;">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="card bg-light mb-3">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-primary">Tier 1 Configuration</h6>
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-semibold">Threshold (pieces)</label>
+                                                    <input type="number" class="form-control" name="tier1_threshold" value="1000" min="1">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-semibold">Rate per Piece (EGP)</label>
+                                                    <input type="number" step="0.01" class="form-control" name="tier1_rate" value="3.0" min="0">
+                                                </div>
+                                                <div class="form-text">Example: 1-1000 pieces at 3 EGP each = 3000 EGP total</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="card bg-light mb-3">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-info">Tier 2 Configuration</h6>
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-semibold">Threshold (pieces)</label>
+                                                    <input type="number" class="form-control" name="tier2_threshold" value="1500" min="1">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-semibold">Rate per Piece (EGP)</label>
+                                                    <input type="number" step="0.01" class="form-control" name="tier2_rate" value="2.0" min="0">
+                                                </div>
+                                                <div class="form-text">Example: 1001-1500 pieces at 2 EGP each</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="card bg-light mb-3">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-warning">Tier 3 Configuration</h6>
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-semibold">Threshold (pieces)</label>
+                                                    <input type="number" class="form-control" name="tier3_threshold" value="2000" min="1">
+                                                </div>
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-semibold">Rate per Piece (EGP)</label>
+                                                    <input type="number" step="0.01" class="form-control" name="tier3_rate" value="3.0" min="0">
+                                                </div>
+                                                <div class="form-text">Example: 1501-2000 pieces at 3 EGP each</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        <div class="card bg-light mb-3">
+                                            <div class="card-body">
+                                                <h6 class="fw-bold text-success">Tier 4+ Configuration</h6>
+                                                <div class="mb-2">
+                                                    <label class="form-label small fw-semibold">Rate per Piece (EGP)</label>
+                                                    <input type="number" step="0.01" class="form-control" name="tier4_rate" value="3.5" min="0">
+                                                </div>
+                                                <div class="form-text">Example: 2001+ pieces at 3.5 EGP each</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <div class="mb-3">
+                                <label for="workerNotes" class="form-label fw-semibold">Notes</label>
+                                <textarea class="form-control" id="workerNotes" name="notes" rows="3" placeholder="Additional notes about this worker (optional)"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save me-2"></i>Save Worker
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.worker-item {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.worker-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15) !important;
+}
+
+.fs-7 {
+    font-size: 0.875rem;
+}
+
+.nav-pills .nav-link {
+    border-radius: 0.5rem;
+    margin: 0 0.25rem;
+    transition: all 0.2s ease;
+    font-size: 0.875rem;
+    padding: 0.375rem 0.75rem;
+}
+
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    color: white;
+    box-shadow: 0 4px 15px rgba(162, 93, 40, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    box-shadow: 0 4px 15px rgba(162, 93, 40, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(162, 93, 40, 0.4);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0,0,0,0.05) !important;
+}
+
+.worker-card.d-none {
+    display: none !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Set today's date as default
+    const hireDateInput = document.getElementById('workerHireDate');
+    if (hireDateInput) {
+        const today = new Date().toISOString().split('T')[0];
+        hireDateInput.value = today;
+    }
+
+    // Filter functionality
+    const departmentLinks = document.querySelectorAll('#departmentTabs .nav-link');
+    const brandLinks = document.querySelectorAll('#brandTabs .nav-link');
+    const workerCards = document.querySelectorAll('.worker-card');
+
+    let activeFilters = {
+        department: 'all',
+        brand: 'all'
+    };
+
+    function filterWorkers() {
+        workerCards.forEach(card => {
+            const cardDept = card.dataset.department;
+            const cardBrand = card.dataset.brand;
+            
+            const deptMatch = activeFilters.department === 'all' || cardDept === activeFilters.department;
+            const brandMatch = activeFilters.brand === 'all' || cardBrand === activeFilters.brand;
+            
+            if (deptMatch && brandMatch) {
+                card.classList.remove('d-none');
+            } else {
+                card.classList.add('d-none');
+            }
+        });
+    }
+
+    // Department filter
+    departmentLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            departmentLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            activeFilters.department = this.dataset.filter;
+            filterWorkers();
+        });
+    });
+
+    // Brand filter
+    brandLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            brandLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            activeFilters.brand = this.dataset.brand;
+            filterWorkers();
+        });
+    });
+
+    // Reset form when modal is closed
+    document.getElementById('workerModal').addEventListener('hidden.bs.modal', function () {
+        document.getElementById('workerForm').reset();
+        // Reset date to today
+        if (hireDateInput) {
+            const today = new Date().toISOString().split('T')[0];
+            hireDateInput.value = today;
+        }
+        // Reset piece rate fields
+        document.getElementById('pieceRateFields').style.display = 'none';
+        document.getElementById('pieceRateEnabled').checked = false;
+    });
+});
+
+function togglePieceRateFields() {
+    const checkbox = document.getElementById('pieceRateEnabled');
+    const fields = document.getElementById('pieceRateFields');
+    
+    if (checkbox.checked) {
+        fields.style.display = 'block';
+    } else {
+        fields.style.display = 'none';
+    }
+}
+</script>
+{% endblock %}

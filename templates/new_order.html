@@ -1,0 +1,378 @@
+{% extends "base.html" %}
+
+{% block title %}New Order - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-plus-circle me-2"></i>Create New Order
+                    </h4>
+                </div>
+                <form method="POST" action="{{ url_for('new_order') }}" id="orderForm">
+                    {{ form.hidden_tag() }}
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Client Information -->
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3">Client Information</h5>
+                                
+                                <div class="mb-3">
+                                    {{ form.client_id.label(class="form-label") }}
+                                    {{ form.client_id(class="form-select", id="clientSelect") }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.client_name.label(class="form-label") }}
+                                    {{ form.client_name(class="form-control", placeholder="Enter new client name if not in list") }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.phone_number.label(class="form-label") }}
+                                    {{ form.phone_number(class="form-control", placeholder="+20 123 456 7890") }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.email.label(class="form-label") }}
+                                    {{ form.email(class="form-control", placeholder="client@example.com") }}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.address.label(class="form-label") }}
+                                    {{ form.address(class="form-control", rows="3", placeholder="Client address") }}
+                                </div>
+                            </div>
+                            
+                            <!-- Order Details -->
+                            <div class="col-md-6">
+                                <h5 class="text-primary mb-3">Order Details</h5>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.order_code.label(class="form-label") }}
+                                            {{ form.order_code(class="form-control", placeholder="Auto-generated if empty") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.date.label(class="form-label") }}
+                                            {{ form.date(class="form-control") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.brand.label(class="form-label") }}
+                                    {{ form.brand(class="form-select") }}
+                                </div>
+                                
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.paid_amount.label(class="form-label") }}
+                                            {{ form.paid_amount(class="form-control", placeholder="0.00") }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            {{ form.remaining_amount.label(class="form-label") }}
+                                            {{ form.remaining_amount(class="form-control", placeholder="0.00") }}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.is_printed(class="form-check-input") }}
+                                        {{ form.is_printed.label(class="form-check-label") }}
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    {{ form.notes.label(class="form-label") }}
+                                    {{ form.notes(class="form-control", rows="3", placeholder="Order notes") }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Selection -->
+                        <hr class="my-4">
+                        <h5 class="text-primary mb-3">Product Selection</h5>
+                        
+                        <div class="row mb-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Select Product</label>
+                                <select class="form-select" id="productSelect" onchange="loadProductOptions()">
+                                    <option value="">Choose a product...</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" 
+                                            data-name="{{ product.name }}"
+                                            data-price="{{ product.selling_price }}"
+                                            data-colors="{{ product.available_colors }}" 
+                                            data-sizes="{{ product.available_sizes }}">
+                                        {{ product.name }} - {{ product.selling_price }} EGP
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-8">
+                                <button type="button" class="btn btn-success mt-4" onclick="addProductToOrder()" id="addProductBtn" disabled>
+                                    <i class="fas fa-plus me-2"></i>Add to Order
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Product Options Grid -->
+                        <div id="productOptionsGrid" style="display: none;" class="mb-4">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h6 class="card-title">Select Quantities by Color & Size</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-sm" id="productOptionsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Color / Size</th>
+                                                    <!-- Size headers populated by JS -->
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <!-- Color rows populated by JS -->
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Order Items List -->
+                        <div id="orderItemsList">
+                            <h6 class="text-primary mb-3">Order Items</h6>
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th>Color</th>
+                                            <th>Size</th>
+                                            <th>Qty</th>
+                                            <th>Unit Price</th>
+                                            <th>Total</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="orderItemsTableBody">
+                                        <!-- Order items will be populated here -->
+                                    </tbody>
+                                    <tfoot>
+                                        <tr class="table-secondary">
+                                            <th colspan="5">Total Order Value</th>
+                                            <th id="orderTotalValue">0.00 EGP</th>
+                                            <th></th>
+                                        </tr>
+                                    </tfoot>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('orders') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary" id="saveOrderBtn">
+                                <i class="fas fa-save me-2"></i>Save Order
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let selectedProducts = [];
+let currentProductData = null;
+
+function loadProductOptions() {
+    const productSelect = document.getElementById('productSelect');
+    const selectedOption = productSelect.options[productSelect.selectedIndex];
+    const addBtn = document.getElementById('addProductBtn');
+    const optionsGrid = document.getElementById('productOptionsGrid');
+    
+    if (!selectedOption.value) {
+        addBtn.disabled = true;
+        optionsGrid.style.display = 'none';
+        return;
+    }
+    
+    currentProductData = {
+        id: selectedOption.value,
+        name: selectedOption.getAttribute('data-name'),
+        price: parseFloat(selectedOption.getAttribute('data-price')),
+        colors: selectedOption.getAttribute('data-colors').split(','),
+        sizes: selectedOption.getAttribute('data-sizes').split(',')
+    };
+    
+    buildProductOptionsGrid();
+    addBtn.disabled = false;
+    optionsGrid.style.display = 'block';
+}
+
+function buildProductOptionsGrid() {
+    const table = document.getElementById('productOptionsTable');
+    const thead = table.querySelector('thead tr');
+    const tbody = table.querySelector('tbody');
+    
+    // Clear existing content
+    thead.innerHTML = '<th>Color \\ Size</th>';
+    tbody.innerHTML = '';
+    
+    // Add size headers
+    currentProductData.sizes.forEach(size => {
+        const th = document.createElement('th');
+        th.textContent = size.trim();
+        th.className = 'text-center';
+        thead.appendChild(th);
+    });
+    
+    // Add color rows
+    currentProductData.colors.forEach(color => {
+        const row = document.createElement('tr');
+        
+        // Color name cell
+        const colorCell = document.createElement('td');
+        colorCell.className = 'fw-semibold';
+        colorCell.textContent = color.trim();
+        row.appendChild(colorCell);
+        
+        // Size quantity cells
+        currentProductData.sizes.forEach(size => {
+            const cell = document.createElement('td');
+            cell.className = 'text-center';
+            const input = document.createElement('input');
+            input.type = 'number';
+            input.className = 'form-control form-control-sm text-center';
+            input.min = '0';
+            input.value = '0';
+            input.style.width = '60px';
+            input.id = `qty-${color.trim()}-${size.trim()}`;
+            cell.appendChild(input);
+            row.appendChild(cell);
+        });
+        
+        tbody.appendChild(row);
+    });
+}
+
+function addProductToOrder() {
+    if (!currentProductData) return;
+    
+    const orderItemsBody = document.getElementById('orderItemsTableBody');
+    let totalOrderValue = 0;
+    
+    // Get quantities from grid
+    currentProductData.colors.forEach(color => {
+        currentProductData.sizes.forEach(size => {
+            const input = document.getElementById(`qty-${color.trim()}-${size.trim()}`);
+            const quantity = parseInt(input.value) || 0;
+            
+            if (quantity > 0) {
+                const itemTotal = quantity * currentProductData.price;
+                totalOrderValue += itemTotal;
+                
+                // Create table row
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${currentProductData.name}</td>
+                    <td>${color.trim()}</td>
+                    <td>${size.trim()}</td>
+                    <td>${quantity}</td>
+                    <td>${currentProductData.price.toFixed(2)} EGP</td>
+                    <td>${itemTotal.toFixed(2)} EGP</td>
+                    <td>
+                        <button type="button" class="btn btn-sm btn-danger" onclick="removeOrderItem(this)">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                `;
+                
+                // Add hidden inputs for form submission
+                row.innerHTML += `
+                    <input type="hidden" name="product_ids[]" value="${currentProductData.id}">
+                    <input type="hidden" name="colors[]" value="${color.trim()}">
+                    <input type="hidden" name="sizes[]" value="${size.trim()}">
+                    <input type="hidden" name="quantities[]" value="${quantity}">
+                    <input type="hidden" name="unit_prices[]" value="${currentProductData.price}">
+                `;
+                
+                orderItemsBody.appendChild(row);
+                
+                // Clear the input
+                input.value = '0';
+            }
+        });
+    });
+    
+    updateOrderTotal();
+    
+    // Clear product selection
+    document.getElementById('productSelect').value = '';
+    document.getElementById('productOptionsGrid').style.display = 'none';
+    document.getElementById('addProductBtn').disabled = true;
+}
+
+function removeOrderItem(button) {
+    button.closest('tr').remove();
+    updateOrderTotal();
+}
+
+function updateOrderTotal() {
+    const rows = document.querySelectorAll('#orderItemsTableBody tr');
+    let total = 0;
+    
+    rows.forEach(row => {
+        const totalCell = row.children[5].textContent;
+        const amount = parseFloat(totalCell.replace(' EGP', ''));
+        total += amount;
+    });
+    
+    document.getElementById('orderTotalValue').textContent = total.toFixed(2) + ' EGP';
+}
+
+// Auto-fill client details when selecting existing client
+document.getElementById('clientSelect').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value && selectedOption.value !== '0') {
+        // Get client details via AJAX
+        fetch(`/api/client/${selectedOption.value}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('client_name').value = data.client.name;
+                    document.getElementById('phone_number').value = data.client.phone_number;
+                    document.getElementById('email').value = data.client.email || '';
+                    document.getElementById('address').value = data.client.address || '';
+                }
+            })
+            .catch(error => console.log('Could not fetch client details'));
+    }
+});
+</script>
+
+<style>
+#productOptionsTable input[type="number"] {
+    width: 60px;
+    margin: 0 auto;
+}
+
+.table th, .table td {
+    vertical-align: middle;
+}
+</style>
+{% endblock %}

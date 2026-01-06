@@ -1,0 +1,659 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Header with Back Button -->
+    <div class="d-flex align-items-center mb-4">
+        <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary me-3 rounded-circle" style="width: 40px; height: 40px;">
+            <i class="fas fa-arrow-left"></i>
+        </a>
+        <div>
+            <h1 class="h3 text-dark fw-bold mb-0">{{ title }}</h1>
+            <p class="text-muted mb-0">Fill in the order details and select products, colors, and sizes</p>
+        </div>
+    </div>
+
+    <form method="POST" id="orderForm">
+        {{ form.hidden_tag() }}
+        
+        <div class="row g-4">
+            <!-- Client Information Card -->
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-user me-2"></i>Client Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.client_name.label(class="form-label fw-semibold") }}
+                            {{ form.client_name(class="form-control form-control-lg" + (" is-invalid" if form.client_name.errors else ""), placeholder="Enter client's full name") }}
+                            {% if form.client_name.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.client_name.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.phone_number.label(class="form-label fw-semibold") }}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-phone"></i></span>
+                                {{ form.phone_number(class="form-control form-control-lg" + (" is-invalid" if form.phone_number.errors else ""), placeholder="01XXXXXXXXX") }}
+                            </div>
+                            {% if form.phone_number.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.phone_number.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.date.label(class="form-label fw-semibold") }}
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-calendar"></i></span>
+                                {{ form.date(class="form-control form-control-lg" + (" is-invalid" if form.date.errors else "")) }}
+                            </div>
+                            {% if form.date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.date.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="mb-3">
+                            {{ form.brand.label(class="form-label fw-semibold") }}
+                            {{ form.brand(class="form-select form-select-lg" + (" is-invalid" if form.brand.errors else "")) }}
+                            {% if form.brand.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.brand.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Selection Card -->
+            <div class="col-lg-6">
+                <div class="card h-100 shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-box me-2"></i>Product Selection</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            {{ form.product_type_id.label(class="form-label fw-semibold") }}
+                            {{ form.product_type_id(class="form-select form-select-lg" + (" is-invalid" if form.product_type_id.errors else ""), id="productSelect") }}
+                            {% if form.product_type_id.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.product_type_id.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    {{ form.total_pieces.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        {{ form.total_pieces(class="form-control form-control-lg" + (" is-invalid" if form.total_pieces.errors else ""), id="totalPieces") }}
+                                        <span class="input-group-text">pieces</span>
+                                    </div>
+                                    {% if form.total_pieces.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.total_pieces.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    {{ form.pieces_per_color.label(class="form-label fw-semibold") }}
+                                    <div class="input-group">
+                                        {{ form.pieces_per_color(class="form-control form-control-lg" + (" is-invalid" if form.pieces_per_color.errors else ""), id="piecesPerColor") }}
+                                        <span class="input-group-text">per color</span>
+                                    </div>
+                                    {% if form.pieces_per_color.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.pieces_per_color.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.is_printed(class="form-check-input") }}
+                                {{ form.is_printed.label(class="form-check-label fw-semibold") }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Colors and Sizes Selection -->
+        <div class="row g-4 mt-2">
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-palette me-2"></i>Color Selection</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="color-selection-grid" id="colorSelection">
+                            {{ form.selected_colors(class="form-select modern-multiselect" + (" is-invalid" if form.selected_colors.errors else ""), multiple=True, id="selectedColors", style="display: none;") }}
+                            
+                            <!-- Custom color checkboxes -->
+                            <div class="row g-3" id="colorCheckboxes">
+                                <div class="col-6 col-md-4">
+                                    <div class="color-option">
+                                        <input type="checkbox" class="btn-check color-check" id="colorBlack" value="Black">
+                                        <label class="btn btn-outline-dark w-100 d-flex align-items-center justify-content-center" for="colorBlack">
+                                            <span class="color-swatch me-2" style="background-color: #000000;"></span>
+                                            Black
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <div class="color-option">
+                                        <input type="checkbox" class="btn-check color-check" id="colorWhite" value="White">
+                                        <label class="btn btn-outline-secondary w-100 d-flex align-items-center justify-content-center" for="colorWhite">
+                                            <span class="color-swatch me-2" style="background-color: #ffffff; border: 1px solid #ddd;"></span>
+                                            White
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <div class="color-option">
+                                        <input type="checkbox" class="btn-check color-check" id="colorGreen" value="Green">
+                                        <label class="btn btn-outline-success w-100 d-flex align-items-center justify-content-center" for="colorGreen">
+                                            <span class="color-swatch me-2" style="background-color: #28a745;"></span>
+                                            Green
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <div class="color-option">
+                                        <input type="checkbox" class="btn-check color-check" id="colorPetrol" value="Petrol">
+                                        <label class="btn btn-outline-info w-100 d-flex align-items-center justify-content-center" for="colorPetrol">
+                                            <span class="color-swatch me-2" style="background-color: #17a2b8;"></span>
+                                            Petrol
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <div class="color-option">
+                                        <input type="checkbox" class="btn-check color-check" id="colorBurgundy" value="Burgundy">
+                                        <label class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center" for="colorBurgundy">
+                                            <span class="color-swatch me-2" style="background-color: #6f1e1e;"></span>
+                                            Burgundy
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <div class="color-option">
+                                        <input type="checkbox" class="btn-check color-check" id="colorBrown" value="Brown">
+                                        <label class="btn btn-outline-warning w-100 d-flex align-items-center justify-content-center" for="colorBrown">
+                                            <span class="color-swatch me-2" style="background-color: #8b4513;"></span>
+                                            Brown
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-6 col-md-4">
+                                    <div class="color-option">
+                                        <input type="checkbox" class="btn-check color-check" id="colorBabyPink" value="Baby Pink">
+                                        <label class="btn btn-outline-danger w-100 d-flex align-items-center justify-content-center" for="colorBabyPink" style="--bs-btn-border-color: #ffb6c1; --bs-btn-color: #d63384;">
+                                            <span class="color-swatch me-2" style="background-color: #ffb6c1;"></span>
+                                            Baby Pink
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if form.selected_colors.errors %}
+                                <div class="invalid-feedback d-block mt-2">
+                                    {% for error in form.selected_colors.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mt-3">
+                                <div class="alert alert-info" role="alert">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <span id="colorCount">0</span> colors selected
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-warning text-dark">
+                        <h5 class="mb-0"><i class="fas fa-ruler me-2"></i>Size Selection</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="size-selection-grid" id="sizeSelection">
+                            {{ form.selected_sizes(class="form-select modern-multiselect" + (" is-invalid" if form.selected_sizes.errors else ""), multiple=True, id="selectedSizes", style="display: none;") }}
+                            
+                            <!-- Custom size checkboxes -->
+                            <div class="row g-2" id="sizeCheckboxes">
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeXS" value="XS">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeXS">XS</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeS" value="S">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeS">S</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeM" value="M">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeM">M</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeL" value="L">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeL">L</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeXL" value="XL">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeXL">XL</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeXXL" value="XXL">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeXXL">XXL</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeXXXL" value="XXXL">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeXXXL">3XL</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeXXXXL" value="XXXXL">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeXXXXL">4XL</label>
+                                    </div>
+                                </div>
+                                <div class="col-4 col-md-3">
+                                    <div class="size-option">
+                                        <input type="checkbox" class="btn-check size-check" id="sizeXXXXXL" value="XXXXXL">
+                                        <label class="btn btn-outline-secondary w-100" for="sizeXXXXXL">5XL</label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if form.selected_sizes.errors %}
+                                <div class="invalid-feedback d-block mt-2">
+                                    {% for error in form.selected_sizes.errors %}{{ error }}{% endfor %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="mt-3">
+                                <div class="alert alert-warning" role="alert">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    <span id="sizeCount">0</span> sizes selected
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Financial Information -->
+        <div class="row g-4 mt-2">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">
+                        <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Financial Information</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.paid_amount.label(class="form-label fw-semibold") }}
+                                    <div class="input-group input-group-lg">
+                                        {{ form.paid_amount(class="form-control" + (" is-invalid" if form.paid_amount.errors else ""), id="paidAmount") }}
+                                        <span class="input-group-text">EGP</span>
+                                    </div>
+                                    {% if form.paid_amount.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.paid_amount.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    {{ form.remaining_amount.label(class="form-label fw-semibold") }}
+                                    <div class="input-group input-group-lg">
+                                        {{ form.remaining_amount(class="form-control" + (" is-invalid" if form.remaining_amount.errors else ""), id="remainingAmount") }}
+                                        <span class="input-group-text">EGP</span>
+                                    </div>
+                                    {% if form.remaining_amount.errors %}
+                                        <div class="invalid-feedback">
+                                            {% for error in form.remaining_amount.errors %}{{ error }}{% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Total Amount</label>
+                                    <div class="input-group input-group-lg">
+                                        <input type="text" class="form-control bg-light" id="totalAmount" readonly placeholder="0.00">
+                                        <span class="input-group-text">EGP</span>
+                                    </div>
+                                    <div class="form-text">Calculated automatically based on product and quantity</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Order Summary -->
+                        <div class="mt-4 p-3 bg-light rounded" id="orderSummary" style="display: none;">
+                            <h6 class="fw-bold mb-3">Order Summary</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-2"><strong>Product:</strong> <span id="summaryProduct">-</span></div>
+                                    <div class="mb-2"><strong>Total Pieces:</strong> <span id="summaryPieces">-</span></div>
+                                    <div class="mb-2"><strong>Colors:</strong> <span id="summaryColors">-</span></div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-2"><strong>Sizes:</strong> <span id="summarySizes">-</span></div>
+                                    <div class="mb-2"><strong>Price per Piece:</strong> <span id="summaryPrice">-</span> EGP</div>
+                                    <div class="mb-2"><strong>Total Amount:</strong> <span id="summaryTotal" class="fw-bold text-primary">-</span> EGP</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('orders') }}" class="btn btn-outline-secondary btn-lg">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary btn-lg" id="submitBtn">
+                        <i class="fas fa-save me-2"></i>Save Order
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Custom CSS -->
+<style>
+.color-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 1px solid rgba(0,0,0,0.1);
+}
+
+.btn-check:checked + .btn {
+    background-color: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+    color: white !important;
+}
+
+.color-option, .size-option {
+    margin-bottom: 0.5rem;
+}
+
+.btn {
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+.card-header {
+    font-weight: 600;
+}
+
+.form-control-lg, .form-select-lg {
+    border-radius: 0.5rem;
+}
+
+.input-group-lg .input-group-text {
+    border-radius: 0 0.5rem 0.5rem 0;
+}
+
+.alert {
+    border: none;
+    border-radius: 0.5rem;
+}
+
+#orderSummary {
+    border: 2px dashed var(--accent-primary);
+    background: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), 
+                linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), 
+                linear-gradient(45deg, transparent 75%, #f8f9fa 75%), 
+                linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    border: none;
+    box-shadow: 0 4px 15px rgba(162, 93, 40, 0.3);
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, var(--accent-secondary), var(--accent-primary));
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(162, 93, 40, 0.4);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Product selection change handler
+    const productSelect = document.getElementById('productSelect');
+    const totalPiecesInput = document.getElementById('totalPieces');
+    const piecesPerColorInput = document.getElementById('piecesPerColor');
+    const paidAmountInput = document.getElementById('paidAmount');
+    const remainingAmountInput = document.getElementById('remainingAmount');
+    const totalAmountDisplay = document.getElementById('totalAmount');
+    const orderSummary = document.getElementById('orderSummary');
+
+    // Color and size selection handlers
+    const colorChecks = document.querySelectorAll('.color-check');
+    const sizeChecks = document.querySelectorAll('.size-check');
+    const colorSelect = document.getElementById('selectedColors');
+    const sizeSelect = document.getElementById('selectedSizes');
+    const colorCount = document.getElementById('colorCount');
+    const sizeCount = document.getElementById('sizeCount');
+
+    // Update color selection
+    colorChecks.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateHiddenSelect(colorChecks, colorSelect);
+            updateColorCount();
+            updateOrderSummary();
+        });
+    });
+
+    // Update size selection
+    sizeChecks.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updateHiddenSelect(sizeChecks, sizeSelect);
+            updateSizeCount();
+            updateOrderSummary();
+        });
+    });
+
+    function updateHiddenSelect(checkboxes, selectElement) {
+        const selectedValues = Array.from(checkboxes)
+            .filter(cb => cb.checked)
+            .map(cb => cb.value);
+        
+        // Clear existing selections
+        Array.from(selectElement.options).forEach(option => option.selected = false);
+        
+        // Set new selections
+        selectedValues.forEach(value => {
+            const option = Array.from(selectElement.options).find(opt => opt.value === value);
+            if (option) option.selected = true;
+        });
+    }
+
+    function updateColorCount() {
+        const count = Array.from(colorChecks).filter(cb => cb.checked).length;
+        colorCount.textContent = count;
+    }
+
+    function updateSizeCount() {
+        const count = Array.from(sizeChecks).filter(cb => cb.checked).length;
+        sizeCount.textContent = count;
+    }
+
+    // Product selection change
+    productSelect.addEventListener('change', function() {
+        if (this.value) {
+            // Load available colors and sizes for selected product
+            loadProductDetails(this.value);
+        }
+        calculateTotal();
+        updateOrderSummary();
+    });
+
+    // Calculate total when pieces change
+    totalPiecesInput.addEventListener('input', function() {
+        calculateTotal();
+        updateOrderSummary();
+    });
+
+    paidAmountInput.addEventListener('input', function() {
+        calculateTotal();
+    });
+
+    function loadProductDetails(productId) {
+        // Fetch product colors and sizes
+        fetch(`/api/product/${productId}/colors`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.colors) {
+                    updateAvailableOptions('color', data.colors);
+                }
+            })
+            .catch(error => console.error('Error loading colors:', error));
+
+        fetch(`/api/product/${productId}/sizes`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.sizes) {
+                    updateAvailableOptions('size', data.sizes);
+                }
+            })
+            .catch(error => console.error('Error loading sizes:', error));
+    }
+
+    function updateAvailableOptions(type, availableOptions) {
+        const checkboxes = document.querySelectorAll(`.${type}-check`);
+        checkboxes.forEach(checkbox => {
+            const isAvailable = availableOptions.includes(checkbox.value);
+            checkbox.disabled = !isAvailable;
+            checkbox.closest('.btn').classList.toggle('disabled', !isAvailable);
+            if (!isAvailable) {
+                checkbox.checked = false;
+            }
+        });
+        
+        if (type === 'color') updateColorCount();
+        if (type === 'size') updateSizeCount();
+    }
+
+    function calculateTotal() {
+        const productSelect = document.getElementById('productSelect');
+        const totalPieces = parseInt(totalPiecesInput.value) || 0;
+        const paidAmount = parseFloat(paidAmountInput.value) || 0;
+
+        if (productSelect.value && totalPieces > 0) {
+            // Get product price from select option data
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const price = parseFloat(selectedOption.dataset.price) || 0;
+            const total = totalPieces * price;
+            
+            totalAmountDisplay.value = total.toFixed(2);
+            remainingAmountInput.value = (total - paidAmount).toFixed(2);
+        } else {
+            totalAmountDisplay.value = '0.00';
+            remainingAmountInput.value = '0.00';
+        }
+    }
+
+    function updateOrderSummary() {
+        const productSelect = document.getElementById('productSelect');
+        const totalPieces = parseInt(totalPiecesInput.value) || 0;
+        const selectedColors = Array.from(colorChecks).filter(cb => cb.checked).map(cb => cb.value);
+        const selectedSizes = Array.from(sizeChecks).filter(cb => cb.checked).map(cb => cb.value);
+
+        if (productSelect.value && totalPieces > 0 && selectedColors.length > 0 && selectedSizes.length > 0) {
+            const selectedOption = productSelect.options[productSelect.selectedIndex];
+            const productName = selectedOption.text;
+            const price = parseFloat(selectedOption.dataset.price) || 0;
+            const total = totalPieces * price;
+
+            document.getElementById('summaryProduct').textContent = productName;
+            document.getElementById('summaryPieces').textContent = totalPieces;
+            document.getElementById('summaryColors').textContent = selectedColors.join(', ');
+            document.getElementById('summarySizes').textContent = selectedSizes.join(', ');
+            document.getElementById('summaryPrice').textContent = price.toFixed(2);
+            document.getElementById('summaryTotal').textContent = total.toFixed(2);
+
+            orderSummary.style.display = 'block';
+        } else {
+            orderSummary.style.display = 'none';
+        }
+    }
+
+    // Initialize counts
+    updateColorCount();
+    updateSizeCount();
+    
+    // If editing existing order, load current selections
+    if (colorSelect.value) {
+        const selectedColors = Array.from(colorSelect.selectedOptions).map(opt => opt.value);
+        colorChecks.forEach(cb => {
+            cb.checked = selectedColors.includes(cb.value);
+        });
+        updateColorCount();
+    }
+    
+    if (sizeSelect.value) {
+        const selectedSizes = Array.from(sizeSelect.selectedOptions).map(opt => opt.value);
+        sizeChecks.forEach(cb => {
+            cb.checked = selectedSizes.includes(cb.value);
+        });
+        updateSizeCount();
+    }
+
+    // Initial calculation if values are present
+    calculateTotal();
+    updateOrderSummary();
+});
+</script>
+{% endblock %}

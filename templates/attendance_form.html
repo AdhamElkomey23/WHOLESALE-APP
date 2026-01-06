@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <h1 class="display-6">{{ title }}</h1>
+                <p class="text-muted">Track daily attendance with detailed time and salary information</p>
+            </div>
+
+            <!-- Attendance Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Worker and Date -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.worker_id.label(class="form-label") }}
+                                {{ form.worker_id(class="form-select") }}
+                                {% if form.worker_id.errors %}
+                                    {% for error in form.worker_id.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.date.label(class="form-label") }}
+                                {{ form.date(class="form-control") }}
+                                {% if form.date.errors %}
+                                    {% for error in form.date.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Attendance Status -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-check">
+                                    {{ form.present(class="form-check-input", id="presentCheck") }}
+                                    {{ form.present.label(class="form-check-label", for="presentCheck") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Time Tracking -->
+                        <div id="timeSection" class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.check_in_time.label(class="form-label") }}
+                                {{ form.check_in_time(class="form-control") }}
+                                <small class="text-muted">24-hour format (e.g., 08:00)</small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.check_out_time.label(class="form-label") }}
+                                {{ form.check_out_time(class="form-control") }}
+                                <small class="text-muted">24-hour format (e.g., 17:00)</small>
+                            </div>
+                        </div>
+
+                        <!-- Overtime and Pieces -->
+                        <div id="workSection" class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.overtime_hours.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.overtime_hours(class="form-control") }}
+                                    <span class="input-group-text">hours</span>
+                                </div>
+                                <small class="text-muted">Manual overtime entry or auto-calculated from times</small>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.pieces_completed.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.pieces_completed(class="form-control") }}
+                                    <span class="input-group-text">pieces</span>
+                                </div>
+                                <small class="text-muted">For piece-rate workers or tracking productivity</small>
+                            </div>
+                        </div>
+
+                        <!-- Deductions -->
+                        <div id="deductionSection" class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.deductions.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.deductions(class="form-control") }}
+                                    <span class="input-group-text">EGP</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.deduction_reason.label(class="form-label") }}
+                                {{ form.deduction_reason(class="form-control", placeholder="Reason for deduction...") }}
+                            </div>
+                        </div>
+
+                        <!-- Bonus -->
+                        <div id="bonusSection" class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.bonus.label(class="form-label") }}
+                                <div class="input-group">
+                                    {{ form.bonus(class="form-control") }}
+                                    <span class="input-group-text">EGP</span>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.bonus_reason.label(class="form-label") }}
+                                {{ form.bonus_reason(class="form-control", placeholder="Reason for bonus...") }}
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3", placeholder="Additional notes about this attendance record...") }}
+                            </div>
+                        </div>
+
+                        <!-- Daily Pay Preview -->
+                        <div id="payPreview" class="alert alert-info mb-4" style="display: none;">
+                            <h6><i class="fas fa-calculator me-2"></i>Daily Pay Calculation</h6>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <small class="text-muted">Base Salary</small>
+                                    <div id="baseSalary">-</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Overtime Pay</small>
+                                    <div id="overtimePay">-</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted">Adjustments</small>
+                                    <div id="adjustments">-</div>
+                                </div>
+                                <div class="col-md-3">
+                                    <small class="text-muted"><strong>Total Pay</strong></small>
+                                    <div id="totalPay" class="fw-bold text-primary">-</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('attendance') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Attendance
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const presentCheck = document.getElementById('presentCheck');
+    const timeSection = document.getElementById('timeSection');
+    const overtimeSection = document.getElementById('overtimeSection');
+    const deductionSection = document.getElementById('deductionSection');
+    const bonusSection = document.getElementById('bonusSection');
+    const payPreview = document.getElementById('payPreview');
+    
+    // Toggle sections based on present status
+    function toggleSections() {
+        const isPresent = presentCheck.checked;
+        const sections = [timeSection, overtimeSection, deductionSection, bonusSection];
+        
+        sections.forEach(section => {
+            if (isPresent) {
+                section.style.display = 'block';
+            } else {
+                section.style.display = 'none';
+            }
+        });
+        
+        if (isPresent) {
+            calculatePay();
+        } else {
+            payPreview.style.display = 'none';
+        }
+    }
+    
+    // Calculate daily pay preview
+    function calculatePay() {
+        const workerSelect = document.querySelector('[name="worker_id"]');
+        if (!workerSelect.value || !presentCheck.checked) {
+            payPreview.style.display = 'none';
+            return;
+        }
+        
+        // This would need worker salary data from the backend
+        // For now, show a placeholder
+        payPreview.style.display = 'block';
+        document.getElementById('baseSalary').textContent = 'Calculating...';
+        document.getElementById('overtimePay').textContent = 'Calculating...';
+        document.getElementById('adjustments').textContent = 'Calculating...';
+        document.getElementById('totalPay').textContent = 'Calculating...';
+    }
+    
+    // Event listeners
+    presentCheck.addEventListener('change', toggleSections);
+    
+    // Initialize
+    toggleSections();
+});
+</script>
+{% endblock %}

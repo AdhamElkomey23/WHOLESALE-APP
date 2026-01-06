@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Wholesale Management{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Header -->
+            <div class="mb-4">
+                <h1 class="display-6">{{ title }}</h1>
+                <p class="text-muted">Configure worker details, salary structure, and piece-rate payment system</p>
+            </div>
+
+            <!-- Worker Form -->
+            <div class="card">
+                <div class="card-body">
+                    <form method="POST">
+                        {{ form.hidden_tag() }}
+                        
+                        <!-- Basic Information -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.name.label(class="form-label") }}
+                                {{ form.name(class="form-control") }}
+                                {% if form.name.errors %}
+                                    {% for error in form.name.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.phone_number.label(class="form-label") }}
+                                {{ form.phone_number(class="form-control") }}
+                                {% if form.phone_number.errors %}
+                                    {% for error in form.phone_number.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Position and Hire Date -->
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                {{ form.position.label(class="form-label") }}
+                                {{ form.position(class="form-control") }}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.hire_date.label(class="form-label") }}
+                                {{ form.hire_date(class="form-control") }}
+                                {% if form.hire_date.errors %}
+                                    {% for error in form.hire_date.errors %}
+                                        <div class="text-danger small">{{ error }}</div>
+                                    {% endfor %}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Payment System Selection -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="fas fa-money-bill-wave me-2"></i>Payment System</h5>
+                            </div>
+                            <div class="card-body">
+                                <!-- Enable Piece-Rate -->
+                                <div class="form-check mb-3">
+                                    {{ form.piece_rate_enabled(class="form-check-input", id="pieceRateCheck") }}
+                                    {{ form.piece_rate_enabled.label(class="form-check-label", for="pieceRateCheck") }}
+                                    <small class="form-text text-muted d-block">When enabled, worker is paid per piece completed instead of fixed daily salary</small>
+                                </div>
+
+                                <!-- Daily Salary (shown when piece-rate is disabled) -->
+                                <div id="salarySection" class="row mb-3">
+                                    <div class="col-md-6">
+                                        {{ form.daily_salary.label(class="form-label") }}
+                                        <div class="input-group">
+                                            {{ form.daily_salary(class="form-control") }}
+                                            <span class="input-group-text">EGP</span>
+                                        </div>
+                                        {% if form.daily_salary.errors %}
+                                            {% for error in form.daily_salary.errors %}
+                                                <div class="text-danger small">{{ error }}</div>
+                                            {% endfor %}
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-md-6">
+                                        {{ form.overtime_rate.label(class="form-label") }}
+                                        <div class="input-group">
+                                            {{ form.overtime_rate(class="form-control") }}
+                                            <span class="input-group-text">EGP/hour</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Piece-Rate Configuration -->
+                                <div id="pieceRateSection" class="border-top pt-3" style="display: none;">
+                                    <h6 class="text-primary mb-3"><i class="fas fa-cogs me-2"></i>Piece-Rate Configuration</h6>
+                                    
+                                    <div class="row mb-3">
+                                        <div class="col-md-4">
+                                            {{ form.base_piece_rate.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.base_piece_rate(class="form-control") }}
+                                                <span class="input-group-text">EGP</span>
+                                            </div>
+                                            <small class="text-muted">Rate for pieces up to threshold</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            {{ form.bonus_threshold.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.bonus_threshold(class="form-control") }}
+                                                <span class="input-group-text">pieces</span>
+                                            </div>
+                                            <small class="text-muted">After this amount, bonus rate applies</small>
+                                        </div>
+                                        <div class="col-md-4">
+                                            {{ form.bonus_piece_rate.label(class="form-label") }}
+                                            <div class="input-group">
+                                                {{ form.bonus_piece_rate(class="form-control") }}
+                                                <span class="input-group-text">EGP</span>
+                                            </div>
+                                            <small class="text-muted">Higher rate after threshold</small>
+                                        </div>
+                                    </div>
+
+                                    <!-- Piece-Rate Example -->
+                                    <div class="alert alert-info">
+                                        <h6><i class="fas fa-calculator me-2"></i>Example Calculation</h6>
+                                        <p class="mb-1"><strong>Scenario:</strong> Worker completes 150 pieces</p>
+                                        <ul class="mb-0">
+                                            <li>First 100 pieces at <span id="baseRateExample">2.00</span> EGP = <span id="basePayExample">200.00</span> EGP</li>
+                                            <li>Next 50 pieces at <span id="bonusRateExample">3.00</span> EGP = <span id="bonusPayExample">150.00</span> EGP</li>
+                                            <li><strong>Total: <span id="totalPayExample">350.00</span> EGP</strong></li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Overtime always available -->
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Overtime Rate (EGP/hour)</label>
+                                        <div class="input-group">
+                                            {{ form.overtime_rate(class="form-control") }}
+                                            <span class="input-group-text">EGP/hour</span>
+                                        </div>
+                                        <small class="text-muted">Applies to both salary and piece-rate workers</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="row mb-3">
+                            <div class="col-12">
+                                <div class="form-check mb-3">
+                                    {{ form.is_active(class="form-check-input") }}
+                                    {{ form.is_active.label(class="form-check-label") }}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Notes -->
+                        <div class="row mb-4">
+                            <div class="col-12">
+                                {{ form.notes.label(class="form-label") }}
+                                {{ form.notes(class="form-control", rows="3", placeholder="Additional notes about this worker...") }}
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="d-flex justify-content-between">
+                            <a href="{{ url_for('workers') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-arrow-left me-2"></i>Back to Workers
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const pieceRateCheck = document.getElementById('pieceRateCheck');
+    const salarySection = document.getElementById('salarySection');
+    const pieceRateSection = document.getElementById('pieceRateSection');
+    const baseRateInput = document.querySelector('[name="base_piece_rate"]');
+    const bonusThresholdInput = document.querySelector('[name="bonus_threshold"]');
+    const bonusRateInput = document.querySelector('[name="bonus_piece_rate"]');
+    
+    function togglePaymentSections() {
+        if (pieceRateCheck.checked) {
+            salarySection.style.display = 'none';
+            pieceRateSection.style.display = 'block';
+        } else {
+            salarySection.style.display = 'block';
+            pieceRateSection.style.display = 'none';
+        }
+    }
+    
+    function updateExample() {
+        const baseRate = parseFloat(baseRateInput.value) || 0;
+        const threshold = parseInt(bonusThresholdInput.value) || 100;
+        const bonusRate = parseFloat(bonusRateInput.value) || 0;
+        
+        const examplePieces = 150;
+        const basePieces = Math.min(examplePieces, threshold);
+        const bonusPieces = Math.max(0, examplePieces - threshold);
+        
+        const basePay = basePieces * baseRate;
+        const bonusPay = bonusPieces * bonusRate;
+        const totalPay = basePay + bonusPay;
+        
+        document.getElementById('baseRateExample').textContent = baseRate.toFixed(2);
+        document.getElementById('bonusRateExample').textContent = bonusRate.toFixed(2);
+        document.getElementById('basePayExample').textContent = basePay.toFixed(2);
+        document.getElementById('bonusPayExample').textContent = bonusPay.toFixed(2);
+        document.getElementById('totalPayExample').textContent = totalPay.toFixed(2);
+    }
+    
+    // Event listeners
+    pieceRateCheck.addEventListener('change', togglePaymentSections);
+    baseRateInput.addEventListener('input', updateExample);
+    bonusThresholdInput.addEventListener('input', updateExample);
+    bonusRateInput.addEventListener('input', updateExample);
+    
+    // Initialize
+    togglePaymentSections();
+    updateExample();
+});
+</script>
+{% endblock %}
